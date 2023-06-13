@@ -21,7 +21,7 @@ object ask:
           frag.render,
           asks.map:
             case Some(ask) =>
-              div(cls := s"ask-container${ask.isStretch ?? " stretch"}", renderOne(ask)).render
+              div(cls := s"ask-container${ask.isStretch so " stretch"}", renderOne(ask)).render
             case None =>
               AskApi.askNotFoundFrag
         )
@@ -50,12 +50,12 @@ private case class RenderAsk(
 
   def render =
     fieldset(
-      cls                              := s"ask${ask.isAnon ?? " anon"}",
+      cls                              := s"ask${ask.isAnon so " anon"}",
       id                               := ask._id,
       ask.hasPickFor(me) option (value := "")
     )(
       header,
-      ask.isConcluded option label(s"${ask.feedback.??(_ size) max ask.picks.??(_ size)} responses"),
+      ask.isConcluded option label(s"${ask.feedback.so(_ size) max ask.picks.so(_ size)} responses"),
       ask.choices.nonEmpty option (
         if ask.isRanked then
           if ask.isConcluded || tallyView then rankGraphBody
@@ -85,7 +85,7 @@ private case class RenderAsk(
             formmethod := "GET",
             formaction := routes.Ask.view(ask._id, viewParam.some, !tallyView)
           ),
-          ctx.me.exists(_ is ask.creator) || ctx.me ?? Granter(Permission.Shusher) option button(
+          ctx.me.exists(_ is ask.creator) || ctx.me.so(Granter(Permission.Shusher)) option button(
             cls        := "admin",
             formmethod := "GET",
             formaction := routes.Ask.admin(ask._id),
@@ -130,7 +130,7 @@ private case class RenderAsk(
           div(cls := "feedback-results")(
             ask.footer map (label(_)),
             fbmap.toSeq flatMap:
-              case (feedbacker, fb) => Seq(div(ask.isTraceable ?? s"$feedbacker:"), div(fb))
+              case (feedbacker, fb) => Seq(div(ask.isTraceable so s"$feedbacker:"), div(fb))
           )
     )
 
@@ -209,7 +209,7 @@ private case class RenderAsk(
 
     val count     = ask.count(choiceText)
     val isAuthor  = ctx.me.exists(_.id == ask.creator)
-    val isShusher = ctx.me ?? Granter(Permission.Shusher)
+    val isShusher = ctx.me so Granter(Permission.Shusher)
 
     if !ask.isRanked then
       if ask.isConcluded || tallyView then
@@ -222,7 +222,7 @@ private case class RenderAsk(
     if sb.isEmpty then choiceText else sb.toString
 
   def rankedTooltips =
-    val respondents = ask.picks ?? (picks => picks.size)
+    val respondents = ask.picks so (picks => picks.size)
     val rankM       = ask.rankMatrix
     val notables = List(
       0 -> "ranked this first",
@@ -242,7 +242,7 @@ private case class RenderAsk(
   def whoPicked(choice: Int, max: Int = 100) =
     val who = ask.whoPicked(choice)
     if ask.isAnon then s"${who.size} votes"
-    else who.take(max).mkString("", ", ", (who.length > max) ?? ", and others...")
+    else who.take(max).mkString("", ", ", (who.length > max) so ", and others...")
 
   def validRanking =
     val initialOrder =
@@ -252,7 +252,7 @@ private case class RenderAsk(
       if r == Nil || r.distinct.sorted != initialOrder.sorted then
         // it's late to be doing this but i think it beats counting the choices in an
         // aggregation stage in every db update or storing choices.size in a redundant field
-        me ?? (id => env.ask.api.setPicks(ask._id, id, Some(Nil))) // blow away the bad
+        me so (id => env.ask.api.setPicks(ask._id, id, Some(Nil))) // blow away the bad
         initialOrder
       else r
     }

@@ -85,7 +85,7 @@ final class ForumPostApi(
           askApi.freezeAsync(spam replace newText, user) flatMap { frozen =>
             val newPost = post.editPost(nowInstant, frozen.text)
             (newPost.text != post.text).so {
-              postRepo.coll.update.one($id(post.id), newPost) >> newPost.isAnonModPost.?? {
+              postRepo.coll.update.one($id(post.id), newPost) >> newPost.isAnonModPost.so {
                 logAnonPost(user.id, newPost, edit = true)
               } >>- promotion.save(user, newPost.text)
             } inject newPost

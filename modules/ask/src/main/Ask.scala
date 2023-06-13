@@ -61,7 +61,7 @@ case class Ask(
 
   // NOTE - vid stands for voter id, either a user id or an anonymous hash
   def hasPickFor(o: Option[String]): Boolean =
-    o ?? (vid => picks.exists(_ contains vid))
+    o so (vid => picks.exists(_ contains vid))
 
   def picksFor(o: Option[String]): Option[Vector[Int]] =
     o.flatMap(vid => picks.flatMap(_ get vid))
@@ -70,10 +70,10 @@ case class Ask(
     picksFor(o) flatMap (_ headOption)
 
   def hasFeedbackFor(o: Option[String]): Boolean =
-    o ?? (vid => feedback.exists(_ contains vid))
+    o so (vid => feedback.exists(_ contains vid))
 
   def feedbackFor(o: Option[String]): Option[String] =
-    o ?? (vid => feedback flatMap (_ get vid))
+    o so (vid => feedback flatMap (_ get vid))
 
   def count(choice: Int): Int    = picks.fold(0)(_.values.count(_ contains choice))
   def count(choice: String): Int = count(choices indexOf choice)
