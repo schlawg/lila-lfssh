@@ -38,8 +38,6 @@ final class SwissFeature(
   private val startsAtOrdering = Ordering.by[Swiss, Long](_.startsAt.toMillis)
 
   private def getForTeams(teams: Seq[TeamId]): Fu[FeaturedSwisses] =
-    if mode != play.api.Mode.Prod then teams map swissCache.featuredInTeam.invalidate
-
     teams.map(swissCache.featuredInTeam.get).parallel.dmap(_.flatten) flatMap { ids =>
       mongo.swiss.byIds[Swiss, SwissId](ids, ReadPreference.secondaryPreferred)
     } map {
