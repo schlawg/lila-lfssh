@@ -4,7 +4,7 @@ import play.api.data.*
 import play.api.data.Forms.{ list as formList, * }
 import scala.util.chaining.*
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.api.GameApiV2
 import lila.app.{ given, * }
 import lila.common.config
@@ -64,7 +64,7 @@ final class GameMod(env: Env)(using akka.stream.Materializer) extends LilaContro
         )
   }
 
-  private def multipleAnalysis(me: Holder, gameIds: Seq[GameId])(using Context) =
+  private def multipleAnalysis(me: Holder, gameIds: Seq[GameId])(using WebContext) =
     env.game.gameRepo.unanalysedGames(gameIds).flatMap { games =>
       games.map { game =>
         env.fishnet
@@ -123,11 +123,11 @@ object GameMod:
   def toDbSelect(user: lila.user.User, filter: Filter): Bdoc =
     import lila.game.Query
     Query.notSimul ++
-      filter.perf.?? { perf =>
+      filter.perf.so { perf =>
         Query.clock(perf != PerfType.Correspondence.key)
-      } ++ filter.arena.?? { id =>
+      } ++ filter.arena.so { id =>
         $doc(lila.game.Game.BSONFields.tournamentId -> id)
-      } ++ filter.swiss.?? { id =>
+      } ++ filter.swiss.so { id =>
         $doc(lila.game.Game.BSONFields.swissId -> id)
       } ++ $and(
         Query.user(user),

@@ -4,7 +4,7 @@ import monocle.syntax.all.*
 
 import chess.format.pgn.{ Glyphs, Move, Pgn, Tag, PgnStr, Comment }
 import chess.opening.*
-import chess.{ Color, Node, Variation, Status, Ply }
+import chess.{ Color, Tree, Variation, Status, Ply }
 
 import lila.game.GameDrawOffers
 import lila.game.Game
@@ -16,7 +16,7 @@ final class Annotator(netDomain: lila.common.config.NetDomain):
       annotateOpening(game.opening) {
         annotateTurns(
           annotateDrawOffers(p, game.drawOffers),
-          analysis.??(_.advices)
+          analysis.so(_.advices)
         )
       }.copy(
         tags = p.tags + Tag(_.Annotator, netDomain)
@@ -82,7 +82,6 @@ final class Annotator(netDomain: lila.common.config.NetDomain):
 
   private def makeVariation(advice: Advice): Option[Variation[Move]] =
     val sans = advice.info.variation take 20
-    Variation.buildWithIndex(
-      sans,
-      (san, index) => Move(Ply(advice.ply.value + index), san)
-    )
+    Tree
+      .buildWithIndex(sans, (san, index) => Move(Ply(advice.ply.value + index), san))
+      .map(_.toVariation)

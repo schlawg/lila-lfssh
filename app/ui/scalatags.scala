@@ -7,7 +7,7 @@ import scalatags.text.Builder
 import scalatags.Text.GenericAttr
 import scalatags.Text.{ Aggregate, Cap }
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.user.Title
 import lila.common.licon.Icon
 
@@ -35,6 +35,7 @@ trait ScalatagsAttrs:
   object frame:
     val scrolling       = attr("scrolling")
     val allowfullscreen = attr("allowfullscreen").empty
+    val credentialless  = attr("credentialless").empty
 
   val dataSortNumberTh = th(attr("data-sort-method") := "number")
   val dataSort         = attr("data-sort")
@@ -122,9 +123,8 @@ trait ScalatagsExtensions:
 
   given Conversion[StringValue, scalatags.Text.Frag] = sv => StringFrag(sv.value)
 
-  // TODO implicit?
-  implicit def opaqueStringFrag[A](a: A)(using r: StringRuntime[A]): Frag = stringFrag(r(a))
-  implicit def opaqueIntFrag[A](a: A)(using r: IntRuntime[A]): Frag       = intFrag(r(a))
+  given opaqueStringFrag[A](using r: StringRuntime[A]): Conversion[A, Frag] = a => stringFrag(r(a))
+  given opaqueIntFrag[A](using r: IntRuntime[A]): Conversion[A, Frag]       = a => intFrag(r(a))
 
   given opaqueStringAttr[A](using bts: StringRuntime[A]): AttrValue[A] with
     def apply(t: Builder, a: Attr, v: A): Unit = stringAttr(t, a, bts(v))
@@ -172,6 +172,6 @@ trait ScalatagsExtensions:
     if (blind) t.addChild(StringFrag(v))
     else t.setAttr("title", Builder.GenericAttrValueSource(v))
 
-  def titleOrText(v: String)(using ctx: Context): Modifier = titleOrText(ctx.blind, v)
+  def titleOrText(v: String)(using ctx: WebContext): Modifier = titleOrText(ctx.blind, v)
 
 object ScalatagsExtensions extends ScalatagsExtensions

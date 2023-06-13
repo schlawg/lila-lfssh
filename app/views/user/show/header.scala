@@ -3,7 +3,7 @@ package views.html.user.show
 import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.mashup.UserInfo
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
@@ -15,7 +15,7 @@ object header:
   private val dataToints = attr("data-toints")
   private val dataTab    = attr("data-tab")
 
-  def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: Context) =
+  def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: WebContext) =
     frag(
       div(cls := "box__top user-show__header")(
         if (u.isPatron)
@@ -51,6 +51,12 @@ object header:
           )(
             splitNumber(trans.nbTournamentPoints.pluralSame(u.toints))
           ),
+          info.nbSimuls > 0 option a(
+            href := routes.Simul.byUser(u.username),
+            cls  := "nm-item simul_stats"
+          )(
+            splitNumber(trans.nbSimuls.pluralSame(info.nbSimuls))
+          ),
           a(href := routes.Study.byOwnerDefault(u.username), cls := "nm-item")(
             splitNumber(trans.`nbStudies`.pluralSame(info.nbStudies))
           ),
@@ -64,7 +70,7 @@ object header:
             cls  := "nm-item",
             href := routes.Ublog.index(u.username)
           )(
-            splitNumber(s"${info.ublog.??(_.nbPosts)} blog posts")
+            splitNumber(s"${info.ublog.so(_.nbPosts)} blog posts")
           ),
           (ctx.isAuth && !ctx.is(u)) option
             a(cls := "nm-item note-zone-toggle")(splitNumber(s"${social.notes.size} Notes"))
@@ -214,8 +220,8 @@ object header:
             )
           )
       },
-      info.ublog.??(_.latests).nonEmpty option div(cls := "user-show__blog ublog-post-cards")(
-        info.ublog.??(_.latests) map { views.html.ublog.post.card(_, showAuthor = false) }
+      info.ublog.so(_.latests).nonEmpty option div(cls := "user-show__blog ublog-post-cards")(
+        info.ublog.so(_.latests) map { views.html.ublog.post.card(_, showAuthor = false) }
       ),
       div(cls := "angles number-menu number-menu--tabs menu-box-pop")(
         a(
@@ -246,7 +252,7 @@ object header:
       )
     )
 
-  def noteZone(u: User, notes: List[lila.user.Note])(implicit ctx: Context) = div(cls := "note-zone")(
+  def noteZone(u: User, notes: List[lila.user.Note])(using ctx: WebContext) = div(cls := "note-zone")(
     postForm(cls := "note-form", action := routes.User.writeNote(u.username))(
       form3.textarea(lila.user.UserForm.note("text"))(
         placeholder := trans.writeAPrivateNoteAboutThisUser.txt()

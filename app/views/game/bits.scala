@@ -2,7 +2,7 @@ package views.html.game
 
 import play.api.i18n.Lang
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 import lila.game.{ Game, Pov }
@@ -29,7 +29,7 @@ object bits:
       simul: Option[lila.simul.Simul],
       userTv: Option[lila.user.User] = None,
       bookmarked: Boolean
-  )(using ctx: Context) =
+  )(using ctx: WebContext) =
     div(
       side.meta(pov, initialFen, tour, simul, userTv, bookmarked = bookmarked),
       cross.map: c =>
@@ -57,7 +57,7 @@ object bits:
       link(
         href = variant match
           case chess.variant.FromPosition =>
-            s"""${routes.Editor.index}?fen=${initialFen.??(_.value.replace(' ', '_'))}"""
+            s"""${routes.Editor.index}?fen=${initialFen.so(_.value.replace(' ', '_'))}"""
           case v => routes.Page.variant(v.key).url
         ,
         title = variant.title,

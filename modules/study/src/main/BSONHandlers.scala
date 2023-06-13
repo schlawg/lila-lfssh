@@ -57,7 +57,7 @@ object BSONHandlers:
   )
 
   import Study.IdName
-  given BSONDocumentHandler[IdName] = Macros.handler
+  given idNameHandler: BSONDocumentHandler[IdName] = Macros.handler
 
   given BSONHandler[Comment.Author] = quickHandler[Comment.Author](
     {
@@ -397,7 +397,7 @@ object BSONHandlers:
       Success(
         Study.LightStudy(
           isPublic = doc.string("visibility") has "public",
-          contributors = doc.getAsOpt[StudyMembers]("members").??(_.contributorIds)
+          contributors = doc.getAsOpt[StudyMembers]("members").so(_.contributorIds)
         )
       )
 

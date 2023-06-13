@@ -5,7 +5,7 @@ import play.api.mvc.{ AnyContentAsFormUrlEncoded, Result }
 import play.api.data.*
 import views.*
 
-import lila.api.{ BodyContext, Context }
+import lila.api.context.*
 import lila.app.{ given, * }
 import lila.common.HTTPRequest
 import lila.report.{ Mod as AsMod, Report as ReportModel, Reporter, Room, Suspect }
@@ -38,7 +38,7 @@ final class Report(
   protected[controllers] def getScores =
     api.maxScores zip env.streamer.api.approval.countRequests zip env.appeal.api.countUnread
 
-  private def renderList(me: Holder, room: String)(using Context) =
+  private def renderList(me: Holder, room: String)(using WebContext) =
     api.openAndRecentWithFilter(me, 12, Room(room)) zip getScores flatMap {
       case (reports, ((scores, streamers), appeals)) =>
         env.user.lightUserApi.preloadMany(reports.flatMap(_.report.userIds)) inject
@@ -57,7 +57,7 @@ final class Report(
     api.inquiries
       .toggle(me, reportOrAppealId)
       .flatMap: (prev, next) =>
-        prev.filter(_.isAppeal).map(_.user).??(env.appeal.api.setUnreadById) inject
+        prev.filter(_.isAppeal).map(_.user).so(env.appeal.api.setUnreadById) inject
           next.fold(
             Redirect:
               if prev.exists(_.isAppeal)
@@ -71,7 +71,9 @@ final class Report(
     else if (inquiry.isComm) Redirect(controllers.routes.Mod.communicationPublic(inquiry.user))
     else modC.redirect(inquiry.user)
 
-  protected[controllers] def onModAction(me: Holder)(goTo: Suspect)(using ctx: BodyContext[?]): Fu[Result] =
+  protected[controllers] def onModAction(
+      me: Holder
+  )(goTo: Suspect)(using ctx: WebBodyContext[?]): Fu[Result] =
     if HTTPRequest.isXhr(ctx.req) then userC.renderModZoneActions(goTo.user.username)
     else
       api.inquiries
@@ -82,7 +84,7 @@ final class Report(
       inquiry: ReportModel,
       me: Holder,
       processed: Boolean = false
-  )(using ctx: BodyContext[?]): Fu[Result] =
+  )(using ctx: WebBodyContext[?]): Fu[Result] =
     val dataOpt = ctx.body.body match
       case AnyContentAsFormUrlEncoded(data) => data.some
       case _                                => none
@@ -91,7 +93,7 @@ final class Report(
         case "profile" => modC.userUrl(inquiry.user, mod = true).some
         case url       => url.some
       }
-    def process() = !processed ?? api.process(me, inquiry)
+    def process() = !processed so api.process(me, inquiry)
     thenGoTo match
       case Some(url) => process() >> Redirect(url).toFuccess
       case _ =>
@@ -111,7 +113,7 @@ final class Report(
   def process(id: ReportId) = SecureBody(_.SeeReport) { _ ?=> me =>
     api byId id flatMap {
       _.fold(Redirect(routes.Report.list).toFuccess): inquiry =>
-        inquiry.isAppeal.??(env.appeal.api.setReadById(inquiry.user)) >>
+        inquiry.isAppeal.so(env.appeal.api.setReadById(inquiry.user)) >>
           api.process(me, inquiry) >>
           onInquiryAction(inquiry, me, processed = true)
     }
@@ -136,7 +138,7 @@ final class Report(
   }
 
   def form = Auth { _ ?=> _ =>
-    getUserStr("username") ?? env.user.repo.byId flatMap { user =>
+    getUserStr("username") so env.user.repo.byId flatMap { user =>
       if (user.map(_.id) has UserModel.lichessId) Redirect(controllers.routes.Main.contact).toFuccess
       else
         env.report.forms.createWithCaptcha map { (form, captcha) =>
@@ -157,7 +159,7 @@ final class Report(
       .bindFromRequest()
       .fold(
         err =>
-          getUserStr("username") ?? env.user.repo.byId flatMap { user =>
+          getUserStr("username") so env.user.repo.byId flatMap { user =>
             env.report.forms.anyCaptcha map { captcha =>
               BadRequest(html.report.form(err, user, captcha))
             }

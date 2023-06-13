@@ -5,7 +5,7 @@ import play.api.data.Forms.*
 import play.api.libs.json.*
 import views.html
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.{ given, * }
 
 final class Learn(env: Env) extends LilaController(env):
@@ -15,10 +15,10 @@ final class Learn(env: Env) extends LilaController(env):
   def index     = Open(serveIndex)
   def indexLang = LangPage(routes.Learn.index)(serveIndex)
 
-  private def serveIndex(using ctx: Context) = NoBot:
+  private def serveIndex(using ctx: WebContext) = NoBot:
     pageHit
     ctx.me
-      .?? { me =>
+      .so { me =>
         env.learn.api.get(me) map { Json.toJson(_) } map some
       }
       .map { progress =>

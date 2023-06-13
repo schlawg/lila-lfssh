@@ -1,6 +1,6 @@
 package views.html.relation
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -13,13 +13,13 @@ object mini:
       blocked: Boolean,
       followable: Boolean,
       relation: Option[lila.relation.Relation] = None
-  )(implicit ctx: Context) =
+  )(using WebContext) =
     relation match
       case None if followable && !blocked =>
         val name   = trans.follow.txt()
         val isLong = name.sizeIs > 8
         a(
-          cls      := s"btn-rack__btn relation-button${!isLong ?? " text"}",
+          cls      := s"btn-rack__btn relation-button${!isLong so " text"}",
           dataIcon := licon.ThumbsUp,
           href     := s"${routes.Relation.follow(userId)}?mini=1",
           title    := isLong option name

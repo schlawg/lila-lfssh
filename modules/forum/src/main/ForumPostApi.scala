@@ -56,7 +56,7 @@ final class ForumPostApi(
             topicRepo.coll.update.one($id(topic.id), topic withPost post) >>
             categRepo.coll.update.one($id(categ.id), categ.withPost(topic, post)) >>
             askApi.commit(frozen, s"/forum/redirect/post/${post._id}".some) >>- {
-              !categ.quiet ?? (indexer ! InsertPost(post))
+              !categ.quiet so (indexer ! InsertPost(post))
               promotion.save(me, post.text)
               shutup ! {
                 if (post.isTeam) lila.hub.actorApi.shutup.RecordTeamForumMessage(me.id, post.text)
@@ -84,7 +84,7 @@ final class ForumPostApi(
         case (_, post) =>
           askApi.freezeAsync(spam replace newText, user) flatMap { frozen =>
             val newPost = post.editPost(nowInstant, frozen.text)
-            (newPost.text != post.text).?? {
+            (newPost.text != post.text).so {
               postRepo.coll.update.one($id(post.id), newPost) >> newPost.isAnonModPost.?? {
                 logAnonPost(user.id, newPost, edit = true)
               } >>- promotion.save(user, newPost.text)
@@ -119,7 +119,7 @@ final class ForumPostApi(
       reactionStr: String,
       v: Boolean
   ): Fu[Option[ForumPost]] =
-    ForumPost.Reaction(reactionStr) ?? { reaction =>
+    ForumPost.Reaction(reactionStr) so { reaction =>
       if (v) lila.mon.forum.reaction(reaction.key).increment()
       postRepo.coll
         .findAndUpdateSimplified[ForumPost](

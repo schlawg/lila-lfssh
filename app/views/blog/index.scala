@@ -1,6 +1,6 @@
 package views.html.blog
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.blog.MiniPost
@@ -12,9 +12,9 @@ object index:
 
   def apply(
       pager: Paginator[io.prismic.Document]
-  )(using ctx: Context, prismic: lila.blog.BlogApi.Context) =
+  )(using ctx: WebContext, prismic: lila.blog.BlogApi.Context) =
 
-    val primaryPost = (pager.currentPage == 1).??(pager.currentPageResults.headOption)
+    val primaryPost = (pager.currentPage == 1).so(pager.currentPageResults.headOption)
 
     views.html.base.layout(
       title = "Blog",
@@ -45,7 +45,7 @@ object index:
       )
     )
 
-  def byYear(year: Int, posts: List[MiniPost])(using Context) =
+  def byYear(year: Int, posts: List[MiniPost])(using WebContext) =
     views.html.base.layout(
       title = s"Lichess blog posts from $year",
       moreCss = cssTag("blog"),
@@ -64,7 +64,7 @@ object index:
 
   private def latestPost(
       doc: io.prismic.Document
-  )(using ctx: Context, prismic: lila.blog.BlogApi.Context) =
+  )(using ctx: WebContext, prismic: lila.blog.BlogApi.Context) =
     st.article(
       doc.getText("blog.title").map { title =>
         h2(a(href := routes.Blog.show(doc.id, doc.slug, prismic.maybeRef))(title))

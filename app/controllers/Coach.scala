@@ -2,7 +2,7 @@ package controllers
 
 import play.api.mvc.*
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.{ given, * }
 import lila.coach.{ Coach as CoachModel, CoachPager, CoachProfileForm }
 import views.*
@@ -20,11 +20,11 @@ final class Coach(env: Env) extends LilaController(env):
   def search(l: String, o: String, c: String, page: Int) = Open:
     searchResults(l, o, c, page)
 
-  private def searchResults(l: String, o: String, c: String, page: Int)(using Context) =
+  private def searchResults(l: String, o: String, c: String, page: Int)(using WebContext) =
     pageHit
     val order   = CoachPager.Order(o)
-    val lang    = (l != "all") ?? play.api.i18n.Lang.get(l)
-    val country = (c != "all") ?? Countries.info(c)
+    val lang    = (l != "all") so play.api.i18n.Lang.get(l)
+    val country = (c != "all") so Countries.info(c)
     for
       langCodes    <- env.coach.api.allLanguages
       countryCodes <- env.coach.api.allCountries
@@ -39,7 +39,7 @@ final class Coach(env: Env) extends LilaController(env):
           studies  <- env.study.pager.withChaptersAndLiking(ctx.me, 4)(stu)
           posts    <- env.ublog.api.latestPosts(lila.ublog.UblogBlog.Id.User(c.user.id), 4)
           reviews  <- api.reviews.approvedByCoach(c.coach)
-          myReview <- ctx.me.?? { api.reviews.find(_, c.coach) }
+          myReview <- ctx.me.so { api.reviews.find(_, c.coach) }
         yield
           lila.mon.coach.pageView.profile(c.coach.id.value).increment()
           Ok(html.coach.show(c, reviews, studies, posts, myReview))
@@ -83,7 +83,7 @@ final class Coach(env: Env) extends LilaController(env):
         api.reviews.mod(review) inject Redirect(routes.Coach.show(review.coachId.value))
   }
 
-  private def WithVisibleCoach(c: CoachModel.WithUser)(f: Fu[Result])(using ctx: Context) =
+  private def WithVisibleCoach(c: CoachModel.WithUser)(f: Fu[Result])(using ctx: WebContext) =
     if c.isListed || ctx.me.exists(_ is c.coach) || isGranted(_.Admin) then f
     else notFound
 

@@ -5,14 +5,14 @@ import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 import play.api.data.Form
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
 
 object topic:
 
-  def form(categ: lila.forum.ForumCateg, form: Form[?], captcha: lila.common.Captcha)(using Context) =
+  def form(categ: lila.forum.ForumCateg, form: Form[?], captcha: lila.common.Captcha)(using WebContext) =
     views.html.base.layout(
       title = "New forum topic",
       moreCss = cssTag("forum"),
@@ -78,7 +78,7 @@ object topic:
       formWithCaptcha: Option[FormWithCaptcha],
       unsub: Option[Boolean],
       canModCateg: Boolean
-  )(using ctx: Context) =
+  )(using ctx: WebContext) =
     views.html.base.layout(
       title = s"${topic.name} • page ${posts.currentPage}/${posts.nbPages} • ${categ.name}",
       moreJs = frag(
@@ -95,7 +95,7 @@ object topic:
         .OpenGraph(
           title = topic.name,
           url = s"$netBaseUrl${routes.ForumTopic.show(categ.slug, topic.slug, posts.currentPage).url}",
-          description = shorten(posts.currentPageResults.headOption.??(_.post.text), 152)
+          description = shorten(posts.currentPageResults.headOption.so(_.post.text), 152)
         )
         .some,
       csp = defaultCsp.withInlineIconFont.withTwitter.some
@@ -201,7 +201,7 @@ object topic:
               a(href := routes.ForumCateg.show(categ.slug))(trans.cancel()),
               (isGranted(_.PublicMod) || isGranted(_.SeeReport)) option
                 form3.submit(
-                  frag(s"Reply as a mod ${(!isGranted(_.PublicMod)).?? { "(anonymously)" }}"),
+                  frag(s"Reply as a mod ${(!isGranted(_.PublicMod)).so("(anonymously)")}"),
                   nameValue = (form("modIcon").name, "true").some,
                   icon = licon.Agent.some
                 ),

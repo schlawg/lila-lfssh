@@ -54,7 +54,7 @@
   <string name="requestAComputerAnalysis">Solicitar uma análise do computador</string>
   <string name="computerAnalysis">Análise do computador</string>
   <string name="computerAnalysisAvailable">Análise de computador disponível</string>
-  <string name="computerAnalysisDisabled">Análise de computador desabilitada</string>
+  <string name="computerAnalysisDisabled">Análise de computador desativada</string>
   <string name="analysis">Análise</string>
   <string name="depthX">Profundidade %s</string>
   <string name="usingServerAnalysis">Análise de servidor em uso</string>
@@ -99,6 +99,7 @@
   <string name="openingExplorer">Explorador de aberturas</string>
   <string name="openingEndgameExplorer">Explorador de Aberturas/Finais</string>
   <string name="xOpeningExplorer">%s Explorador de aberturas</string>
+  <string name="playFirstOpeningEndgameExplorerMove">Jogue o primeiro lance do explorador de aberturas/finais</string>
   <string name="winPreventedBy50MoveRule">Vitória impedida pela regra dos 50 movimentos</string>
   <string name="lossSavedBy50MoveRule">Derrota impedida pela regra dos 50 movimentos</string>
   <string name="winOr50MovesByPriorMistake">Vitória ou 50 movimentos por erro anterior</string>
@@ -164,7 +165,7 @@
   <string name="viewInFullSize">Ver em tela cheia</string>
   <string name="logOut">Sair</string>
   <string name="signIn">Entrar</string>
-  <string name="rememberMe">Continuar logado</string>
+  <string name="rememberMe">Lembrar de mim</string>
   <string name="youNeedAnAccountToDoThat">Você precisa de uma conta para fazer isso</string>
   <string name="signUp">Registrar</string>
   <string name="computersAreNotAllowedToPlay">A ajuda de software não é permitida. Por favor, não utilize programas de xadrez, bancos de dados ou o auxilio de outros jogadores durante a partida. Além disso, a criação de múltiplas contas é fortemente desaconselhada e sua prática excessiva acarretará em banimento.</string>
@@ -216,7 +217,7 @@
   <string name="error.weakPassword">A senha é extremamente comum e fácil de adivinhar.</string>
   <string name="error.namePassword">Não utilize seu nome de usuário como senha.</string>
   <string name="blankedPassword">Você usou a mesma senha em outro site, e esse site foi comprometido. Para garantir a segurança da sua conta no Lichess, você precisa criar uma nova senha. Agradecemos sua compreensão.</string>
-  <string name="youAreLeavingLichess">Você vai sair do Lichess</string>
+  <string name="youAreLeavingLichess">Você está saindo do Lichess</string>
   <string name="neverTypeYourPassword">Nunca digite sua senha do Lichess em outro site!</string>
   <string name="proceedToX">Ir para %s</string>
   <string name="passwordSuggestion">Não coloque uma senha sugerida por outra pessoa, porque ela poderá roubar sua conta.</string>
@@ -288,6 +289,7 @@
   <string name="cancelRematchOffer">Cancelar oferta de revanche</string>
   <string name="viewRematch">Ver revanche</string>
   <string name="confirmMove">Confirmar lance</string>
+  <string name="enableConfirmationForThisGame">Habilitar confirmação para este jogo</string>
   <string name="play">Jogar</string>
   <string name="inbox">Mensagens</string>
   <string name="chatRoom">Sala de chat</string>
@@ -345,6 +347,10 @@
   <plurals name="nbStudies">
     <item quantity="one">%s estudo</item>
     <item quantity="other">%s estudos</item>
+  </plurals>
+  <plurals name="nbSimuls">
+    <item quantity="one">%s simultânea</item>
+    <item quantity="other">%s simultâneas</item>
   </plurals>
   <string name="viewTournament">Ver torneio</string>
   <string name="backToTournament">Voltar ao torneio</string>
@@ -681,6 +687,11 @@
   <string name="keyGoToStartOrEnd">ir para início/fim</string>
   <string name="keyShowOrHideComments">mostrar/ocultar comentários</string>
   <string name="keyEnterOrExitVariation">entrar/sair da variante</string>
+  <string name="keyRequestComputerAnalysis">Solicite análise do computador, aprenda com seus erros</string>
+  <string name="keyNextLearnFromYourMistakes">Próximo (Aprenda com seus erros)</string>
+  <string name="keyNextBlunder">Próximo erro grave</string>
+  <string name="keyNextMistake">Próximo erro</string>
+  <string name="keyNextInaccuracy">Próxima imprecisão</string>
   <string name="newTournament">Novo torneio</string>
   <string name="tournamentHomeTitle">Torneios de xadrez com diversos controles de tempo e variantes</string>
   <string name="tournamentHomeDescription">Jogue xadrez em ritmo acelerado! Entre em um torneio oficial agendado ou crie seu próprio. Bullet, Blitz, Clássico, Chess960, King of the Hill, Três Xeques e outras modalidades disponíveis para uma ilimitada diversão enxadrística.</string>
@@ -778,6 +789,7 @@
   <string name="invalidFen">FEN inválido</string>
   <string name="custom">Personalizado</string>
   <string name="notifications">Notificações</string>
+  <string name="notificationsX">Notificações: %1$s</string>
   <string name="perfRatingX">Classificação: %s</string>
   <plurals name="nbSecondsToPlayTheFirstMove">
     <item quantity="one">%s segundo para fazer o primeiro lance</item>

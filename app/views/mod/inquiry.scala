@@ -5,7 +5,7 @@ import controllers.appeal.routes.{ Appeal as appealRoutes }
 import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.richText
@@ -39,7 +39,7 @@ object inquiry:
       )
     }
 
-  def apply(in: lila.mod.Inquiry)(implicit ctx: Context) =
+  def apply(in: lila.mod.Inquiry)(using ctx: WebContext) =
     def renderReport(r: Report) =
       div(cls := "doc report")(
         r.bestAtoms(10).map { atom =>
@@ -251,7 +251,7 @@ object inquiry:
       )
     )
 
-  def noteZone(u: User, notes: List[lila.user.Note])(implicit ctx: Context) = div(
+  def noteZone(u: User, notes: List[lila.user.Note])(using WebContext) = div(
     cls := List(
       "dropper counter notes" -> true,
       "empty"                 -> notes.isEmpty
@@ -291,7 +291,7 @@ object inquiry:
       allReports: List[Report],
       reportee: User
   ): Option[NonEmptyList[UserId]] =
-    (report.reason == Reason.Boost || reportee.marks.boost) ?? {
+    (report.reason == Reason.Boost || reportee.marks.boost) so {
       allReports
         .filter(_.reason == Reason.Boost)
         .flatMap(_.atoms.toList)

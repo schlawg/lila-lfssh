@@ -3,7 +3,7 @@ package controllers
 import play.api.libs.json.{ Json, Writes }
 import play.api.mvc.Result
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.{ given, * }
 import lila.common.config.MaxPerSecond
 import lila.common.paginator.{ AdapterLike, Paginator, PaginatorJson }
@@ -19,11 +19,11 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
 
   val api = env.relation.api
 
-  private def renderActions(username: UserName, mini: Boolean)(using ctx: Context) =
+  private def renderActions(username: UserName, mini: Boolean)(using ctx: WebContext) =
     env.user.lightUserApi.asyncFallbackName(username) flatMap { user =>
-      (ctx.userId ?? { api.fetchRelation(_, user.id) }) zip
-        (ctx.isAuth ?? { env.pref.api followable user.id }) zip
-        (ctx.userId ?? { api.fetchBlocks(user.id, _) }) flatMap { case ((relation, followable), blocked) =>
+      (ctx.userId so { api.fetchRelation(_, user.id) }) zip
+        (ctx.isAuth so { env.pref.api followable user.id }) zip
+        (ctx.userId so { api.fetchBlocks(user.id, _) }) flatMap { case ((relation, followable), blocked) =>
           negotiate(
             html = fuccess(Ok:
               if mini then
@@ -132,7 +132,7 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
         }
     )
 
-  def apiFollowing = Scoped(_.Follow.Read) { req ?=> me =>
+  def apiFollowing = Scoped(_.Follow.Read) { ctx ?=> me =>
     apiC.jsonDownload {
       env.relation.stream
         .follow(me, Direction.Following, MaxPerSecond(30))
@@ -161,18 +161,18 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
     }
   }
 
-  private def RelatedPager(adapter: AdapterLike[UserId], page: Int)(using Context) =
+  private def RelatedPager(adapter: AdapterLike[UserId], page: Int)(using WebContext) =
     Paginator(
       adapter = adapter mapFutureList followship,
       currentPage = page,
       maxPerPage = lila.common.config.MaxPerPage(30)
     )
 
-  private def followship(userIds: Seq[UserId])(using ctx: Context): Fu[List[Related]] =
+  private def followship(userIds: Seq[UserId])(using ctx: WebContext): Fu[List[Related]] =
     env.user.repo usersFromSecondary userIds flatMap { users =>
-      (ctx.isAuth ?? { env.pref.api.followableIds(users map (_.id)) }) flatMap { followables =>
+      (ctx.isAuth so { env.pref.api.followableIds(users map (_.id)) }) flatMap { followables =>
         users.map { u =>
-          ctx.userId ?? { api.fetchRelation(_, u.id) } map { rel =>
+          ctx.userId so { api.fetchRelation(_, u.id) } map { rel =>
             lila.relation.Related(u, none, followables(u.id), rel)
           }
         }.parallel

@@ -4,7 +4,7 @@ import play.api.libs.json.*
 import play.api.mvc.*
 import views.*
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.{ given, * }
 import lila.chat.Chat
 import lila.common.HTTPRequest
@@ -23,19 +23,19 @@ final class Round(
 ) extends LilaController(env)
     with TheftPrevention:
 
-  private def renderPlayer(pov: Pov)(using ctx: Context): Fu[Result] =
+  private def renderPlayer(pov: Pov)(using ctx: WebContext): Fu[Result] =
     negotiate(
       html =
         if (!pov.game.started) notFound
         else
           PreventTheft(pov) {
-            pov.game.playableByAi ?? env.fishnet.player(pov.game)
+            pov.game.playableByAi so env.fishnet.player(pov.game)
             env.tournament.api.gameView.player(pov) flatMap { tour =>
               gameC.preloadUsers(pov.game) zip
-                (pov.game.simulId ?? env.simul.repo.find) zip
+                (pov.game.simulId so env.simul.repo.find) zip
                 getPlayerChat(pov.game, tour.map(_.tour)) zip
-                (ctx.noBlind ?? env.game.crosstableApi.withMatchup(pov.game)) zip
-                (pov.game.isSwitchable ?? otherPovs(pov.game)) zip
+                (ctx.noBlind so env.game.crosstableApi.withMatchup(pov.game)) zip
+                (pov.game.isSwitchable so otherPovs(pov.game)) zip
                 env.bookmark.api.exists(pov.game, ctx.me) zip
                 env.api.roundApi.player(pov, tour, lila.api.Mobile.Api.currentVersion) map {
                   case ((((((_, simul), chatOption), crosstable), playing), bookmarked), data) =>
@@ -59,7 +59,7 @@ final class Round(
         if (isTheft(pov)) fuccess(theftResponse)
         else
           env.tournament.api.gameView.mobile(pov.game) flatMap { tour =>
-            pov.game.playableByAi ?? env.fishnet.player(pov.game)
+            pov.game.playableByAi so env.fishnet.player(pov.game)
             gameC.preloadUsers(pov.game) zip
               env.api.roundApi.player(pov, tour, apiVersion) zip
               getPlayerChat(pov.game, none) map { case ((_, data), chat) =>
@@ -75,8 +75,8 @@ final class Round(
       case None      => userC.tryRedirect(fullId into UserStr) getOrElse notFound
     }
 
-  private def otherPovs(game: GameModel)(using ctx: Context) =
-    ctx.me ?? { user =>
+  private def otherPovs(game: GameModel)(using ctx: WebContext) =
+    ctx.me so { user =>
       env.round.proxyRepo urgentGames user map {
         _ filter { pov =>
           pov.gameId != game.id && pov.game.isSwitchable && pov.game.isSimul == game.isSimul
@@ -130,12 +130,12 @@ final class Round(
     }
 
   private def proxyPov(gameId: GameId, color: String): Fu[Option[Pov]] =
-    chess.Color.fromName(color) ?? {
+    chess.Color.fromName(color) so {
       env.round.proxyRepo.pov(gameId, _)
     }
 
   private[controllers] def watch(pov: Pov, userTv: Option[UserModel] = None)(using
-      ctx: Context
+      ctx: WebContext
   ): Fu[Result] =
     playablePovForReq(pov.game) match
       case Some(player) if userTv.isEmpty => renderPlayer(pov withColor player.color)
@@ -148,9 +148,9 @@ final class Round(
             if pov.game.replayable then analyseC.replay(pov, userTv = userTv)
             else if HTTPRequest.isHuman(ctx.req) then
               env.tournament.api.gameView.watcher(pov.game) zip
-                (pov.game.simulId ?? env.simul.repo.find) zip
+                (pov.game.simulId so env.simul.repo.find) zip
                 getWatcherChat(pov.game) zip
-                (ctx.noBlind ?? env.game.crosstableApi.withMatchup(pov.game)) zip
+                (ctx.noBlind so env.game.crosstableApi.withMatchup(pov.game)) zip
                 env.bookmark.api.exists(pov.game, ctx.me) flatMap {
                   case ((((tour, simul), chat), crosstable), bookmarked) =>
                     env.api.roundApi.watcher(
@@ -196,13 +196,13 @@ final class Round(
 
   private[controllers] def getWatcherChat(
       game: GameModel
-  )(using ctx: Context): Fu[Option[lila.chat.UserChat.Mine]] = {
+  )(using ctx: WebContext): Fu[Option[lila.chat.UserChat.Mine]] = {
     ctx.noKid && (ctx.noBot || ctx.userId.exists(game.userIds.contains)) && ctx.me.fold(
       HTTPRequest isHuman ctx.req
     )(env.chat.panic.allowed) && {
       game.finishedOrAborted || !ctx.userId.exists(game.userIds.contains)
     }
-  } ?? {
+  } so {
     val id = ChatId(s"${game.id}/w")
     env.chat.api.userChat.findMineIf(id, ctx.me, !game.justCreated) flatMap { chat =>
       env.user.lightUserApi.preloadMany(chat.chat.userIds) inject chat.some
@@ -210,9 +210,9 @@ final class Round(
   }
 
   private[controllers] def getPlayerChat(game: GameModel, tour: Option[Tour])(using
-      ctx: Context
+      ctx: WebContext
   ): Fu[Option[Chat.GameOrEvent]] =
-    ctx.noKid ?? {
+    ctx.noKid so {
       def toEventChat(resource: String)(c: lila.chat.UserChat.Mine) =
         Chat
           .GameOrEvent(
@@ -228,7 +228,7 @@ final class Round(
         case (Some(tid), _, _) =>
           {
             ctx.isAuth && tour.fold(true)(tournamentC.canHaveChat(_, none))
-          } ?? env.chat.api.userChat.cached
+          } so env.chat.api.userChat.cached
             .findMine(ChatId(tid), ctx.me)
             .dmap(toEventChat(s"tournament/$tid"))
         case (_, Some(sid), _) =>
@@ -243,7 +243,7 @@ final class Round(
                 .dmap(toEventChat(s"swiss/$sid"))
             }
         case _ =>
-          game.hasChat ?? {
+          game.hasChat so {
             env.chat.api.playerChat.findIf(ChatId(game.id), !game.justCreated) map { chat =>
               Chat
                 .GameOrEvent(
@@ -262,7 +262,7 @@ final class Round(
   def sides(gameId: GameId, color: String) = Open:
     OptionFuResult(proxyPov(gameId, color)): pov =>
       env.tournament.api.gameView.withTeamVs(pov.game) zip
-        (pov.game.simulId ?? env.simul.repo.find) zip
+        (pov.game.simulId so env.simul.repo.find) zip
         env.game.gameRepo.initialFen(pov.game) zip
         env.game.crosstableApi.withMatchup(pov.game) zip
         env.bookmark.api.exists(pov.game, ctx.me) map {
@@ -306,7 +306,7 @@ final class Round(
 
   def mini(gameId: GameId, color: String) = Open:
     OptionOk(
-      chess.Color.fromName(color).??(env.round.proxyRepo.povIfPresent(gameId, _)) orElse env.game.gameRepo
+      chess.Color.fromName(color).so(env.round.proxyRepo.povIfPresent(gameId, _)) orElse env.game.gameRepo
         .pov(gameId, color)
     )(html.game.mini(_))
 
@@ -320,7 +320,7 @@ final class Round(
     if (seconds < 1 || seconds > 86400) BadRequest.toFuccess
     else
       env.round.proxyRepo.game(lila.game.Game anyToId anyId) flatMap {
-        _.flatMap { Pov(_, me) }.?? { pov =>
+        _.flatMap { Pov(_, me) }.so { pov =>
           env.round.moretimer.isAllowedIn(pov.game) map {
             if _ then
               env.round.tellRound(pov.gameId, Moretime(pov.playerId, seconds.seconds))

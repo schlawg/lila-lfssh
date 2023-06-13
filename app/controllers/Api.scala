@@ -7,6 +7,7 @@ import play.api.mvc.*
 import scala.util.chaining.*
 
 import lila.api.GameApiV2
+import lila.api.context.*
 import lila.app.{ given, * }
 import lila.common.config.{ MaxPerPage, MaxPerSecond }
 import lila.common.{ HTTPRequest, IpAddress, LightUser }
@@ -36,17 +37,17 @@ final class Api(
 
   private val userRateLimit = env.security.ipTrust.rateLimit(3_000, 1.day, "user.show.api.ip")
   def user(name: UserStr) =
-    def get(req: RequestHeader, me: Option[lila.user.User], lang: Lang) =
+    def get(me: Option[lila.user.User])(using AnyContext) =
       userRateLimit(req.ipAddress, rateLimitedFu):
         userApi.extended(
           name,
           me,
           withFollows = userWithFollows(req),
           withTrophies = getBool("trophies", req)
-        )(using lang) map toApiResult map toHttp
+        ) map toApiResult map toHttp
     OpenOrScoped()(
-      ctx ?=> get(ctx.req, ctx.me, ctx.lang),
-      req ?=> me => get(req, me.some, me.realLang | reqLang(using req))
+      ctx ?=> get(ctx.me),
+      ctx ?=> me => get(me.some)
     )
 
   private[controllers] def userWithFollows(req: RequestHeader) =
@@ -70,7 +71,7 @@ final class Api(
       } map toApiResult map toHttp
 
   def usersStatus = ApiRequest:
-    val ids = get("ids", req).??(_.split(',').take(100).toList flatMap UserStr.read).map(_.id)
+    val ids = get("ids", req).so(_.split(',').take(100).toList flatMap UserStr.read).map(_.id)
     env.user.lightUserApi asyncMany ids dmap (_.flatten) flatMap { users =>
       val streamingIds = env.streamer.liveStreamApi.userIds
       def toJson(u: LightUser) =
@@ -82,7 +83,7 @@ final class Api(
       if getBool("withGameIds", req)
       then
         users.map { u =>
-          (env.round.playing(u.id) ?? env.game.cached.lastPlayedPlayingId(u.id)) map { gameId =>
+          (env.round.playing(u.id) so env.game.cached.lastPlayedPlayingId(u.id)) map { gameId =>
             toJson(u).add("playingId", gameId)
           }
         }.parallel map toApiResult
@@ -158,7 +159,7 @@ final class Api(
     CrosstableRateLimitPerIP(req.ipAddress, fuccess(ApiResult.Limited), cost = 1):
       val (u1, u2) = (name1.id, name2.id)
       env.game.crosstableApi(u1, u2) flatMap { ct =>
-        (ct.results.nonEmpty && getBool("matchup", req)).?? {
+        (ct.results.nonEmpty && getBool("matchup", req)).so {
           env.game.crosstableApi.getMatchup(u1, u2)
         } map { matchup =>
           toApiResult:
@@ -187,17 +188,17 @@ final class Api(
     } map toApiResult
 
   def tournamentGames(id: TourId) =
-    AnonOrScoped() { req ?=> me =>
+    AnonOrScoped() { ctx ?=> me =>
       env.tournament.tournamentRepo byId id flatMapz { tour =>
-        val onlyUserId = getUserStr("player", req).map(_.id)
+        val onlyUserId = getUserStr("player").map(_.id)
         val config = GameApiV2.ByTournamentConfig(
           tour = tour,
-          format = GameApiV2.Format byRequest req,
-          flags = gameC.requestPgnFlags(req, extended = false),
+          format = GameApiV2.Format byRequest ctx.req,
+          flags = gameC.requestPgnFlags(ctx.req, extended = false),
           perSecond = gamesPerSecond(me)
         )
         GlobalConcurrencyLimitPerIP
-          .download(req.ipAddress)(env.api.gameApiV2.exportByTournament(config, onlyUserId)) { source =>
+          .download(ctx.req.ipAddress)(env.api.gameApiV2.exportByTournament(config, onlyUserId)) { source =>
             Ok.chunked(source)
               .pipe(asAttachmentStream(env.api.gameApiV2.filename(tour, config.format)))
               .as(gameC gameContentType config)
@@ -240,24 +241,24 @@ final class Api(
     }
 
   def tournamentsByOwner(name: UserStr, status: List[Int]) = Anon:
-    (name.id != lila.user.User.lichessId) ?? env.user.repo.byId(name) flatMapz { user =>
-      val nb     = getInt("nb", req) | Int.MaxValue
-      given Lang = reqLang
-      jsonDownload {
+    (name.id != lila.user.User.lichessId) so env.user.repo.byId(name) flatMapz { user =>
+      val nb = getInt("nb", req) | Int.MaxValue
+      jsonDownload:
+        given Lang = reqLang
         env.tournament.api
           .byOwnerStream(user, status flatMap lila.tournament.Status.apply, MaxPerSecond(20), nb)
           .mapAsync(1)(env.tournament.apiJsonView.fullJson)
-      }.toFuccess
+      .toFuccess
     }
 
-  def swissGames(id: SwissId) = AnonOrScoped() { req ?=> me =>
+  def swissGames(id: SwissId) = AnonOrScoped() { ctx ?=> me =>
     env.swiss.cache.swissCache byId id flatMapz { swiss =>
       val config = GameApiV2.BySwissConfig(
         swissId = swiss.id,
-        format = GameApiV2.Format byRequest req,
-        flags = gameC.requestPgnFlags(req, extended = false),
+        format = GameApiV2.Format byRequest ctx.req,
+        flags = gameC.requestPgnFlags(ctx.req, extended = false),
         perSecond = gamesPerSecond(me),
-        player = getUserStr("player", req).map(_.id)
+        player = getUserStr("player").map(_.id)
       )
       GlobalConcurrencyLimitPerIP
         .download(req.ipAddress)(env.api.gameApiV2.exportBySwiss(config)) { source =>
@@ -271,7 +272,7 @@ final class Api(
   }
 
   private def gamesPerSecond(me: Option[lila.user.User]) = MaxPerSecond(
-    30 + me.isDefined.??(20) + me.exists(_.isVerified).??(40)
+    30 + me.isDefined.so(20) + me.exists(_.isVerified).so(40)
   )
 
   def swissResults(id: SwissId) = Anon:
@@ -288,32 +289,31 @@ final class Api(
       result.pipe(asAttachment(env.api.gameApiV2.filename(swiss, if csv then "csv" else "ndjson")))
     }
 
-  def gamesByUsersStream = AnonOrScopedBody(parse.tolerantText)() { req ?=> me =>
+  def gamesByUsersStream = AnonOrScopedBody(parse.tolerantText)() { ctx ?=> me =>
     val max = me.fold(300) { u => if u is lila.user.User.lichess4545Id then 900 else 500 }
-    withIdsFromReqBody[UserId](req, max, id => UserStr.read(id).map(_.id)) { ids =>
-      GlobalConcurrencyLimitPerIP.events(req.ipAddress)(
+    withIdsFromReqBody[UserId](ctx.body, max, id => UserStr.read(id).map(_.id)) { ids =>
+      GlobalConcurrencyLimitPerIP.events(ctx.ip)(
         addKeepAlive:
           env.game.gamesByUsersStream(userIds = ids, withCurrentGames = getBool("withCurrentGames", req))
       )(sourceToNdJsonOption)
     }.toFuccess
   }
 
-  def gamesByIdsStream(streamId: String) = AnonOrScopedBody(parse.tolerantText)() { req ?=> me =>
-    withIdsFromReqBody[GameId](req, gamesByIdsMax(me), lila.game.Game.strToIdOpt) { ids =>
-      GlobalConcurrencyLimitPerIP.events(req.ipAddress)(
-        addKeepAlive(
+  def gamesByIdsStream(streamId: String) = AnonOrScopedBody(parse.tolerantText)() { ctx ?=> me =>
+    withIdsFromReqBody[GameId](ctx.body, gamesByIdsMax(me), lila.game.Game.strToIdOpt) { ids =>
+      GlobalConcurrencyLimitPerIP.events(ctx.ip)(
+        addKeepAlive:
           env.game.gamesByIdsStream(
             streamId,
             initialIds = ids,
             maxGames = if me.isDefined then 5_000 else 1_000
           )
-        )
       )(sourceToNdJsonOption)
     }.toFuccess
   }
 
-  def gamesByIdsStreamAddIds(streamId: String) = AnonOrScopedBody(parse.tolerantText)() { req ?=> me =>
-    withIdsFromReqBody[GameId](req, gamesByIdsMax(me), lila.game.Game.strToIdOpt) { ids =>
+  def gamesByIdsStreamAddIds(streamId: String) = AnonOrScopedBody(parse.tolerantText)() { ctx ?=> me =>
+    withIdsFromReqBody[GameId](ctx.body, gamesByIdsMax(me), lila.game.Game.strToIdOpt) { ids =>
       env.game.gamesByIdsStream.addGameIds(streamId, ids)
       jsonOkResult
     }.toFuccess
@@ -391,7 +391,7 @@ final class Api(
     }
 
   def perfStat(username: UserStr, perfKey: lila.rating.Perf.Key) = ApiRequest:
-    given play.api.i18n.Lang = reqLang(using req)
+    given Lang = reqLang(using req)
     env.perfStat.api.data(username, perfKey, none) map {
       _.fold[ApiResult](ApiResult.NoData) { data => ApiResult.Data(env.perfStat.jsonView(data)) }
     }
@@ -433,7 +433,7 @@ final class Api(
   def sourceToNdJsonOption(source: Source[Option[JsValue], ?]): Result =
     sourceToNdJsonString:
       source.map:
-        _ ?? Json.stringify + "\n"
+        _.so(Json.stringify) + "\n"
 
   private def sourceToNdJsonString(source: Source[String, ?]): Result =
     Ok.chunked(source).as(ndJsonContentType) pipe noProxyBuffer

@@ -40,7 +40,7 @@ final class Dev(env: Env) extends LilaController(env):
   }
 
   def settingsPost(id: String) = SecureBody(_.Settings) { ctx ?=> me =>
-    settingsList.find(_.id == id) ?? { setting =>
+    settingsList.find(_.id == id) so { setting =>
       setting.form
         .bindFromRequest()
         .fold(
@@ -72,9 +72,9 @@ final class Dev(env: Env) extends LilaController(env):
       )
   }
 
-  def command = ScopedBody(parse.tolerantText)(Seq(_.Preference.Write)) { req ?=> me =>
-    lila.security.Granter(_.Cli)(me) ?? {
-      runAs(me.id, req.body) map { Ok(_) }
+  def command = ScopedBody(parse.tolerantText)(Seq(_.Preference.Write)) { ctx ?=> me =>
+    lila.security.Granter(_.Cli)(me) so {
+      runAs(me.id, ctx.body.body) map { Ok(_) }
     }
   }
 

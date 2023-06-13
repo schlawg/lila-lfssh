@@ -4,7 +4,7 @@ import play.api.libs.json.*
 import play.api.mvc.*
 import views.*
 
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.{ given, * }
 import lila.streamer.{ Streamer as StreamerModel, StreamerForm }
 import lila.common.Json.given
@@ -16,7 +16,7 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
 
   def index(page: Int) = Open:
     NoBot:
-      ctx.noKid ?? {
+      ctx.noKid.so:
         pageHit
         val requests = getBool("requests") && isGranted(_.Streamers)
         for
@@ -24,7 +24,6 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
           live        <- api.withUsers(liveStreams, ctx.me.map(_.id))
           pager       <- env.streamer.pager.get(page, liveStreams, ctx.me.map(_.id), requests)
         yield Ok(html.streamer.index(live, pager, requests))
-      }
 
   def featured = Anon:
     env.streamer.liveStreamApi.all.map: streams =>
@@ -68,22 +67,19 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
         }
 
   def create = AuthBody { _ ?=> me =>
-    ctx.noKid ?? {
-      NoLameOrBot {
+    ctx.noKid.so:
+      NoLameOrBot:
         api find me flatMap {
           case None => api.create(me) inject Redirect(routes.Streamer.edit)
           case _    => Redirect(routes.Streamer.edit).toFuccess
         }
-      }
-    }
   }
 
-  private def modData(streamer: StreamerModel)(using Context) =
-    isGranted(_.ModLog) ?? {
+  private def modData(streamer: StreamerModel)(using WebContext) =
+    isGranted(_.ModLog).so:
       logApi.userHistory(streamer.userId) zip
         env.user.noteApi.byUserForMod(streamer.userId) zip
         env.streamer.api.sameChannels(streamer) map some
-    }
 
   def edit = Auth { ctx ?=> _ =>
     AsStreamer { s =>
@@ -169,10 +165,16 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
   def youTubePubSubChallenge = Anon:
     fuccess:
       get("hub.challenge", req).fold(BadRequest): challenge =>
-        lila.log("streamer").info(s"youTubePubSubChallenge $challenge")
+        val days      = get("hub.lease_seconds", req).map(s => f" for ${s.toFloat / (60 * 60 * 24)}%.1f days")
+        val channelId = get("hub.topic", req).map(t => s" on ${t.split("=").last}")
+        lila
+          .log("streamer")
+          .info(
+            s"WebSub: CONFIRMED ${~get("hub.mode", req)}${~days}${~channelId}"
+          )
         Ok(challenge)
 
-  private def AsStreamer(f: StreamerModel.WithContext => Fu[Result])(using ctx: Context) =
+  private def AsStreamer(f: StreamerModel.WithContext => Fu[Result])(using ctx: WebContext) =
     ctx.me.fold(notFound): me =>
       if (StreamerModel.canApply(me) || isGranted(_.Streamers))
         api.find(getUserStr("u").ifTrue(isGranted(_.Streamers)).map(_.id) | me.id) flatMap {
@@ -184,8 +186,7 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
             scalatags.Text.all.raw("You are not yet allowed to create a streamer profile.")
         .toFuccess
 
-  private def WithVisibleStreamer(s: StreamerModel.WithContext)(f: Fu[Result])(using ctx: Context) =
-    ctx.noKid ?? {
+  private def WithVisibleStreamer(s: StreamerModel.WithContext)(f: Fu[Result])(using ctx: WebContext) =
+    ctx.noKid.so:
       if (s.streamer.isListed || ctx.me.exists(_ is s.streamer) || isGranted(_.Admin)) f
       else notFound
-    }

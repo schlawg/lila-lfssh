@@ -2,7 +2,7 @@ package views
 package html.tournament
 
 import controllers.routes
-import lila.api.Context
+import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.markdownLinksOrRichText
@@ -18,7 +18,7 @@ object side:
       streamers: List[UserId],
       shieldOwner: Option[UserId],
       chat: Boolean
-  )(using ctx: Context) =
+  )(using ctx: WebContext) =
     frag(
       div(cls := "tour__meta")(
         st.section(dataIcon := tour.perfType.icon.toString)(
@@ -31,7 +31,7 @@ object side:
                 tour.perfType.some,
                 shortName = true
               ),
-              tour.position.isDefined ?? s"$separator${trans.thematic.txt()}",
+              tour.position.isDefined so s"$separator${trans.thematic.txt()}",
               separator,
               tour.durationString
             ),
@@ -90,7 +90,7 @@ object side:
       chat option views.html.chat.frag
     )
 
-  private def teamBattle(tour: Tournament)(battle: TeamBattle)(implicit ctx: Context) =
+  private def teamBattle(tour: Tournament)(battle: TeamBattle)(using ctx: WebContext) =
     st.section(cls := "team-battle")(
       p(cls := "team-battle__title text", dataIcon := licon.Group)(
         s"Battle of ${battle.teams.size} teams and ${battle.nbLeaders} leaders",
