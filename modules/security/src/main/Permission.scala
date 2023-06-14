@@ -198,7 +198,6 @@ object Permission:
           PuzzleCurator,
           OpeningWiki,
           Presets,
-          DisapproveCoachReview,
           Relay,
           Streamers,
           DisableTwoFactor,
@@ -233,8 +232,7 @@ object Permission:
       ModerateForum,
       ModerateBlog,
       ReportBan,
-      ModMessage,
-      DisapproveCoachReview
+      ModMessage
     ),
     "Play mod" -> List(
       SeeInsight,
