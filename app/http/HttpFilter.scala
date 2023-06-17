@@ -35,6 +35,7 @@ final class HttpFilter(env: Env)(using val mat: Materializer)(using Executor)
       val ip = req.headers.get("x-real-ip") getOrElse req.remoteAddress;
       logger.info(s"${ip} $client - $statusCode $req $actionName ${reqTime}ms")
     }
+    result
 
   private def serveAssets(req: RequestHeader, res: Fu[Result]) =
     res.dmap:
