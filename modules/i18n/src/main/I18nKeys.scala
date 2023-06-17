@@ -233,7 +233,6 @@ object I18nKeys:
   val `cancelRematchOffer` = I18nKey("cancelRematchOffer")
   val `viewRematch` = I18nKey("viewRematch")
   val `confirmMove` = I18nKey("confirmMove")
-  val `enableConfirmationForThisGame` = I18nKey("enableConfirmationForThisGame")
   val `play` = I18nKey("play")
   val `inbox` = I18nKey("inbox")
   val `chatRoom` = I18nKey("chatRoom")
@@ -1212,7 +1211,6 @@ object I18nKeys:
     val `urlOfTheGame` = I18nKey("study:urlOfTheGame")
     val `loadAGameFromXOrY` = I18nKey("study:loadAGameFromXOrY")
     val `createChapter` = I18nKey("study:createChapter")
-    val `configureLiveBroadcast` = I18nKey("study:configureLiveBroadcast")
     val `createStudy` = I18nKey("study:createStudy")
     val `editStudy` = I18nKey("study:editStudy")
     val `visibility` = I18nKey("study:visibility")
@@ -1583,6 +1581,8 @@ object I18nKeys:
     val `downloadAllRounds` = I18nKey("broadcast:downloadAllRounds")
     val `definitivelyDeleteRound` = I18nKey("broadcast:definitivelyDeleteRound")
     val `deleteAllGamesOfThisRound` = I18nKey("broadcast:deleteAllGamesOfThisRound")
+    val `editRoundStudy` = I18nKey("broadcast:editRoundStudy")
+    val `nbBroadcasts` = I18nKey("broadcast:nbBroadcasts")
 
   object streamer:
     val `lichessStreamers` = I18nKey("streamer:lichessStreamers")
@@ -2482,4 +2482,3 @@ object I18nKeys:
     val `engineWrite` = I18nKey("oauthScope:engineWrite")
     val `webLogin` = I18nKey("oauthScope:webLogin")
     val `webMod` = I18nKey("oauthScope:webMod")
-

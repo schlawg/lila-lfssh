@@ -23,14 +23,13 @@ final class Storm(env: Env) extends LilaController(env):
       }
     }
 
-  def apiGet = AnonOrScoped(_.Puzzle.Read) { _ ?=> me =>
-    dataAndHighScore(me, none).map: (data, high) =>
+  def apiGet = AnonOrScoped(_.Puzzle.Read, _.Web.Mobile): ctx ?=>
+    dataAndHighScore(ctx.me, none).map: (data, high) =>
       import lila.storm.StormJson.given
       JsonOk(data.add("high" -> high))
-  }
 
   def record =
-    OpenOrScopedBody(parse.anyContent)(Seq(_.Puzzle.Write)): ctx ?=>
+    OpenOrScopedBody(parse.anyContent)(Seq(_.Puzzle.Write, _.Web.Mobile)): ctx ?=>
       NoBot:
         env.storm.forms.run
           .bindFromRequest()

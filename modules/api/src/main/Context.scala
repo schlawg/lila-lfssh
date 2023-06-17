@@ -5,15 +5,17 @@ import play.api.mvc.{ Request, RequestHeader }
 
 import lila.common.HTTPRequest
 import lila.pref.Pref
-import lila.user.{ UserBodyContext, UserContext }
+import lila.user.UserContext
 import lila.notify.Notification.UnreadCount
-import lila.oauth.{ OAuthScope, OAuthScopes }
+import lila.oauth.{ OAuthScope, TokenScopes }
 
 object context:
   export lila.api.{ AnyContext, BodyContext }
   export lila.api.{ WebContext, WebBodyContext }
   export lila.api.{ OAuthContext, OAuthBodyContext }
+  export lila.api.{ MinimalContext, MinimalBodyContext }
 
+/* data necessary to render the lichess website layout */
 case class PageData(
     teamNbRequests: Int,
     nbChallenges: Int,
@@ -45,26 +47,34 @@ object PageData:
   def error(req: RequestHeader, nonce: Option[Nonce]) = anon(req, nonce).copy(error = true)
 
 trait AnyContext:
+  val req: RequestHeader
   val userContext: UserContext
-  export userContext.{ req, me, impersonatedBy, lang, userId, is, kid, noKid, troll }
+  def lang: Lang
+  export userContext.{ me, impersonatedBy, userId, is, kid, noKid, troll }
   export me.{ isDefined as isAuth, isEmpty as isAnon }
-  def isBot               = me.exists(_.isBot)
-  def noBot               = !isBot
-  def isAppealUser        = me.exists(_.enabled.no)
-  def ip                  = HTTPRequest ipAddress userContext.req
-  val scopes: OAuthScopes = OAuthScopes(Nil)
-  def isMobile            = scopes.has(_.Web.Mobile)
+  def isBot                = me.exists(_.isBot)
+  def noBot                = !isBot
+  def isAppealUser         = me.exists(_.enabled.no)
+  def ip                   = HTTPRequest ipAddress req
+  val scopes: TokenScopes  = TokenScopes(Nil)
+  def isMobile             = scopes.has(_.Web.Mobile)
+  def isWebAuth: Boolean   = false
+  def isOauthAuth: Boolean = false
 
 trait BodyContext[A] extends AnyContext:
-  def body: Request[A]
+  val body: Request[A]
 
+/* Able to render a lichess page with a layout. Might be authenticated with cookie session */
 class WebContext(
+    val req: RequestHeader,
+    val lang: Lang,
     val userContext: UserContext,
     val pageData: PageData
 ) extends AnyContext:
 
   export pageData.{ teamNbRequests, nbChallenges, nbNotifications, pref, blindMode as blind, nonce, hasClas }
-  def noBlind = !blind
+  override def isWebAuth = isAuth
+  def noBlind            = !blind
 
   def currentTheme      = lila.pref.Theme(pref.theme)
   def currentTheme3d    = lila.pref.Theme3d(pref.theme3d)
@@ -73,9 +83,9 @@ class WebContext(
   def currentSoundSet   = lila.pref.SoundSet(pref.soundSet)
 
   lazy val currentBg =
-    if (pref.bg == Pref.Bg.TRANSPARENT) "transp"
-    else if (pref.bg == Pref.Bg.LIGHT) "light"
-    else if (pref.bg == Pref.Bg.SYSTEM) "system"
+    if pref.bg == Pref.Bg.TRANSPARENT then "transp"
+    else if pref.bg == Pref.Bg.LIGHT then "light"
+    else if pref.bg == Pref.Bg.SYSTEM then "system"
     else "dark" // dark && dark board
 
   lazy val mobileApiVersion = Mobile.Api requestVersion req
@@ -93,36 +103,45 @@ class WebContext(
 
   def flash(name: String): Option[String] = req.flash get name
 
-  def withLang(l: Lang) = new WebContext(userContext withLang l, pageData)
+  def withLang(l: Lang) = new WebContext(req, l, userContext, pageData)
 
+/* Able to render a lichess page with a layout. Might be authenticated with cookie session */
 final class WebBodyContext[A](
-    bodyContext: UserBodyContext[A],
+    val body: Request[A],
+    lang: Lang,
+    userContext: UserContext,
     data: PageData
-) extends WebContext(bodyContext, data)
+) extends WebContext(body, lang, userContext, data)
     with BodyContext[A]:
+  override def withLang(l: Lang) = WebBodyContext(body, l, userContext, data)
 
-  export bodyContext.body
-  override def withLang(l: Lang) = WebBodyContext(bodyContext withLang l, data)
-
-sealed trait OAuthAnyContext extends AnyContext:
-  val scopes: OAuthScopes
-
+/* Cannot render a lichess page. Might be authenticated oauth and have scopes */
 class OAuthContext(
+    val req: RequestHeader,
+    val lang: Lang,
     val userContext: UserContext,
-    override val scopes: OAuthScopes
-) extends OAuthAnyContext:
-  def withLang(l: Lang) = OAuthContext(userContext withLang l, scopes)
+    override val scopes: TokenScopes
+) extends AnyContext:
+  override def isOauthAuth: Boolean = me.isDefined
 
 final class OAuthBodyContext[A](
-    val bodyContext: UserBodyContext[A],
-    override val scopes: OAuthScopes
-) extends OAuthContext(bodyContext, scopes)
+    val body: Request[A],
+    lang: Lang,
+    userContext: UserContext,
+    override val scopes: TokenScopes
+) extends OAuthContext(body, lang, userContext, scopes)
     with BodyContext[A]:
-  export bodyContext.body
-  def scoped                     = me.map(OAuthScope.Scoped(_, scopes))
-  override def withLang(l: Lang) = OAuthBodyContext(bodyContext withLang l, scopes)
+  def scoped = me.map(OAuthScope.Scoped(_, scopes))
 
-object WebContext:
+/* Cannot render a lichess page. Cannot be authenticated. */
+class MinimalContext(
+    val req: RequestHeader,
+    val userContext: UserContext
+) extends AnyContext:
+  lazy val lang = lila.i18n.I18nLangPicker(req)
 
-  def error(req: RequestHeader, lang: Lang, nonce: Option[Nonce]): WebContext =
-    WebContext(UserContext(req, none, none, lang), PageData.error(req, nonce))
+final class MinimalBodyContext[A](
+    val body: Request[A],
+    userContext: UserContext
+) extends MinimalContext(body, userContext)
+    with BodyContext[A]

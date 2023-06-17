@@ -9,7 +9,6 @@ import lila.api.context.*
 import lila.app.{ given, * }
 import lila.common.config.MaxPerSecond
 import lila.common.HTTPRequest
-import lila.game.{ Game as GameModel }
 
 final class Game(env: Env, apiC: => Api) extends LilaController(env):
 
@@ -29,7 +28,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
   }
 
   def exportOne(id: GameAnyId) = Anon:
-    exportGame(GameModel anyToId id)
+    exportGame(id.gameId)
 
   private[controllers] def exportGame(gameId: GameId)(using req: RequestHeader): Fu[Result] =
     env.round.proxyRepo.gameIfPresent(gameId) orElse env.game.gameRepo.game(gameId) flatMap {
@@ -45,88 +44,78 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
           env.api.gameApiV2.filename(game, config.format) map { filename =>
             Ok(content)
               .pipe(asAttachment(filename))
-              .withHeaders(lila.app.http.ResponseHeaders.headersForApiOrApp(req)*)
+              .withHeaders(headersForApiOrApp*)
               .as(gameContentType(config))
           }
         }
     }
 
-  def exportByUser(username: UserStr) = OpenOrScoped()(
-    open = ctx ?=> handleExport(username, ctx.me, oauth = false),
-    scoped = _ ?=> me => handleExport(username, me.some, oauth = true)
-  )
+  def exportByUser(username: UserStr)    = OpenOrScoped()(handleExport(username))
+  def apiExportByUser(username: UserStr) = AnonOrScoped()(handleExport(username))
 
-  def apiExportByUser(username: UserStr) = AnonOrScoped() { _ ?=> me =>
-    handleExport(username, me, oauth = me.isDefined)
-  }
-
-  private def handleExport(
-      username: UserStr,
-      me: Option[lila.user.User],
-      oauth: Boolean
-  )(using req: RequestHeader) =
+  private def handleExport(username: UserStr)(using ctx: AnyContext) =
     env.user.repo byId username flatMap {
-      _.filter(u => u.enabled.yes || me.exists(_ is u) || me.so(isGranted(_.GamesModView, _))) so { user =>
-        val format = GameApiV2.Format byRequest req
-        import lila.rating.{ Perf, PerfType }
-        WithVs: vs =>
-          val finished = getBoolOpt("finished") | true
-          val config = GameApiV2.ByUserConfig(
-            user = user,
-            format = format,
-            vs = vs,
-            since = getTimestamp("since"),
-            until = getTimestamp("until"),
-            max = getInt("max").map(_ atLeast 1),
-            rated = getBoolOpt("rated"),
-            perfType = (~get("perfType") split "," map { Perf.Key(_) } flatMap PerfType.apply).toSet,
-            color = get("color") flatMap chess.Color.fromName,
-            analysed = getBoolOpt("analysed"),
-            flags = requestPgnFlags(extended = false),
-            sort = if (get("sort") has "dateAsc") GameApiV2.GameSort.DateAsc else GameApiV2.GameSort.DateDesc,
-            perSecond = MaxPerSecond(me match {
-              case Some(m) if m is lila.user.User.explorerId => env.apiExplorerGamesPerSecond.get()
-              case Some(m) if m is user.id                   => 60
-              case Some(_) if oauth => 30 // bonus for oauth logged in only (not for CSRF)
-              case _                => 20
-            }),
-            playerFile = get("players"),
-            ongoing = getBool("ongoing") || !finished,
-            finished = finished
-          )
-          if me.exists(_ is lila.user.User.explorerId) then
-            Ok.chunked(env.api.gameApiV2.exportByUser(config))
-              .pipe(noProxyBuffer)
-              .as(gameContentType(config))
-          else
-            apiC
-              .GlobalConcurrencyLimitPerIpAndUserOption(req, me, user.some)(
-                env.api.gameApiV2.exportByUser(config)
-              ): source =>
-                Ok.chunked(source)
-                  .pipe:
-                    asAttachmentStream:
-                      s"lichess_${user.username}_${fileDate}.${format.toString.toLowerCase}"
-                  .as(gameContentType(config))
+      _.filter(u => u.enabled.yes || ctx.me.exists(_ is u) || ctx.me.so(isGranted(_.GamesModView, _))) so {
+        user =>
+          val format = GameApiV2.Format byRequest req
+          import lila.rating.{ Perf, PerfType }
+          WithVs: vs =>
+            val finished = getBoolOpt("finished") | true
+            val config = GameApiV2.ByUserConfig(
+              user = user,
+              format = format,
+              vs = vs,
+              since = getTimestamp("since"),
+              until = getTimestamp("until"),
+              max = getInt("max").map(_ atLeast 1),
+              rated = getBoolOpt("rated"),
+              perfType = (~get("perfType") split "," map { Perf.Key(_) } flatMap PerfType.apply).toSet,
+              color = get("color") flatMap chess.Color.fromName,
+              analysed = getBoolOpt("analysed"),
+              flags = requestPgnFlags(extended = false),
+              sort =
+                if (get("sort") has "dateAsc") GameApiV2.GameSort.DateAsc else GameApiV2.GameSort.DateDesc,
+              perSecond = MaxPerSecond(ctx.me match
+                case Some(m) if m is lila.user.User.explorerId => env.apiExplorerGamesPerSecond.get()
+                case Some(m) if m is user.id                   => 60
+                case Some(_) if ctx.isOauthAuth => 30 // bonus for oauth logged in only (not for CSRF)
+                case _                          => 20
+              ),
+              playerFile = get("players"),
+              ongoing = getBool("ongoing") || !finished,
+              finished = finished
+            )
+            if ctx.me.exists(_ is lila.user.User.explorerId) then
+              Ok.chunked(env.api.gameApiV2.exportByUser(config))
+                .pipe(noProxyBuffer)
+                .as(gameContentType(config))
+            else
+              apiC
+                .GlobalConcurrencyLimitPerIpAndUserOption(user.some)(
+                  env.api.gameApiV2.exportByUser(config)
+                ): source =>
+                  Ok.chunked(source)
+                    .pipe:
+                      asAttachmentStream:
+                        s"lichess_${user.username}_${fileDate}.${format.toString.toLowerCase}"
+                    .as(gameContentType(config))
 
       }
     }
 
   private def fileDate = DateTimeFormatter ofPattern "yyyy-MM-dd" print nowInstant
 
-  def apiExportByUserImportedGames(username: UserStr) =
-    def doExport(username: UserStr)(me: lila.user.User)(using ctx: AnyContext) =
-      if !me.is(username)
-      then Forbidden("Imported games of other players cannot be downloaded")
-      else
-        apiC
-          .GlobalConcurrencyLimitPerIpAndUserOption(ctx.req, me.some, me.some)(
-            env.api.gameApiV2.exportUserImportedGames(me)
-          ): source =>
-            Ok.chunked(source)
-              .pipe(asAttachmentStream(s"lichess_${me.username}_$fileDate.imported.pgn"))
-              .as(pgnContentType)
-    AuthOrScoped()(doExport(username), doExport(username))
+  def apiExportByUserImportedGames(username: UserStr) = AuthOrScoped() { ctx ?=> me =>
+    if !me.is(username)
+    then Forbidden("Imported games of other players cannot be downloaded")
+    else
+      apiC.GlobalConcurrencyLimitPerIpAndUserOption(me.some)(
+        env.api.gameApiV2.exportUserImportedGames(me)
+      ): source =>
+        Ok.chunked(source)
+          .pipe(asAttachmentStream(s"lichess_${me.username}_$fileDate.imported.pgn"))
+          .as(pgnContentType)
+  }
 
   def exportByIds = AnonBodyOf(parse.tolerantText): body =>
     val config = GameApiV2.ByIdsConfig(
@@ -174,5 +163,5 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
           case _: GameApiV2.OneConfig => JSON
           case _                      => ndJsonContentType
 
-  private[controllers] def preloadUsers(game: GameModel): Funit =
+  private[controllers] def preloadUsers(game: lila.game.Game): Funit =
     env.user.lightUserApi preloadMany game.userIds

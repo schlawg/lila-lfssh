@@ -477,7 +477,7 @@ final class User(
     lila.user.UserForm.apiNote
       .bindFromRequest()
       .fold(
-        jsonFormErrorDefaultLang,
+        jsonFormError(_)(using reqLang),
         data => doWriteNote(username, me, data)(_ => jsonOkResult)
       )
   }
@@ -493,11 +493,10 @@ final class User(
     }
 
   def deleteNote(id: String) = Auth { ctx ?=> me =>
-    OptionFuResult(env.user.noteApi.byId(id)) { note =>
+    OptionFuResult(env.user.noteApi.byId(id)): note =>
       (note.isFrom(me) && !note.mod) so {
         env.user.noteApi.delete(note._id) inject Redirect(routes.User.show(note.to).url + "?note")
       }
-    }
   }
 
   def setDoxNote(id: String, dox: Boolean) = Secure(_.Admin) { ctx ?=> _ =>
@@ -512,8 +511,8 @@ final class User(
       .ifTrue(isGranted(_.BoostHunter))
       .so(env.user.repo.byId)
       .map(_ | me)
-      .flatMap { user =>
-        for {
+      .flatMap: user =>
+        for
           ops         <- env.game.favoriteOpponents(user.id)
           followables <- env.pref.api.followables(ops map (_._1.id))
           relateds <-
@@ -525,8 +524,7 @@ final class User(
                 }
               }
               .parallel
-        } yield html.relation.bits.opponents(user, relateds)
-      }
+        yield html.relation.bits.opponents(user, relateds)
   }
 
   def perfStat(username: UserStr, perfKey: Perf.Key) = Open:
@@ -546,7 +544,7 @@ final class User(
               }
         )
 
-  def autocomplete = OpenOrScoped(): me =>
+  def autocomplete = OpenOrScoped(): ctx ?=>
     getUserStr("term").flatMap(UserModel.validateId) match
       case None                          => BadRequest("No search term provided")
       case Some(id) if getBool("exists") => env.user.repo exists id map JsonOk
@@ -556,9 +554,9 @@ final class User(
             case (Some(tourId), _, _) => env.tournament.playerRepo.searchPlayers(TourId(tourId), term, 10)
             case (_, Some(swissId), _) =>
               env.swiss.api.searchPlayers(SwissId(swissId), term, 10)
-            case (_, _, Some(teamId)) => env.team.api.searchMembersAs(TeamId(teamId), term, me, 10)
+            case (_, _, Some(teamId)) => env.team.api.searchMembersAs(TeamId(teamId), term, ctx.me, 10)
             case _ =>
-              me.ifTrue(getBool("friend")) match
+              ctx.me.ifTrue(getBool("friend")) match
                 case Some(follower) =>
                   env.relation.api.searchFollowedBy(follower, term, 10) flatMap {
                     case Nil     => env.user.cached userIdsLike term

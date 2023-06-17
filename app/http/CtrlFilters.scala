@@ -51,10 +51,10 @@ trait CtrlFilters extends ControllerHelpers with ResponseBuilder with CtrlConver
     else
       ctx match
         case web: WebContext => authorizationFailed(using web)
-        case _               => authorizationFailed(ctx.req)
+        case _               => authorizationFailed(using ctx)
 
-  def IfGranted(perm: Permission.Selector, req: RequestHeader, me: User)(f: => Fu[Result]): Fu[Result] =
-    if isGranted(perm, me) then f else authorizationFailed(req)
+  def IfGranted(perm: Permission.Selector, me: User)(f: => Fu[Result])(using ctx: AnyContext): Fu[Result] =
+    if isGranted(perm, me) then f else authorizationFailed(using ctx)
 
   def Firewall[A <: Result](a: => Fu[A])(using ctx: WebContext): Fu[Result] =
     if env.security.firewall.accepts(ctx.req) then a
@@ -114,7 +114,7 @@ trait CtrlFilters extends ControllerHelpers with ResponseBuilder with CtrlConver
   import env.security.csrfRequestHandler.check as csrfCheck
   val csrfForbiddenResult = Forbidden("Cross origin request forbidden")
 
-  def CSRF(req: RequestHeader)(f: => Fu[Result]): Fu[Result] =
+  def CSRF(f: => Fu[Result])(using req: RequestHeader): Fu[Result] =
     if csrfCheck(req) then f else csrfForbiddenResult
 
   def XhrOnly(res: => Fu[Result])(using ctx: WebContext): Fu[Result] =

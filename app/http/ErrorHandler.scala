@@ -26,10 +26,11 @@ final class ErrorHandler(
       lila.mon.http.error(actionName, client, req.method, 500).increment()
       lila.log("http").error(s"ERROR 500 $actionName", exception)
       if canShowErrorPage(req) then
-        val errorCtx = lila.api.WebContext.error(
+        val errorCtx = lila.api.WebContext(
           req,
           lila.i18n.defaultLang,
-          HTTPRequest.isSynchronousHttp(req) option lila.api.Nonce.random
+          lila.user.UserContext.anon,
+          lila.api.PageData.error(req, HTTPRequest.isSynchronousHttp(req) option lila.api.Nonce.random)
         )
         InternalServerError(views.html.site.bits.errorPage(using errorCtx))
       else InternalServerError("Sorry, something went wrong.")
@@ -40,11 +41,11 @@ final class ErrorHandler(
 
   override def onClientError(req: RequestHeader, statusCode: Int, msg: String): Fu[Result] =
     statusCode match
-      case 404 if canShowErrorPage(req) => mainC.handlerNotFound(req)
+      case 404 if canShowErrorPage(req) => mainC.handlerNotFound(using req)
       case 404                          => fuccess(NotFound("404 - Resource not found"))
-      case 403                          => lobbyC.handleStatus(req, Results.Forbidden)
+      case 403                          => lobbyC.handleStatus(Results.Forbidden)(using req)
       case _ if req.attrs.contains(request.RequestAttrKey.Session) =>
-        lobbyC.handleStatus(req, Results.BadRequest)
+        lobbyC.handleStatus(Results.BadRequest)(using req)
       case _ =>
         fuccess:
           Results.BadRequest("Sorry, the request could not be processed")
