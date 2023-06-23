@@ -1,5 +1,7 @@
 package lila.oauth
 
+import cats.Eq
+import cats.derived.*
 import lila.i18n.I18nKey
 import lila.i18n.I18nKeys.{ oauthScope as trans }
 
@@ -11,7 +13,7 @@ object OAuthScopes extends TotalWrapper[OAuthScopes, List[OAuthScope]]:
   extension (e: OAuthScopes)
     def has(s: OAuthScope): Boolean             = e contains s
     def has(s: OAuthScope.Selector): Boolean    = has(s(OAuthScope))
-    def keyList: String                         = e.map(_.key) mkString ", "
+    def keyList: String                         = e.map(_.key) mkString ","
     def intersects(other: OAuthScopes): Boolean = e.exists(other.has)
     def isEmpty                                 = e.isEmpty
 
@@ -28,6 +30,8 @@ object EndpointScopes extends TotalWrapper[EndpointScopes, List[OAuthScope]]:
     def compatible(token: TokenScopes): Boolean = e.exists(token.has)
 
 object OAuthScope:
+
+  given Eq[OAuthScope] = Eq.fromUniversalEquals
 
   object Preference:
     case object Read  extends OAuthScope("preference:read", lila.i18n.I18nKeys.oauthScope.preferenceRead)

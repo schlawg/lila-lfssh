@@ -23,7 +23,7 @@ final class Practice(
     .map(_.noCache)
 
   def show(sectionId: String, studySlug: String, studyId: StudyId) = Open:
-    OptionFuResult(api.getStudyWithFirstOngoingChapter(ctx.me, studyId))(showUserPractice)
+    Found(api.getStudyWithFirstOngoingChapter(ctx.me, studyId))(showUserPractice)
 
   def showChapter(
       sectionId: String,
@@ -31,7 +31,7 @@ final class Practice(
       studyId: StudyId,
       chapterId: StudyChapterId
   ) = Open:
-    OptionFuResult(api.getStudyWithChapter(ctx.me, studyId, chapterId))(showUserPractice)
+    Found(api.getStudyWithChapter(ctx.me, studyId, chapterId))(showUserPractice)
 
   def showSection(sectionId: String) =
     redirectTo(sectionId)(_.studies.headOption)
@@ -63,7 +63,7 @@ final class Practice(
         _.noCache.enableSharedArrayBuffer.withCanonical(s"${us.url}/${us.study.chapter.id}")
 
   def chapter(studyId: StudyId, chapterId: StudyChapterId) = Open:
-    OptionFuResult(api.getStudyWithChapter(ctx.me, studyId, chapterId)): us =>
+    Found(api.getStudyWithChapter(ctx.me, studyId, chapterId)): us =>
       analysisJson(us).map: (analysisJson, studyJson) =>
         JsonOk(
           Json.obj(
@@ -96,7 +96,7 @@ final class Practice(
         }
 
   def complete(chapterId: StudyChapterId, nbMoves: Int) = Auth { ctx ?=> me ?=>
-    api.progress.setNbMoves(me, chapterId, lila.practice.PracticeProgress.NbMoves(nbMoves))
+    api.progress.setNbMoves(me, chapterId, lila.practice.PracticeProgress.NbMoves(nbMoves)) inject NoContent
   }
 
   def reset = AuthBody { _ ?=> me ?=>

@@ -24,19 +24,17 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
         (ctx.isAuth so { env.pref.api followable user.id }) zip
         (ctx.userId so { api.fetchBlocks(user.id, _) }) flatMap { case ((relation, followable), blocked) =>
           negotiate(
-            html = Ok.page:
-              if mini then
-                html.relation.mini(user.id, blocked = blocked, followable = followable, relation = relation)
-              else
-                html.relation.actions(user, relation = relation, blocked = blocked, followable = followable)
+            Ok.page:
+              if mini
+              then html.relation.mini(user.id, blocked = blocked, followable = followable, relation)
+              else html.relation.actions(user, relation, blocked = blocked, followable = followable)
             ,
-            api = _ =>
-              Ok:
-                Json.obj(
-                  "followable" -> followable,
-                  "following"  -> relation.contains(true),
-                  "blocking"   -> relation.contains(false)
-                )
+            Ok:
+              Json.obj(
+                "followable" -> followable,
+                "following"  -> relation.contains(true),
+                "blocking"   -> relation.contains(false)
+              )
           )
         }
     }
@@ -47,11 +45,12 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
     key = "follow.user"
   )
 
-  private def FollowingUser(str: UserStr)(f: LightUser => Fu[Result])(using me: Me): Fu[Result] =
-    env.user.lightUserApi.async(str.id) flatMapz { user =>
+  private def FollowingUser(
+      str: UserStr
+  )(f: LightUser => Fu[Result])(using me: Me)(using Context): Fu[Result] =
+    Found(env.user.lightUserApi.async(str.id)): user =>
       FollowLimitPerUser(me, rateLimitedFu):
         f(user)
-    }
 
   def follow(username: UserStr) = Auth { ctx ?=> me ?=>
     FollowingUser(username): user =>
@@ -102,26 +101,22 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
 
   def following(username: UserStr, page: Int) = Open:
     Reasonable(page, config.Max(20)):
-      OptionFuResult(env.user.repo byId username): user =>
+      Found(env.user.repo byId username): user =>
         RelatedPager(api.followingPaginatorAdapter(user.id), page) flatMap { pag =>
           negotiate(
-            html =
-              if ctx.is(user) || isGrantedOpt(_.CloseAccount)
-              then Ok.page(html.relation.bits.friends(user, pag))
-              else ctx.me.fold(notFound)(me => Redirect(routes.Relation.following(me.username))),
-            api = _ => Ok(jsonRelatedPaginator(pag))
+            if ctx.is(user) || isGrantedOpt(_.CloseAccount)
+            then Ok.page(html.relation.bits.friends(user, pag))
+            else ctx.me.fold(notFound)(me => Redirect(routes.Relation.following(me.username))),
+            Ok(jsonRelatedPaginator(pag))
           )
         }
 
   def followers(username: UserStr, page: Int) = Open:
-    negotiate(
-      html = notFound,
-      api = _ =>
-        Reasonable(page, config.Max(20)):
-          RelatedPager(api.followersPaginatorAdapter(username.id), page) flatMap { pag =>
-            Ok(jsonRelatedPaginator(pag))
-          }
-    )
+    negotiateJson:
+      Reasonable(page, config.Max(20)):
+        RelatedPager(api.followersPaginatorAdapter(username.id), page) flatMap { pag =>
+          Ok(jsonRelatedPaginator(pag))
+        }
 
   def apiFollowing = Scoped(_.Follow.Read) { ctx ?=> me ?=>
     apiC.jsonDownload:

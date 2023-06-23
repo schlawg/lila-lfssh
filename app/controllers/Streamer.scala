@@ -52,7 +52,7 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
           lila.streamer.Stream.toJson(env.memo.picfitUrl, stream)
 
   def show(username: UserStr) = Open:
-    OptionFuResult(api.forSubscriber(username)): s =>
+    Found(api.forSubscriber(username)): s =>
       WithVisibleStreamer(s):
         for
           sws      <- env.streamer.liveStreamApi of s
@@ -61,7 +61,7 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
         yield Ok(page)
 
   def redirect(username: UserStr) = Open:
-    OptionFuResult(api.forSubscriber(username)): s =>
+    Found(api.forSubscriber(username)): s =>
       WithVisibleStreamer(s):
         env.streamer.liveStreamApi of s map { sws =>
           Redirect(sws.redirectToLiveUrl | routes.Streamer.show(username.value).url)
@@ -156,8 +156,9 @@ final class Streamer(env: Env, apiC: => Api) extends LilaController(env):
     Ok
   }
 
-  def onYouTubeVideo = AnonBodyOf(parse.tolerantXml):
-    env.streamer.ytApi.onVideoXml
+  def onYouTubeVideo = AnonBodyOf(parse.tolerantXml): body =>
+    env.streamer.ytApi.onVideoXml(body)
+    NoContent
 
   def youTubePubSubChallenge = Anon:
     get("hub.challenge").fold(BadRequest): challenge =>

@@ -23,7 +23,7 @@ final class Round(
     with TheftPrevention:
 
   private def renderPlayer(pov: Pov)(using ctx: Context): Fu[Result] =
-    negotiate(
+    negotiateApi(
       html =
         if !pov.game.started then notFound
         else
@@ -88,7 +88,7 @@ final class Round(
     }
 
   def whatsNext(fullId: GameFullId) = Open:
-    OptionFuResult(env.round.proxyRepo.pov(fullId)): currentPov =>
+    Found(env.round.proxyRepo.pov(fullId)): currentPov =>
       if currentPov.isMyTurn
       then Ok(Json.obj("nope" -> true))
       else
@@ -97,7 +97,7 @@ final class Round(
         }
 
   def next(gameId: GameId) = Auth { ctx ?=> me ?=>
-    OptionFuResult(env.round.proxyRepo game gameId): currentGame =>
+    Found(env.round.proxyRepo game gameId): currentGame =>
       otherPovs(currentGame) map getNext(currentGame) map {
         _ orElse Pov(currentGame, me)
       } flatMap {
@@ -141,7 +141,7 @@ final class Round(
         if (userTv.isDefined) watch(!pov, userTv)
         else Redirect(routes.Round.watcher(pov.gameId, "white"))
       case _ =>
-        negotiate(
+        negotiateApi(
           html =
             if pov.game.replayable then analyseC.replay(pov, userTv = userTv)
             else if HTTPRequest.isHuman(ctx.req) then
@@ -186,11 +186,10 @@ final class Round(
               data     <- env.api.roundApi.watcher(pov, tour, apiVersion, tv = none)
               analysis <- env.analyse.analyser get pov.game
               chat     <- getWatcherChat(pov.game)
-            yield Ok {
+            yield Ok:
               data
                 .add("chat" -> chat.map(c => lila.chat.JsonView(c.chat)))
                 .add("analysis" -> analysis.map(a => lila.analyse.JsonView.mobile(pov.game, a)))
-            }
         ) dmap (_.noCache)
 
   private[controllers] def getWatcherChat(
@@ -256,7 +255,7 @@ final class Round(
     }
 
   def sides(gameId: GameId, color: String) = Open:
-    OptionFuResult(proxyPov(gameId, color)): pov =>
+    Found(proxyPov(gameId, color)): pov =>
       env.tournament.api.gameView.withTeamVs(pov.game) zip
         (pov.game.simulId so env.simul.repo.find) zip
         env.game.gameRepo.initialFen(pov.game) zip
@@ -274,7 +273,7 @@ final class Round(
       .bindFromRequest()
       .fold(
         _ => BadRequest,
-        text => env.round.noteApi.set(gameId, me, text.trim take 10000)
+        text => env.round.noteApi.set(gameId, me, text.trim take 10000) inject NoContent
       )
   }
 
@@ -283,7 +282,7 @@ final class Round(
   }
 
   def continue(id: GameId, mode: String) = Open:
-    OptionResult(env.game.gameRepo game id): game =>
+    Found(env.game.gameRepo game id): game =>
       Redirect(
         "%s?fen=%s#%s".format(
           routes.Lobby.home,
@@ -293,8 +292,8 @@ final class Round(
       )
 
   def resign(fullId: GameFullId) = Open:
-    OptionFuRedirect(env.round.proxyRepo.pov(fullId)): pov =>
-      val redirection = fuccess(routes.Lobby.home)
+    Found(env.round.proxyRepo.pov(fullId)): pov =>
+      val redirection = fuccess(Redirect(routes.Lobby.home))
       if isTheft(pov) then
         lila.log("round").warn(s"theft resign $fullId ${ctx.ip}")
         redirection
@@ -303,13 +302,13 @@ final class Round(
         akka.pattern.after(500.millis, env.system.scheduler)(redirection)
 
   def mini(gameId: GameId, color: String) = Open:
-    OptionPage(
+    FoundPage(
       chess.Color.fromName(color).so(env.round.proxyRepo.povIfPresent(gameId, _)) orElse
         env.game.gameRepo.pov(gameId, color)
     )(html.game.mini(_))
 
   def miniFullId(fullId: GameFullId) = Open:
-    OptionPage(env.round.proxyRepo.povIfPresent(fullId) orElse env.game.gameRepo.pov(fullId))(
+    FoundPage(env.round.proxyRepo.povIfPresent(fullId) orElse env.game.gameRepo.pov(fullId))(
       html.game.mini(_)
     )
 

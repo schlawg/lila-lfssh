@@ -41,7 +41,7 @@ final class Challenge(
     showId(id)
 
   protected[controllers] def showId(id: ChallengeId)(using Context): Fu[Result] =
-    OptionFuResult(api byId id)(showChallenge(_))
+    Found(api byId id)(showChallenge(_))
 
   protected[controllers] def showChallenge(
       c: ChallengeModel,
@@ -69,7 +69,7 @@ final class Challenge(
                 html.challenge.theirs(c, json, _, color)
               }
         ,
-        api = _ => Ok(json)
+        json = Ok(json)
       ) flatMap withChallengeAnonCookie(mine && c.challengerIsAnon, c, owner = true)
     } map env.lilaCookie.ensure(ctx.req)
 
@@ -84,24 +84,23 @@ final class Challenge(
       !challenge.challengerUserId.so(orig => me.exists(_ is orig))
 
   def accept(id: ChallengeId, color: Option[String]) = Open:
-    OptionFuResult(api byId id): c =>
+    Found(api byId id): c =>
       val cc = color flatMap chess.Color.fromName
       isForMe(c) so api
         .accept(c, ctx.req.sid, cc)
         .flatMap {
           case Validated.Valid(Some(pov)) =>
-            negotiate(
+            negotiateApi(
               html = Redirect(routes.Round.watcher(pov.gameId, cc.fold("white")(_.name))),
               api = apiVersion => env.api.roundApi.player(pov, none, apiVersion) map { Ok(_) }
             ) flatMap withChallengeAnonCookie(ctx.isAnon, c, owner = false)
           case invalid =>
             negotiate(
-              html = Redirect(routes.Round.watcher(c.id.value, cc.fold("white")(_.name))),
-              api = _ =>
-                notFoundJson(invalid match
-                  case Validated.Invalid(err) => err
-                  case _                      => "The challenge has already been accepted"
-                )
+              Redirect(routes.Round.watcher(c.id.value, cc.fold("white")(_.name))),
+              notFoundJson(invalid match
+                case Validated.Invalid(err) => err
+                case _                      => "The challenge has already been accepted"
+              )
             )
         }
 
@@ -142,14 +141,14 @@ final class Challenge(
     }
 
   def decline(id: ChallengeId) = AuthBody { ctx ?=> _ ?=>
-    OptionFuResult(api byId id): c =>
-      isForMe(c) so
+    Found(api byId id): c =>
+      isForMe(c).so:
         api.decline(
           c,
           env.challenge.forms.decline
             .bindFromRequest()
             .fold(_ => ChallengeModel.DeclineReason.default, _.realReason)
-        )
+        ) inject NoContent
   }
   def apiDecline(id: ChallengeId) = ScopedBody(_.Challenge.Write, _.Bot.Play, _.Board.Play) { ctx ?=> me ?=>
     api.activeByIdFor(id, me) flatMap {
@@ -170,8 +169,10 @@ final class Challenge(
 
   def cancel(id: ChallengeId) =
     Open:
-      OptionFuResult(api byId id): c =>
-        if isMine(c) then api cancel c else notFound
+      Found(api byId id): c =>
+        if isMine(c)
+        then api cancel c inject NoContent
+        else notFound
 
   def apiCancel(id: ChallengeId) = Scoped(_.Challenge.Write, _.Bot.Play, _.Board.Play) { ctx ?=> me ?=>
     api.activeByIdBy(id, me) flatMap {
@@ -227,7 +228,7 @@ final class Challenge(
             env.game.gameRepo game id flatMapz { g =>
               env.round.proxyRepo.upgradeIfPresent(g) dmap some dmap
                 (_.filter(_.hasUserIds(u1.id, u2.id)))
-            } mapz { game =>
+            } orNotFound { game =>
               env.round.tellRound(game.id, lila.round.actorApi.round.StartClock)
               jsonOkResult
             }
@@ -254,12 +255,12 @@ final class Challenge(
   def toFriend(id: ChallengeId) = AuthBody { ctx ?=> _ ?=>
     import play.api.data.*
     import play.api.data.Forms.*
-    OptionFuResult(api byId id): c =>
+    Found(api byId id): c =>
       if isMine(c) then
         Form(single("username" -> lila.user.UserForm.historicalUsernameField))
           .bindFromRequest()
           .fold(
-            _ => funit,
+            _ => NoContent,
             username =>
               ChallengeIpRateLimit(ctx.ip, rateLimitedFu):
                 env.user.repo byId username flatMap {
@@ -382,8 +383,8 @@ final class Challenge(
 
   def offerRematchForGame(gameId: GameId) = Auth { _ ?=> me ?=>
     NoBot:
-      OptionFuResult(env.game.gameRepo game gameId): g =>
-        Pov.opponentOf(g, me).flatMap(_.userId) so env.user.repo.byId flatMapz { opponent =>
+      Found(env.game.gameRepo game gameId): g =>
+        Pov.opponentOf(g, me).flatMap(_.userId) so env.user.repo.byId orNotFound { opponent =>
           env.challenge.granter.isDenied(me.some, opponent, g.perfType) flatMap {
             case Some(d) => BadRequest(jsonError(lila.challenge.ChallengeDenied translated d))
             case _ =>

@@ -94,12 +94,14 @@ object SetupForm:
     )(_ => none)
       .verifying("Invalid clock", _.validClock)
 
-  def boardApiHook(mobile: Boolean) = Form:
+  def boardApiHook(allowFastGames: Boolean) = Form:
     boardApiHookBase
       .verifying(
         "Invalid time control",
         hook =>
-          mobile || hook.makeClock.exists(lila.game.Game.isBoardCompatible) || hook.makeDaysPerTurn.isDefined
+          allowFastGames || hook.makeClock.exists(
+            lila.game.Game.isBoardCompatible
+          ) || hook.makeDaysPerTurn.isDefined
       )
 
   object api:

@@ -53,36 +53,30 @@ final class Account(
   }
 
   def info = Auth { _ ?=> me ?=>
-    negotiate(
-      html = notFound,
-      api = _ =>
-        for
-          povs         <- env.round.proxyRepo urgentGames me
-          nbChallenges <- env.challenge.api.countInFor get me
-          playban      <- env.playban.api currentBan me
-        yield Ok {
-          import lila.pref.JsonView.given
-          env.user.jsonView
-            .full(me, withRating = ctx.pref.showRatings, withProfile = false) ++ Json
-            .obj(
-              "prefs"        -> ctx.pref,
-              "nowPlaying"   -> JsArray(povs take 50 map env.api.lobbyApi.nowPlaying),
-              "nbChallenges" -> nbChallenges,
-              "online"       -> true
-            )
-            .add("kid" -> me.kid)
-            .add("troll" -> me.marks.troll)
-            .add("playban" -> playban)
-            .add("announce" -> AnnounceStore.get.map(_.json))
-        }.withHeaders(CACHE_CONTROL -> "max-age=15")
-    )
+    negotiateJson:
+      for
+        povs         <- env.round.proxyRepo urgentGames me
+        nbChallenges <- env.challenge.api.countInFor get me
+        playban      <- env.playban.api currentBan me
+      yield Ok {
+        import lila.pref.JsonView.given
+        env.user.jsonView
+          .full(me, withRating = ctx.pref.showRatings, withProfile = false) ++ Json
+          .obj(
+            "prefs"        -> ctx.pref,
+            "nowPlaying"   -> JsArray(povs take 50 map env.api.lobbyApi.nowPlaying),
+            "nbChallenges" -> nbChallenges,
+            "online"       -> true
+          )
+          .add("kid" -> me.kid)
+          .add("troll" -> me.marks.troll)
+          .add("playban" -> playban)
+          .add("announce" -> AnnounceStore.get.map(_.json))
+      }.withHeaders(CACHE_CONTROL -> "max-age=15")
   }
 
   def nowPlaying = Auth { _ ?=> _ ?=>
-    negotiate(
-      html = notFound,
-      api = _ => doNowPlaying
-    )
+    negotiateJson(doNowPlaying)
   }
 
   val apiMe =
@@ -108,17 +102,15 @@ final class Account(
     }
 
   def dasher = Auth { _ ?=> me ?=>
-    negotiate(
-      html = notFound,
-      api = _ =>
-        env.pref.api.get(me).map { prefs =>
-          Ok:
-            import lila.pref.JsonView.given
-            lila.common.LightUser.lightUserWrites.writes(me.light) ++ Json.obj(
-              "coach" -> isGranted(_.Coach),
-              "prefs" -> prefs
-            )
-        }
+    negotiateJson(
+      env.pref.api.get(me).map { prefs =>
+        Ok:
+          import lila.pref.JsonView.given
+          lila.common.LightUser.lightUserWrites.writes(me.light) ++ Json.obj(
+            "coach" -> isGranted(_.Coach),
+            "prefs" -> prefs
+          )
+      }
     )
   }
 
@@ -153,7 +145,7 @@ final class Account(
   }
 
   def apiEmail = Scoped(_.Email.Read) { _ ?=> me ?=>
-    env.user.repo email me mapz { email =>
+    env.user.repo email me orNotFound { email =>
       JsonOk(Json.obj("email" -> email.value))
     }
   }
@@ -175,16 +167,15 @@ final class Account(
   }
 
   def emailConfirm(token: String) = Open:
-    env.security.emailChange.confirm(token) flatMapz { (user, prevEmail) =>
+    env.security.emailChange.confirm(token) orNotFound { (user, prevEmail) =>
       (prevEmail.exists(_.isNoReply) so env.clas.api.student.release(user)) >>
         auth.authenticateUser(
           user,
           remember = true,
           result =
-            if (prevEmail.exists(_.isNoReply))
-              Some(_ => Redirect(routes.User.show(user.username)).flashSuccess)
-            else
-              Some(_ => Redirect(routes.Account.email).flashSuccess)
+            if prevEmail.exists(_.isNoReply)
+            then Some(_ => Redirect(routes.User.show(user.username)).flashSuccess)
+            else Some(_ => Redirect(routes.Account.email).flashSuccess)
         )
     }
 
@@ -273,14 +264,14 @@ final class Account(
           .fold(
             err =>
               negotiate(
-                html = BadRequest.page(html.account.kid(me, err, managed = false)),
-                api = _ => BadRequest(errorsAsJson(err))
+                BadRequest.page(html.account.kid(me, err, managed = false)),
+                BadRequest(errorsAsJson(err))
               ),
             _ =>
               env.user.repo.setKid(me, getBool("v")) >>
                 negotiate(
-                  html = Redirect(routes.Account.kid).flashSuccess,
-                  api = _ => jsonOkResult
+                  Redirect(routes.Account.kid).flashSuccess,
+                  jsonOkResult
                 )
           )
   }
@@ -310,7 +301,7 @@ final class Account(
     then refreshSessionId(Redirect(routes.Account.security).flashSuccess)
     else
       env.security.store.closeUserAndSessionId(me, sessionId) >>
-        env.push.webSubscriptionApi.unsubscribeBySession(sessionId)
+        env.push.webSubscriptionApi.unsubscribeBySession(sessionId) inject NoContent
   }
 
   private def renderReopen(form: Option[Form[Reopen]], msg: Option[String])(using
@@ -367,7 +358,7 @@ final class Account(
     val userId: UserId = getUserStr("user")
       .map(_.id)
       .filter(id => me.is(id) || isGranted(_.Impersonate)) | me.userId
-    env.user.repo byId userId flatMapz { user =>
+    env.user.repo byId userId orNotFound { user =>
       if getBool("text") then
         apiC.GlobalConcurrencyLimitUser(me)(env.api.personalDataExport(user)): source =>
           Ok.chunked(source.map(_ + "\n"))

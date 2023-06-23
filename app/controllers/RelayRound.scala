@@ -23,76 +23,40 @@ final class RelayRound(
           html.relay.roundForm.create(env.relay.roundForm.create(trs), trs.tour)
   }
 
-  def create(tourId: String) =
-    AuthOrScopedBody(_.Study.Write)(
-      auth = ctx ?=>
-        me ?=>
-          NoLameOrBot:
-            WithTourAndRoundsCanUpdate(tourId): trs =>
-              val tour = trs.tour
-              env.relay.roundForm
-                .create(trs)
-                .bindFromRequest()
-                .fold(
-                  err => BadRequest.page(html.relay.roundForm.create(err, tour)),
-                  setup =>
-                    rateLimitCreation(Redirect(routes.RelayTour.redirectOrApiTour(tour.slug, tour.id.value))):
-                      env.relay.api.create(setup, me, tour) map { round =>
-                        Redirect(routes.RelayRound.show(tour.slug, round.slug, round.id.value))
-                      }
-                )
-      ,
-      scoped = ctx ?=>
-        me ?=>
-          NoLameOrBot:
-            env.relay.api tourById TourModel.Id(tourId) flatMapz { tour =>
-              env.relay.api.withRounds(tour) flatMap { trs =>
-                env.relay.roundForm
-                  .create(trs)
-                  .bindFromRequest()
-                  .fold(
-                    err => BadRequest(apiFormError(err)),
-                    setup =>
-                      rateLimitCreation(rateLimited):
-                        JsonOk:
-                          env.relay.api.create(setup, me, tour) map { round =>
-                            env.relay.jsonView.withUrl(round withTour tour)
-                          }
+  def create(tourId: String) = AuthOrScopedBody(_.Study.Write) { ctx ?=> me ?=>
+    NoLameOrBot:
+      WithTourAndRoundsCanUpdate(tourId): trs =>
+        val tour = trs.tour
+        def whenRateLimited = negotiate(
+          Redirect(routes.RelayTour.redirectOrApiTour(tour.slug, tour.id.value)),
+          rateLimited
+        )
+        env.relay.roundForm
+          .create(trs)
+          .bindFromRequest()
+          .fold(
+            err =>
+              negotiate(
+                BadRequest.page(html.relay.roundForm.create(err, tour)),
+                BadRequest(apiFormError(err))
+              ),
+            setup =>
+              rateLimitCreation(whenRateLimited):
+                env.relay.api.create(setup, tour) flatMap { round =>
+                  negotiate(
+                    Redirect(routes.RelayRound.show(tour.slug, round.slug, round.id.value)),
+                    JsonOk(env.relay.jsonView.withUrl(round withTour tour))
                   )
-              }
-            }
-    )
+                }
+          )
+  }
 
   def edit(id: RelayRoundId) = Auth { ctx ?=> me ?=>
-    OptionPage(env.relay.api.byIdAndContributor(id)): rt =>
+    FoundPage(env.relay.api.byIdAndContributor(id)): rt =>
       html.relay.roundForm.edit(rt, env.relay.roundForm.edit(rt.round))
   }
 
-  def update(id: RelayRoundId) =
-    AuthOrScopedBody(_.Study.Write)(
-      auth = ctx ?=>
-        me ?=>
-          doUpdate(id).flatMapz:
-            _.fold(
-              (old, err) => BadRequest.page(html.relay.roundForm.edit(old, err)),
-              rt => Redirect(rt.path)
-            )
-      ,
-      scoped = ctx ?=>
-        me ?=>
-          doUpdate(id).map:
-            case None => NotFound(jsonError("No such broadcast"))
-            case Some(res) =>
-              res.fold(
-                (_, err) => BadRequest(apiFormError(err)),
-                rt => JsonOk(env.relay.jsonView.withUrl(rt))
-              )
-    )
-
-  private def doUpdate(id: RelayRoundId)(using
-      req: Request[?],
-      me: Me
-  ): Fu[Option[Either[(RoundModel.WithTour, Form[RelayRoundForm.Data]), RoundModel.WithTour]]] =
+  def update(id: RelayRoundId) = AuthOrScopedBody(_.Study.Write) { ctx ?=> me ?=>
     env.relay.api.byIdAndContributor(id) flatMapz { rt =>
       env.relay.roundForm
         .edit(rt.round)
@@ -100,18 +64,31 @@ final class RelayRound(
         .fold(
           err => fuccess(Left(rt -> err)),
           data =>
-            env.relay.api.update(rt.round) { data.update(_, me) }.dmap(_ withTour rt.tour) dmap Right.apply
+            env.relay.api
+              .update(rt.round)(data.update)
+              .dmap(_ withTour rt.tour)
+              .dmap(Right(_))
         ) dmap some
+    } orNotFound {
+      _.fold(
+        (old, err) =>
+          negotiate(
+            BadRequest.page(html.relay.roundForm.edit(old, err)),
+            BadRequest(apiFormError(err))
+          ),
+        rt => negotiate(Redirect(rt.path), JsonOk(env.relay.jsonView.withUrl(rt)))
+      )
     }
+  }
 
   def reset(id: RelayRoundId) = Auth { ctx ?=> me ?=>
-    OptionFuResult(env.relay.api.byIdAndContributor(id)): rt =>
+    Found(env.relay.api.byIdAndContributor(id)): rt =>
       env.relay.api.reset(rt.round) inject Redirect(rt.path)
   }
 
   def show(ts: String, rs: String, id: RelayRoundId) =
     OpenOrScoped(_.Study.Read): ctx ?=>
-      negotiateHtmlOrJson(
+      negotiate(
         html =
           pageHit
           WithRoundAndTour(ts, rs, id): rt =>
@@ -125,34 +102,31 @@ final class RelayRound(
                   }
                 }
               else env.study.api byIdWithChapter rt.round.studyId
-            sc flatMapz { doShow(rt, _) }
+            sc orNotFound { doShow(rt, _) }
         ,
-        json = env.relay.api.byIdWithTour(id) flatMapz { rt =>
-          env.study.studyRepo.byId(rt.round.studyId) flatMapz { study =>
+        json = Found(env.relay.api.byIdWithTour(id)): rt =>
+          Found(env.study.studyRepo.byId(rt.round.studyId)): study =>
             studyC.CanView(study)(
               env.study.chapterRepo orderedMetadataByStudy rt.round.studyId map { games =>
                 JsonOk(env.relay.jsonView.withUrlAndGames(rt, games))
               }
             )(studyC.privateUnauthorizedJson, studyC.privateForbiddenJson)
-          }
-        }
       )
 
   def pgn(ts: String, rs: String, id: StudyId) = studyC.pgn(id)
   def apiPgn(id: StudyId)                      = studyC.apiPgn(id)
 
   def stream(id: RelayRoundId) = AnonOrScoped(): ctx ?=>
-    env.relay.api.byIdWithStudy(id) flatMapz { rt =>
+    Found(env.relay.api.byIdWithStudy(id)): rt =>
       studyC.CanView(rt.study) {
         apiC.GlobalConcurrencyLimitPerIP
           .events(req.ipAddress)(env.relay.pgnStream.streamRoundGames(rt)): source =>
             noProxyBuffer(Ok.chunked[PgnStr](source.keepAlive(60.seconds, () => PgnStr(" "))))
       }(Unauthorized, Forbidden)
-    }
 
   def chapter(ts: String, rs: String, id: RelayRoundId, chapterId: StudyChapterId) = Open:
     WithRoundAndTour(ts, rs, id): rt =>
-      env.study.api.byIdWithChapterOrFallback(rt.round.studyId, chapterId) flatMapz { doShow(rt, _) }
+      env.study.api.byIdWithChapterOrFallback(rt.round.studyId, chapterId) orNotFound { doShow(rt, _) }
 
   def push(id: RelayRoundId) = ScopedBody(parse.tolerantText)(Seq(_.Study.Write)) { ctx ?=> me ?=>
     env.relay.api
@@ -165,7 +139,7 @@ final class RelayRound(
   private def WithRoundAndTour(@nowarn ts: String, @nowarn rs: String, id: RelayRoundId)(
       f: RoundModel.WithTour => Fu[Result]
   )(using ctx: Context): Fu[Result] =
-    OptionFuResult(env.relay.api byIdWithTour id): rt =>
+    Found(env.relay.api byIdWithTour id): rt =>
       if !ctx.req.path.startsWith(rt.path) && HTTPRequest.isRedirectable(ctx.req)
       then Redirect(rt.path)
       else f(rt)
@@ -173,15 +147,16 @@ final class RelayRound(
   private def WithTour(id: String)(
       f: TourModel => Fu[Result]
   )(using Context): Fu[Result] =
-    OptionFuResult(env.relay.api tourById TourModel.Id(id))(f)
+    Found(env.relay.api tourById TourModel.Id(id))(f)
 
   private def WithTourAndRoundsCanUpdate(id: String)(
       f: TourModel.WithRounds => Fu[Result]
   )(using ctx: Context): Fu[Result] =
     WithTour(id): tour =>
-      ctx.me.soUse { env.relay.api.canUpdate(tour) } flatMapz {
-        env.relay.api withRounds tour flatMap f
-      }
+      ctx.me
+        .soUse { env.relay.api.canUpdate(tour) }
+        .elseNotFound:
+          env.relay.api withRounds tour flatMap f
 
   private def doShow(rt: RoundModel.WithTour, oldSc: lila.study.Study.WithChapter)(using
       ctx: Context

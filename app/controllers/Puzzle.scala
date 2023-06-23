@@ -50,11 +50,11 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   def daily = Open:
     NoBot:
-      OptionFuResult(env.puzzle.daily.get): daily =>
-        negotiate(
+      Found(env.puzzle.daily.get): daily =>
+        negotiateApi(
           html = renderShow(daily.puzzle, PuzzleAngle.mix),
           api = v => renderJson(daily.puzzle, PuzzleAngle.mix, apiVersion = v.some) dmap { Ok(_) }
-        ) dmap (_.noCache)
+        ).dmap(_.noCache)
 
   def apiDaily = Anon:
     env.puzzle.daily.get.flatMap:
@@ -199,12 +199,11 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
   def streakLang = LangPage(routes.Puzzle.streak)(serveStreak)
 
   private def serveStreak(using ctx: Context) = NoBot:
-    streakJsonAndPuzzle.flatMapz: (json, puzzle) =>
+    FoundPage(streakJsonAndPuzzle): (json, puzzle) =>
       val prefJson = env.puzzle.jsonView.pref(ctx.pref)
       val langPath = LangPath(routes.Puzzle.streak).some
-      Ok.page:
-        views.html.puzzle.show(puzzle, json, prefJson, PuzzleSettings.default, langPath)
-      .map(_.noCache.enableSharedArrayBuffer)
+      views.html.puzzle.show(puzzle, json, prefJson, PuzzleSettings.default, langPath)
+    .map(_.noCache.enableSharedArrayBuffer)
 
   private def streakJsonAndPuzzle(using Lang) =
     given Option[Me] = none
@@ -219,7 +218,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
     env.user.repo.addStreakRun(userId, score)
 
   def apiStreak = Anon:
-    streakJsonAndPuzzle.mapz: (json, _) =>
+    streakJsonAndPuzzle.orNotFound: (json, _) =>
       JsonOk(json)
 
   def apiStreakResult(score: Int) = ScopedBody(_.Puzzle.Write, _.Web.Mobile) { _ ?=> me ?=>
@@ -242,14 +241,15 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   def voteTheme(id: PuzzleId, themeStr: String) = AuthBody { _ ?=> me ?=>
     NoBot:
-      PuzzleTheme.findDynamic(themeStr) so { theme =>
-        env.puzzle.forms.themeVote
-          .bindFromRequest()
-          .fold(
-            jsonFormError,
-            vote => env.puzzle.api.theme.vote(me, id, theme.key, vote) inject jsonOkResult
-          )
-      }
+      PuzzleTheme
+        .findDynamic(themeStr)
+        .so: theme =>
+          env.puzzle.forms.themeVote
+            .bindFromRequest()
+            .fold(
+              jsonFormError,
+              vote => env.puzzle.api.theme.vote(me, id, theme.key, vote) inject jsonOkResult
+            )
   }
 
   def setDifficulty(theme: String) = AuthBody { _ ?=> me ?=>
@@ -299,7 +299,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       case _ =>
         lila.puzzle.Puzzle toId angleOrId match
           case Some(id) =>
-            OptionFuResult(env.puzzle.api.puzzle find id): puzzle =>
+            Found(env.puzzle.api.puzzle find id): puzzle =>
               ctx.me.so { env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle) } >>
                 renderShow(puzzle, PuzzleAngle.mix, langPath = langPath)
           case _ =>
@@ -313,7 +313,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
   def showWithAngle(angleKey: String, id: PuzzleId) = Open:
     NoBot:
       val angle = PuzzleAngle.findOrMix(angleKey)
-      OptionFuResult(env.puzzle.api.puzzle find id): puzzle =>
+      Found(env.puzzle.api.puzzle find id): puzzle =>
         if angle.asTheme.exists(theme => !puzzle.themes.contains(theme))
         then Redirect(routes.Puzzle.show(puzzle.id))
         else
@@ -410,82 +410,70 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       )
 
   def mobileBcLoad(nid: Long) = Open:
-    negotiate(
-      html = notFound,
-      _ =>
-        OptionOk(Puz.numericalId(nid) so env.puzzle.api.puzzle.find): puz =>
-          env.puzzle.jsonView.bc(puz)
-        .dmap(_ as JSON)
-    )
+    negotiateJson:
+      FoundOk(Puz.numericalId(nid) so env.puzzle.api.puzzle.find): puz =>
+        env.puzzle.jsonView.bc(puz)
 
   // XHR load next play puzzle
   def mobileBcNew = Open:
     NoBot:
-      negotiate(
+      negotiateApi(
         html = notFound,
-        api = v => {
+        api = v =>
           val angle = PuzzleAngle.mix
           nextPuzzleForMe(angle, none) flatMap {
             _.fold(notFoundJson()) { p => JsonOk(renderJson(p, angle, apiVersion = v.some)) }
           }
-        }
       )
 
   /* Mobile API: select a bunch of puzzles for offline use */
   def mobileBcBatchSelect = Auth { ctx ?=> _ ?=>
-    negotiate(
-      html = notFound,
-      api = _ =>
-        val nb = getInt("nb") getOrElse 15 atLeast 1 atMost 30
-        env.puzzle.batch.nextForMe(PuzzleDifficulty.default, nb) flatMap { puzzles =>
+    negotiateJson:
+      val nb = getInt("nb") getOrElse 15 atLeast 1 atMost 30
+      env.puzzle.batch
+        .nextForMe(PuzzleDifficulty.default, nb)
+        .flatMap: puzzles =>
           env.puzzle.jsonView.bc.batch(puzzles)
-        } dmap { Ok(_) }
-    )
+        .dmap(Ok(_))
   }
 
   /* Mobile API: tell the server about puzzles solved while offline */
   def mobileBcBatchSolve = AuthBody(parse.json) { ctx ?=> me ?=>
-    negotiate(
-      html = notFound,
-      api = _ => {
-        import lila.puzzle.PuzzleForm.bc.*
-        import lila.puzzle.PuzzleWin
-        ctx.body.body
-          .validate[SolveDataBc]
-          .fold(
-            err => BadRequest(err.toString),
-            data =>
-              data.solutions.lastOption
-                .flatMap: solution =>
-                  Puz
-                    .numericalId(solution.id)
-                    .map(_ -> PuzzleWin(solution.win))
-                .so: (id, solution) =>
-                  env.puzzle.finisher(id, PuzzleAngle.mix, me, solution, chess.Mode.Rated)
-                .map:
-                  case None => Ok(env.puzzle.jsonView.bc.userJson(me.perfs.puzzle.intRating))
-                  case Some((round, perf)) =>
-                    env.puzzle.session.onComplete(round, PuzzleAngle.mix)
-                    Ok(env.puzzle.jsonView.bc.userJson(perf.intRating))
-          )
-      }
-    )
+    negotiateJson:
+      import lila.puzzle.PuzzleForm.bc.*
+      import lila.puzzle.PuzzleWin
+      ctx.body.body
+        .validate[SolveDataBc]
+        .fold(
+          err => BadRequest(err.toString),
+          data =>
+            data.solutions.lastOption
+              .flatMap: solution =>
+                Puz
+                  .numericalId(solution.id)
+                  .map(_ -> PuzzleWin(solution.win))
+              .so: (id, solution) =>
+                env.puzzle.finisher(id, PuzzleAngle.mix, me, solution, chess.Mode.Rated)
+              .map:
+                case None => Ok(env.puzzle.jsonView.bc.userJson(me.perfs.puzzle.intRating))
+                case Some((round, perf)) =>
+                  env.puzzle.session.onComplete(round, PuzzleAngle.mix)
+                  Ok(env.puzzle.jsonView.bc.userJson(perf.intRating))
+        )
   }
 
   def mobileBcVote(nid: Long) = AuthBody { ctx ?=> me ?=>
-    negotiate(
-      html = notFound,
-      api = _ =>
-        env.puzzle.forms.bc.vote
-          .bindFromRequest()
-          .fold(
-            jsonFormError,
-            intVote =>
-              Puz.numericalId(nid) so {
-                env.puzzle.api.vote.update(_, me, intVote == 1) inject jsonOkResult
-              }
-          )
-    )
+    negotiateJson:
+      env.puzzle.forms.bc.vote
+        .bindFromRequest()
+        .fold(
+          jsonFormError,
+          intVote =>
+            Puz.numericalId(nid) so {
+              env.puzzle.api.vote.update(_, me, intVote == 1) inject jsonOkResult
+            }
+        )
+
   }
 
   def help = Open:

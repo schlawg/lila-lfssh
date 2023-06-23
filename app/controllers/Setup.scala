@@ -7,7 +7,7 @@ import play.api.i18n.Lang
 import chess.format.Fen
 
 import lila.app.{ given, * }
-import lila.common.IpAddress
+import lila.common.{ IpAddress, HTTPRequest }
 import lila.game.{ AnonCookie, Pov }
 import lila.rating.Glicko
 import lila.setup.Processor.HookResult
@@ -57,7 +57,7 @@ final class Setup(
             jsonFormError,
             config =>
               processor.ai(config) flatMap { pov =>
-                negotiate(
+                negotiateApi(
                   html = redirectPov(pov),
                   api = apiVersion =>
                     env.api.roundApi.player(pov, none, apiVersion) map { data =>
@@ -80,9 +80,9 @@ final class Setup(
                   case Some(denied) =>
                     val message = lila.challenge.ChallengeDenied.translated(denied)
                     negotiate(
-                      html = Forbidden(jsonError(message)),
                       // 403 tells setupCtrl.ts to close the setup modal
-                      api = _ => BadRequest(jsonError(message))
+                      Forbidden(jsonError(message)), // TODO test
+                      BadRequest(jsonError(message))
                     )
                   case None =>
                     import lila.challenge.Challenge.*
@@ -104,13 +104,13 @@ final class Setup(
                     env.challenge.api create challenge flatMap {
                       if _ then
                         negotiate(
-                          html = Redirect(routes.Round.watcher(challenge.id, "white")),
-                          api = _ => challengeC.showChallenge(challenge, justCreated = true)
+                          Redirect(routes.Round.watcher(challenge.id, "white")),
+                          challengeC.showChallenge(challenge, justCreated = true)
                         )
                       else
                         negotiate(
-                          html = Redirect(routes.Lobby.home),
-                          api = _ => BadRequest(jsonError("Challenge not created"))
+                          Redirect(routes.Lobby.home),
+                          BadRequest(jsonError("Challenge not created"))
                         )
                     }
                 }
@@ -150,7 +150,7 @@ final class Setup(
     NoBot:
       PostRateLimit(ctx.ip, rateLimitedFu):
         NoPlaybanOrCurrent:
-          env.game.gameRepo game gameId flatMapz { game =>
+          Found(env.game.gameRepo game gameId): game =>
             for
               blocking <- ctx.userId so env.relation.api.fetchBlocking
               hookConfig = lila.setup.HookConfig.default(ctx.isAuth)
@@ -160,18 +160,10 @@ final class Setup(
                   get("deltaMin"),
                   get("deltaMax")
                 )
-              )(rr => hookConfig withRatingRange rr) updateFrom game
-              sameOpponents = game.userIds
-              hookResult <-
-                processor
-                  .hook(
-                    hookConfigWithRating,
-                    sri,
-                    ctx.req.sid,
-                    lila.pool.Blocking(blocking ++ sameOpponents)
-                  )
+              )(hookConfig.withRatingRange) updateFrom game
+              allBlocking = lila.pool.Blocking(blocking ++ game.userIds)
+              hookResult <- processor.hook(hookConfigWithRating, sri, ctx.req.sid, allBlocking)
             yield hookResponse(hookResult)
-          }
 
   private val BoardApiHookConcurrencyLimitPerUserOrSri = lila.memo.ConcurrencyLimit[Either[Sri, UserId]](
     name = "Board API hook Stream API concurrency per user",
@@ -192,7 +184,8 @@ final class Setup(
       case Left(err) => err.toFuccess
       case Right(author) =>
         forms
-          .boardApiHook(ctx.isMobile)
+          .boardApiHook:
+            ctx.isMobileOauth || (ctx.isAnon && HTTPRequest.isLichessMobile(ctx.req))
           .bindFromRequest()
           .fold(
             newJsonFormError,

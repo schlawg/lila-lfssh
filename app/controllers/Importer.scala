@@ -30,8 +30,8 @@ final class Importer(env: Env) extends LilaController(env):
       .fold(
         failure =>
           negotiate( // used by mobile app
-            html = BadRequest.page(html.game.importGame(failure)),
-            api = _ => BadRequest(jsonError("Invalid PGN"))
+            BadRequest.page(html.game.importGame(failure)),
+            BadRequest(jsonError("Invalid PGN"))
           ),
         data =>
           ImportRateLimitPerIP(ctx.ip, rateLimitedFu, cost = 1):
@@ -83,8 +83,7 @@ final class Importer(env: Env) extends LilaController(env):
     }
 
   def masterGame(id: GameId, orientation: String) = Open:
-    env.explorer.importer(id) mapz { game =>
+    Found(env.explorer.importer(id)): game =>
       val url      = routes.Round.watcher(game.id, orientation).url
       val fenParam = get("fen").so(f => s"?fen=$f")
       Redirect(s"$url$fenParam")
-    }

@@ -4,6 +4,7 @@ package http
 import play.api.libs.json.*
 import play.api.http.*
 import play.api.mvc.*
+import alleycats.Zero
 
 import lila.common.{ HTTPRequest, ApiVersion }
 
@@ -16,15 +17,29 @@ trait ResponseBuilder(using Executor)
     with CtrlPage:
 
   val keyPages = KeyPages(env)
-  export keyPages.{ notFound as renderNotFound }
   export scalatags.Text.Frag
 
-  // given Conversion[scalatags.Text.Frag, Result] = Ok(_)
-  given Conversion[Result, Fu[Result]] = fuccess(_)
-  // given Conversion[scalatags.Text.Frag, Fu[Result]] = html => fuccess(Ok(html))
-  given (using Context): Conversion[Funit, Fu[Result]] =
-    _ => negotiate(fuccess(Ok("ok")), _ => fuccess(jsonOkResult))
-  given alleycats.Zero[Result] = alleycats.Zero(Results.NotFound)
+  given Conversion[Result, Fu[Result]]    = fuccess(_)
+  given Conversion[Frag, Fu[Frag]]        = fuccess(_)
+  given (using Context): Zero[Fu[Result]] = Zero(notFound)
+
+  def Found[A](a: Fu[Option[A]])(f: A => Fu[Result])(using Context): Fu[Result] =
+    a.flatMap(_.fold(notFound)(f))
+
+  def FoundOk[A, B: Writeable](fua: Fu[Option[A]])(op: A => Fu[B])(using Context): Fu[Result] =
+    Found(fua): a =>
+      op(a).dmap(Ok(_))
+
+  def FoundPage[A](fua: Fu[Option[A]])(op: A => PageContext ?=> Fu[Frag])(using Context): Fu[Result] =
+    Found(fua): a =>
+      Ok.pageAsync(op(a))
+
+  extension [A](fua: Fu[Option[A]])
+    def orNotFound(f: A => Fu[Result])(using Context): Fu[Result] =
+      fua flatMap { _.fold(notFound)(f) }
+  extension [A](fua: Fu[Boolean])
+    def elseNotFound(f: => Fu[Result])(using Context): Fu[Result] =
+      fua flatMap { if _ then f else notFound }
 
   val rateLimitedMsg             = "Too many requests. Try again later."
   val rateLimited                = TooManyRequests(rateLimitedMsg)
@@ -44,46 +59,49 @@ trait ResponseBuilder(using Executor)
       _.fold(notFoundJson())(a => fuccess(JsonOk(a)))
   def JsonStrOk(str: JsonStr): Result       = Ok(str) as JSON
   def JsonBadRequest(body: JsValue): Result = BadRequest(body) as JSON
+  def JsonBadRequest(msg: String): Result   = JsonBadRequest(jsonError(msg))
 
-  def negotiate(html: => Fu[Result], api: ApiVersion => Fu[Result])(using ctx: Context): Fu[Result] =
+  def negotiateApi(html: => Fu[Result], api: ApiVersion => Fu[Result])(using ctx: Context): Fu[Result] =
     lila.api.Mobile.Api
       .requestVersion(ctx.req)
       .fold(html): v =>
         api(v).dmap(_ as JSON)
       .dmap(_.withHeaders(VARY -> "Accept"))
 
-  def negotiateHtmlOrJson(html: => Fu[Result], json: => Fu[Result])(using ctx: Context): Fu[Result] =
-    if HTTPRequest.acceptsJson(ctx.req) then json else html
+  def negotiate(html: => Fu[Result], json: => Fu[Result])(using ctx: Context): Fu[Result] =
+    if HTTPRequest.acceptsJson(ctx.req)
+    then json.dmap(_.withHeaders(VARY -> "Accept").as(JSON))
+    else html.dmap(_.withHeaders(VARY -> "Accept"))
+
+  def negotiateJson(result: => Fu[Result])(using Context) = negotiate(notFound, result)
 
   def jsonError[A: Writes](err: A): JsObject = Json.obj("error" -> err)
 
   def notFoundJsonSync(msg: String = "Not found"): Result = NotFound(jsonError(msg)) as JSON
 
   def notFoundJson(msg: String = "Not found"): Fu[Result] = fuccess(notFoundJsonSync(msg))
+  def notFoundText(msg: String = "Not found"): Fu[Result] = fuccess(Results.NotFound(msg))
 
   def notForBotAccounts = JsonBadRequest(jsonError("This API endpoint is not for Bot accounts."))
 
   def notFound(using ctx: Context): Fu[Result] =
     negotiate(
-      html = ctx match
-        case web: Context if HTTPRequest.isSynchronousHttp(ctx.req) => renderNotFound(using web)
-        case _ => fuccess(Results.NotFound("Resource not found"))
-      ,
-      api = _ => notFoundJson("Resource not found")
+      html =
+        if HTTPRequest.isSynchronousHttp(ctx.req)
+        then keyPages.notFound
+        else notFoundText(),
+      json = notFoundJson()
     )
 
   def authenticationFailed(using ctx: Context): Fu[Result] =
     negotiate(
-      html = fuccess:
-        Redirect(
-          if HTTPRequest.isClosedLoginPath(ctx.req)
-          then controllers.routes.Auth.login
-          else controllers.routes.Auth.signup
-        ) withCookies env.lilaCookie.session(env.security.api.AccessUri, ctx.req.uri)
-      ,
-      api = _ =>
-        env.lilaCookie.ensure(ctx.req):
-          Unauthorized(jsonError("Login required"))
+      html = Redirect(
+        if HTTPRequest.isClosedLoginPath(ctx.req)
+        then controllers.routes.Auth.login
+        else controllers.routes.Auth.signup
+      ) withCookies env.lilaCookie.session(env.security.api.AccessUri, ctx.req.uri),
+      json = env.lilaCookie.ensure(ctx.req):
+        Unauthorized(jsonError("Login required"))
     )
 
   private val forbiddenJsonResult = Forbidden(jsonError("Authorization failed"))
@@ -96,6 +114,12 @@ trait ResponseBuilder(using Executor)
         render:
           case Accepts.Json() => forbiddenJsonResult
           case _              => Results.Forbidden("Authorization failed")
+
+  def serverError(msg: String)(using ctx: Context): Fu[Result] =
+    negotiate(
+      InternalServerError.page(views.html.site.message.serverError(msg)),
+      InternalServerError(jsonError(msg))
+    )
 
   def playbanJsonError(ban: lila.playban.TempBan) =
     Forbidden(

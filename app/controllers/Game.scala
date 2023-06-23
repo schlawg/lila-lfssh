@@ -13,11 +13,11 @@ import lila.common.HTTPRequest
 final class Game(env: Env, apiC: => Api) extends LilaController(env):
 
   def bookmark(gameId: GameId) = Auth { _ ?=> me ?=>
-    env.bookmark.api.toggle(gameId, me)
+    env.bookmark.api.toggle(gameId, me) inject NoContent
   }
 
   def delete(gameId: GameId) = Auth { _ ?=> me ?=>
-    OptionFuResult(env.game.gameRepo game gameId): game =>
+    Found(env.game.gameRepo game gameId): game =>
       if game.pgnImport.flatMap(_.user).exists(me.is(_)) then
         env.hub.bookmark ! lila.hub.actorApi.bookmark.Remove(game.id)
         (env.game.gameRepo remove game.id) >>
