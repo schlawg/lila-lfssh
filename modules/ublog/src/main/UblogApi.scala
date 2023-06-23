@@ -37,8 +37,9 @@ final class UblogApi(
       getUserBlog(me, insertMissing = true) flatMap { blog =>
         val post = data.update(me, prev, Markdown(frozen.text))
         colls.post.update.one($id(prev.id), $set(bsonWriteObjTry[UblogPost](post).get)) >>
-          (post.live && prev.lived.isEmpty).so(onFirstPublish(me, blog, post)
-          inject post.copy(markdown = Markdown(askApi.unfreeze(frozen.text, frozen.asks map some)))
+          (post.live && prev.lived.isEmpty).so(onFirstPublish(me, blog, post)) inject post.copy(markdown =
+            Markdown(askApi.unfreeze(frozen.text, frozen.asks map some))
+          )
       }
     }
 
