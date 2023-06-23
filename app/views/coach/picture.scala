@@ -3,17 +3,16 @@ package coach
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.coach.Coach
 
 object picture:
 
-  def apply(c: Coach.WithUser, error: Option[String] = None)(using WebContext) =
+  def apply(c: Coach.WithUser, error: Option[String] = None)(using PageContext) =
     views.html.account.layout(
       title = s"${c.user.titleUsername} coach picture",
-      evenMoreJs = jsTag("coach.form.js"),
+      evenMoreJs = iifeModule("javascripts/coach.form.js"),
       evenMoreCss = cssTag("coach.editor"),
       active = "coach"
     ) {

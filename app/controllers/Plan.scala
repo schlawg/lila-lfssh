@@ -4,7 +4,6 @@ import java.util.Currency
 import play.api.libs.json.*
 import play.api.mvc.*
 
-import lila.api.WebContext
 import lila.app.{ given, * }
 import lila.common.EmailAddress
 import lila.plan.{
@@ -20,7 +19,6 @@ import lila.plan.{
   StripeCustomer,
   StripeCustomerId
 }
-import lila.user.{ User as UserModel }
 import views.*
 
 final class Plan(env: Env) extends LilaController(env):
@@ -29,78 +27,79 @@ final class Plan(env: Env) extends LilaController(env):
 
   def index = Open:
     pageHit
-    ctx.me.fold(indexAnon): me =>
+    ctx.me.foldUse(indexAnon): me ?=>
       import lila.plan.PlanApi.SyncResult.*
       env.plan.api.sync(me) flatMap {
         case ReloadUser => Redirect(routes.Plan.index)
         case Synced(Some(patron), None, None) =>
-          env.user.repo email me.id flatMap { email =>
+          env.user.repo email me flatMap { email =>
             renderIndex(email, patron.some)
           }
-        case Synced(Some(patron), Some(stripeCus), _) => indexStripePatron(me, patron, stripeCus)
-        case Synced(Some(patron), _, Some(payPalSub)) => indexPayPalPatron(me, patron, payPalSub)
-        case _                                        => indexFreeUser(me)
+        case Synced(Some(patron), Some(stripeCus), _) => indexStripePatron(patron, stripeCus)
+        case Synced(Some(patron), _, Some(payPalSub)) => indexPayPalPatron(patron, payPalSub)
+        case _                                        => indexFreeUser
       }
 
   def list = Open:
-    ctx.me.fold(Redirect(routes.Plan.index).toFuccess): me =>
+    ctx.me.foldUse(Redirect(routes.Plan.index).toFuccess): me ?=>
       import lila.plan.PlanApi.SyncResult.*
       env.plan.api.sync(me) flatMap {
         case ReloadUser            => Redirect(routes.Plan.list)
-        case Synced(Some(_), _, _) => indexFreeUser(me)
+        case Synced(Some(_), _, _) => indexFreeUser
         case _                     => Redirect(routes.Plan.index)
       }
 
-  private def indexAnon(using WebContext) = renderIndex(email = none, patron = none)
+  private def indexAnon(using Context) = renderIndex(email = none, patron = none)
 
-  private def indexFreeUser(me: UserModel)(using WebContext) =
-    env.user.repo email me.id flatMap { renderIndex(_, patron = none) }
+  private def indexFreeUser(using ctx: Context, me: Me) =
+    env.user.repo email me flatMap { renderIndex(_, patron = none) }
 
   private def renderIndex(email: Option[EmailAddress], patron: Option[lila.plan.Patron])(using
-      WebContext
+      Context
   ): Fu[Result] =
     for
       recentIds <- env.plan.api.recentChargeUserIds
       bestIds   <- env.plan.api.topPatronUserIds
       _         <- env.user.lightUserApi.preloadMany(recentIds ::: bestIds)
       pricing   <- env.plan.priceApi.pricingOrDefault(myCurrency)
-    yield Ok(
-      html.plan.index(
-        stripePublicKey = env.plan.stripePublicKey,
-        payPalPublicKey = env.plan.payPalPublicKey,
-        email = email,
-        patron = patron,
-        recentIds = recentIds,
-        bestIds = bestIds,
-        pricing = pricing
-      )
-    )
+      page <- renderPage:
+        html.plan.index(
+          stripePublicKey = env.plan.stripePublicKey,
+          payPalPublicKey = env.plan.payPalPublicKey,
+          email = email,
+          patron = patron,
+          recentIds = recentIds,
+          bestIds = bestIds,
+          pricing = pricing
+        )
+    yield Ok(page)
 
-  private def indexStripePatron(me: UserModel, patron: lila.plan.Patron, customer: StripeCustomer)(using
-      ctx: WebContext
-  ) = for {
+  private def indexStripePatron(patron: lila.plan.Patron, customer: StripeCustomer)(using
+      ctx: Context,
+      me: Me
+  ) = for
     pricing <- env.plan.priceApi.pricingOrDefault(myCurrency)
     info    <- env.plan.api.stripe.customerInfo(me, customer)
     gifts   <- env.plan.api.giftsFrom(me)
     res <- info match
       case Some(info: CustomerInfo.Monthly) =>
-        Ok(html.plan.indexStripe(me, patron, info, env.plan.stripePublicKey, pricing, gifts)).toFuccess
+        Ok.page(html.plan.indexStripe(me, patron, info, env.plan.stripePublicKey, pricing, gifts))
       case Some(CustomerInfo.OneTime(cus)) =>
         renderIndex(cus.email map { EmailAddress(_) }, patron.some)
       case None =>
-        env.user.repo email me.id flatMap {
+        env.user.repo email me flatMap {
           renderIndex(_, patron.some)
         }
-  } yield res
+  yield res
 
-  private def indexPayPalPatron(me: UserModel, patron: lila.plan.Patron, sub: PayPalSubscription)(using
-      WebContext
+  private def indexPayPalPatron(patron: lila.plan.Patron, sub: PayPalSubscription)(using
+      ctx: Context,
+      me: Me
   ) =
-    env.plan.api.giftsFrom(me) map { gifts =>
-      Ok(html.plan.indexPayPal(me, patron, sub, gifts))
-    }
+    Ok.pageAsync:
+      env.plan.api.giftsFrom(me) map { html.plan.indexPayPal(me, patron, sub, _) }
 
-  private def myCurrency(using ctx: WebContext): Currency =
+  private def myCurrency(using ctx: Context): Currency =
     get("currency") flatMap lila.plan.CurrencyApi.currencyOption getOrElse
       env.plan.currencyApi.currencyByCountryCodeOrLang(
         env.security.geoIP(ctx.ip).flatMap(_.countryCode),
@@ -109,9 +108,9 @@ final class Plan(env: Env) extends LilaController(env):
 
   def features = Open:
     pageHit
-    html.plan.features()
+    Ok.page(html.plan.features())
 
-  def switch = AuthBody { ctx ?=> me =>
+  def switch = AuthBody { ctx ?=> me ?=>
     env.plan.priceApi.pricingOrDefault(myCurrency) flatMap { pricing =>
       lila.plan.Switch
         .form(pricing)
@@ -123,7 +122,7 @@ final class Plan(env: Env) extends LilaController(env):
     }
   }
 
-  def cancel = AuthBody { _ ?=> me =>
+  def cancel = AuthBody { _ ?=> me ?=>
     env.plan.api.cancel(me) inject Redirect(routes.Plan.index)
   }
 
@@ -131,10 +130,11 @@ final class Plan(env: Env) extends LilaController(env):
     // wait for the payment data from stripe or paypal
     lila.common.LilaFuture.delay(2.seconds):
       for
-        patron   <- ctx.me so env.plan.api.userPatron
+        patron   <- ctx.me so { env.plan.api.userPatron(_) }
         customer <- patron so env.plan.api.stripe.patronCustomer
-        gift     <- ctx.me so env.plan.api.recentGiftFrom
-      yield Ok(html.plan.thanks(patron, customer, gift))
+        gift     <- ctx.me so { env.plan.api.recentGiftFrom(_) }
+        page     <- renderPage(html.plan.thanks(patron, customer, gift))
+      yield Ok(page)
 
   def webhook = AnonBodyOf(parse.json): body =>
     if req.headers.hasHeader("PAYPAL-TRANSMISSION-SIG")
@@ -150,11 +150,10 @@ final class Plan(env: Env) extends LilaController(env):
   }
 
   private def createStripeSession(
-      me: UserModel,
       checkout: PlanCheckout,
       customerId: StripeCustomerId,
-      giftTo: Option[UserModel]
-  )(using ctx: WebContext) = {
+      giftTo: Option[lila.user.User]
+  )(using ctx: Context, me: Me) = {
     for
       isLifetime <- env.plan.priceApi.isLifetime(checkout.money)
       data = CreateStripeSession(
@@ -168,13 +167,13 @@ final class Plan(env: Env) extends LilaController(env):
         isLifetime = isLifetime,
         ip = ctx.ip
       )
-      session <- env.plan.api.stripe.createSession(data, me)
+      session <- env.plan.api.stripe.createSession(data)
     yield JsonOk(Json.obj("session" -> Json.obj("id" -> session.id.value)))
   }.recover(badStripeApiCall)
 
-  def switchStripePlan(user: UserModel, money: Money) =
+  def switchStripePlan(money: Money)(using me: Me) =
     env.plan.api
-      .switch(user, money)
+      .switch(me, money)
       .inject(jsonOkResult)
       .recover(badStripeApiCall)
 
@@ -192,7 +191,7 @@ final class Plan(env: Env) extends LilaController(env):
     ("slow", 40, 1.day)
   )
 
-  def stripeCheckout = AuthBody { ctx ?=> me =>
+  def stripeCheckout = AuthBody { ctx ?=> me ?=>
     CheckoutRateLimit(ctx.ip, rateLimitedFu):
       env.plan.priceApi
         .pricingOrDefault(myCurrency)
@@ -208,22 +207,22 @@ final class Plan(env: Env) extends LilaController(env):
               data =>
                 val checkout = data.fixFreq
                 for
-                  gifted   <- checkout.giftTo.filterNot(ctx.userId.has).so(env.user.repo.enabledById)
+                  gifted   <- checkout.giftTo.filterNot(ctx.is).so(env.user.repo.enabledById)
                   customer <- env.plan.api.stripe.userCustomer(me)
                   session <- customer match
                     case Some(customer) if checkout.freq == Freq.Onetime =>
-                      createStripeSession(me, checkout, customer.id, gifted)
+                      createStripeSession(checkout, customer.id, gifted)
                     case Some(customer) if customer.firstSubscription.isDefined =>
-                      switchStripePlan(me, checkout.money)
+                      switchStripePlan(checkout.money)
                     case _ =>
                       env.plan.api.stripe
                         .makeCustomer(me, checkout)
-                        .flatMap(customer => createStripeSession(me, checkout, customer.id, gifted))
+                        .flatMap(customer => createStripeSession(checkout, customer.id, gifted))
                 yield session
             )
   }
 
-  def updatePayment = AuthBody { ctx ?=> me =>
+  def updatePayment = AuthBody { ctx ?=> me ?=>
     CaptureRateLimit(ctx.ip, rateLimitedFu):
       env.plan.api.stripe.userCustomer(me) flatMap {
         _.flatMap(_.firstSubscription).map(_.copy(ip = ctx.ip.some)) so { sub =>
@@ -242,7 +241,7 @@ final class Plan(env: Env) extends LilaController(env):
       }
   }
 
-  def updatePaymentCallback = AuthBody { ctx ?=> me =>
+  def updatePaymentCallback = AuthBody { ctx ?=> me ?=>
     get("session") so { session =>
       env.plan.api.stripe.userCustomer(me) flatMap {
         _.flatMap(_.firstSubscription) so { sub =>
@@ -252,7 +251,7 @@ final class Plan(env: Env) extends LilaController(env):
     }
   }
 
-  def payPalCheckout = AuthBody { ctx ?=> me =>
+  def payPalCheckout = AuthBody { ctx ?=> me ?=>
     CheckoutRateLimit(ctx.ip, rateLimitedFu):
       env.plan.priceApi.pricingOrDefault(myCurrency) flatMap { pricing =>
         env.plan.checkoutForm
@@ -272,7 +271,7 @@ final class Plan(env: Env) extends LilaController(env):
                     JsonOk(Json.obj("subscription" -> Json.obj("id" -> sub.id.value)))
               else
                 for
-                  gifted <- checkout.giftTo.filterNot(ctx.userId.has).so(env.user.repo.enabledById)
+                  gifted <- checkout.giftTo.filterNot(ctx is _).so(env.user.repo.enabledById)
                   // customer <- env.plan.api.userCustomer(me)
                   order <- env.plan.api.payPal.createOrder(checkout, me, gifted)
                 yield JsonOk(Json.obj("order" -> Json.obj("id" -> order.id.value)))
@@ -280,7 +279,7 @@ final class Plan(env: Env) extends LilaController(env):
       }
   }
 
-  def payPalCapture(orderId: String) = Auth { ctx ?=> me =>
+  def payPalCapture(orderId: String) = Auth { ctx ?=> me ?=>
     CaptureRateLimit(ctx.ip, rateLimitedFu):
       get("sub")
         .map(PayPalSubscriptionId.apply)

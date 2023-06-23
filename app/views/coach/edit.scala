@@ -3,7 +3,6 @@ package views.html.coach
 import play.api.data.Form
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.i18n.LangList
 import lila.app.ui.ScalatagsTemplate.{ *, given }
@@ -30,7 +29,7 @@ object edit:
   }
 
   def apply(c: lila.coach.Coach.WithUser, form: Form[?])(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     views.html.account.layout(
       title = s"${c.user.titleUsername} coach page",

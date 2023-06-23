@@ -1,8 +1,8 @@
 package views.html.user
 
 import play.api.i18n.Lang
+import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.rating.{ Perf, PerfType }
@@ -18,7 +18,7 @@ object perfStat:
   def apply(
       data: PerfStatData,
       ratingChart: Option[String]
-  )(using WebContext) =
+  )(using PageContext) =
     import data.*
     import stat.perfType
     views.html.base.layout(
@@ -26,14 +26,11 @@ object perfStat:
       robots = false,
       moreJs = frag(
         jsModule("user"),
-        ratingChart.map { rc =>
-          frag(
-            jsModule("chart.ratingHistory"),
-            embedJsUnsafeLoadThen {
-              s"LichessChartRatingHistory($rc,{singlePerfName:'${perfType.trans(using lila.i18n.defaultLang)}'});"
-            }
+        ratingChart.map: rc =>
+          jsModuleInit(
+            "chart.ratingHistory",
+            s"{data:$rc,singlePerfName:'${perfType.trans(using lila.i18n.defaultLang)}'}"
           )
-        }
       ),
       moreCss = cssTag("perf-stat")
     ) {
@@ -73,7 +70,7 @@ object perfStat:
   private def decimal(v: Double) = lila.common.Maths.roundDownAt(v, 2)
 
   private def glicko(u: User, perfType: PerfType, perf: Perf, percentile: Option[Double])(using
-      ctx: WebContext
+      ctx: PageContext
   ): Frag =
     st.section(cls := "glicko")(
       h2(

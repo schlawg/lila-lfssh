@@ -4,7 +4,7 @@ import * as prop from 'common/storage';
 import * as cs from 'chess';
 import { src as src, dest as dest } from 'chess';
 import { PromotionCtrl, promote } from 'chess/promotion';
-import { RootCtrl, VoiceMove, VoiceCtrl, Entry, Match } from '../main';
+import { RootCtrl, VoiceMove, VoiceCtrl, Entry, Match, makeCtrl } from '../main';
 import { coloredArrows, numberedArrows, brushes } from './arrows';
 import { settingNodes } from './view';
 import {
@@ -19,13 +19,33 @@ import {
   findTransforms,
 } from '../util';
 
-// Based on the original implementation by Sam 'Spammy' Ezeh. see the README.md in ui/voice/@build
+// shimmed so we can show the UI while fetching the module
+export function load(ctrl: RootCtrl, initialFen: string): VoiceMove {
+  let move: VoiceMove;
+  const ui = makeCtrl({ redraw: ctrl.redraw, module: () => move, tpe: 'move' });
 
-export default (window as any).LichessVoiceMove = function (
-  root: RootCtrl,
-  ui: VoiceCtrl,
-  initialFen: string
-): VoiceMove {
+  lichess.loadEsm<VoiceMove>('voice.move', { init: { root: ctrl, ui, initialFen } }).then(x => (move = x));
+  return {
+    ui,
+    initGrammar: () => move.initGrammar(),
+    update: fen => move.update(fen),
+    confirm: (request, callback) => move.confirm(request, callback),
+    get promotionHook() {
+      return move.promotionHook;
+    },
+    get allPhrases() {
+      return move.allPhrases;
+    },
+    get prefNodes() {
+      return move.prefNodes;
+    },
+  };
+}
+
+export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: string }): VoiceMove {
+  const root = opts.root;
+  const ui = opts.ui;
+  const initialFen = opts.initialFen;
   const DEBUG = { emptyMatches: false, buildMoves: false, buildSquares: false, collapse: true };
   const cg: CgApi = root.chessground;
   let entries: Entry[] = [];
@@ -106,7 +126,9 @@ export default (window as any).LichessVoiceMove = function (
 
   function initTimerRec() {
     if (timer() === 0) return;
-    const words = [...partials.commands, ...(colorsPref() ? partials.colors : partials.numbers)].map(w => valWord(w));
+    const words = [...partials.commands, ...(colorsPref() ? partials.colors : partials.numbers)].map(w =>
+      valWord(w)
+    );
     lichess.mic.initRecognizer(words, { recId: 'timer', partial: true, listener: listenTimer });
   }
 
@@ -190,7 +212,11 @@ export default (window as any).LichessVoiceMove = function (
       console.info('handleAmbiguity', `no match for '${phrase}' among`, choices);
       return false;
     }
-    console.info('handleAmbiguity', `matched '${phrase}' to '${chosen[0]}' at cost=${chosen[1]} among`, choices);
+    console.info(
+      'handleAmbiguity',
+      `matched '${phrase}' to '${chosen[0]}' at cost=${chosen[1]} among`,
+      choices
+    );
     submit(chosen[0]);
     return true;
   }
@@ -255,7 +281,8 @@ export default (window as any).LichessVoiceMove = function (
       // mappings within a tag partition are not allowed when partite is true
       const to = byTok.get(transform.to);
       // should be optimized, maybe consolidate tags when parsing the lexicon
-      if (from?.tags?.every(x => to?.tags?.includes(x)) && from.tags.length === to!.tags.length) return Infinity;
+      if (from?.tags?.every(x => to?.tags?.includes(x)) && from.tags.length === to!.tags.length)
+        return Infinity;
     }
     return sub?.cost ?? Infinity;
   }
@@ -284,7 +311,8 @@ export default (window as any).LichessVoiceMove = function (
     // dedup by uci squares & keep first to preserve cost order
     options = options
       .filter(
-        ([uci, _], keepIfFirst) => options.findIndex(first => first[0].slice(0, 4) === uci.slice(0, 4)) === keepIfFirst
+        ([uci, _], keepIfFirst) =>
+          options.findIndex(first => first[0].slice(0, 4) === uci.slice(0, 4)) === keepIfFirst
       )
       .slice(0, maxArrows());
 
@@ -577,4 +605,4 @@ export default (window as any).LichessVoiceMove = function (
     }
     return [...new Map(res)]; // vals expansion can create duplicates
   }
-};
+}

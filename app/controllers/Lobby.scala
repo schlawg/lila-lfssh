@@ -5,7 +5,7 @@ import play.api.mvc.*
 import views.*
 
 import lila.app.{ *, given }
-import lila.api.WebContext
+
 import lila.common.Json.given
 
 final class Lobby(env: Env) extends LilaController(env):
@@ -29,7 +29,7 @@ final class Lobby(env: Env) extends LilaController(env):
         Ok(lobbyJson).withHeaders(CACHE_CONTROL -> s"max-age=$expiration")
     )
 
-  private def serveHtmlHome(using ctx: WebContext) =
+  private def serveHtmlHome(using ctx: Context) =
     env.pageCache { () =>
       keyPages.homeHtml.map: html =>
         Ok(html).withCanonical("").noCache
@@ -40,21 +40,22 @@ final class Lobby(env: Env) extends LilaController(env):
       LangPage("/")(serveHtmlHome)(lang)
 
   def handleStatus(status: Results.Status)(using RequestHeader): Fu[Result] =
-    webContext.flatMap: ctx =>
+    makeContext.flatMap: ctx =>
       keyPages.home(status)(using ctx)
 
   def seeks = Open:
     negotiate(
       html = NotFound,
       api = _ =>
-        ctx.me.fold(env.lobby.seekApi.forAnon)(env.lobby.seekApi.forUser) map { seeks =>
+        ctx.me.fold(env.lobby.seekApi.forAnon)(env.lobby.seekApi.forUser(_)) map { seeks =>
           Ok(JsArray(seeks.map(_.render))).withHeaders(CACHE_CONTROL -> s"max-age=10")
         }
     )
 
-  def timeline = Auth { _ ?=> me =>
-    env.timeline.entryApi
-      .userEntries(me.id)
-      .map: entries =>
-        Ok(html.timeline.entries(entries)).withHeaders(CACHE_CONTROL -> s"max-age=20")
+  def timeline = Auth { _ ?=> me ?=>
+    Ok.pageAsync:
+      env.timeline.entryApi
+        .userEntries(me)
+        .map(html.timeline.entries)
+    .map(_.withHeaders(CACHE_CONTROL -> s"max-age=20"))
   }

@@ -1,6 +1,5 @@
 package views.html.user
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.user.User
@@ -17,7 +16,7 @@ object mini:
       rel: Option[lila.relation.Relation],
       ping: Option[Int],
       crosstable: Option[lila.game.Crosstable]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     frag(
       div(cls := "upt__info")(
         div(cls := "upt__info__top")(
@@ -36,7 +35,7 @@ object mini:
           ),
           ping map bits.signalBars
         ),
-        if (u.lame && !ctx.me.has(u) && !isGranted(_.UserModView))
+        if (u.lame && !ctx.is(u) && !isGranted(_.UserModView))
           div(cls := "upt__info__warning")(trans.thisAccountViolatedTos())
         else
           ctx.pref.showRatings option div(cls := "upt__info__ratings")(u.best8Perfs map {

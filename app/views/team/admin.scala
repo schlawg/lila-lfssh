@@ -5,7 +5,6 @@ import play.api.data.Field
 import play.api.data.Form
 import play.api.i18n.Lang
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -13,7 +12,7 @@ object admin:
 
   import trans.team.*
 
-  def leaders(t: lila.team.Team, form: Form[?])(using WebContext) =
+  def leaders(t: lila.team.Team, form: Form[?])(using PageContext) =
     views.html.base.layout(
       title = s"${t.name} • ${teamLeaders.txt()}",
       moreCss = frag(cssTag("team"), cssTag("tagify")),
@@ -37,7 +36,7 @@ object admin:
       )
     }
 
-  def kick(t: lila.team.Team, form: Form[?])(using WebContext) =
+  def kick(t: lila.team.Team, form: Form[?])(using PageContext) =
     views.html.base.layout(
       title = s"${t.name} • ${kickSomeone.txt()}",
       moreCss = frag(cssTag("team"), cssTag("tagify")),
@@ -67,7 +66,7 @@ object admin:
       tours: List[lila.tournament.Tournament],
       unsubs: Int,
       limiter: (Int, Instant)
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       title = s"${t.name} • ${messageAllMembers.txt()}",
       moreCss = cssTag("team"),

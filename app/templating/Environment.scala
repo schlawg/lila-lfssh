@@ -2,7 +2,6 @@ package lila.app
 package templating
 
 import lila.app.ui.ScalatagsTemplate.*
-import lila.user.UserContext
 
 object Environment
     extends StringHelper
@@ -24,6 +23,9 @@ object Environment
     with ChessgroundHelper:
 
   export lila.Lila.{ id as _, *, given }
+  export lila.api.Context.{ *, given }
+  export lila.api.{ PageData, Nonce }
+  export lila.user.Me
   export lila.common.licon
 
   private var envVar: Option[Env] = None

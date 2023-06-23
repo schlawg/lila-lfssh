@@ -4,7 +4,7 @@ import akka.actor.*
 import com.softwaremill.macwire.*
 
 import lila.common.config.*
-import lila.user.User
+import lila.user.{ User, Me }
 import lila.report.{ ModId, SuspectId }
 
 @Module
@@ -34,10 +34,10 @@ final class Env(
     ec: Executor,
     scheduler: Scheduler
 ):
-  private lazy val logRepo        = new ModlogRepo(db(CollName("modlog")))
-  private lazy val assessmentRepo = new AssessmentRepo(db(CollName("player_assessment")))
-  private lazy val historyRepo    = new HistoryRepo(db(CollName("mod_gaming_history")))
-  private lazy val queueStatsRepo = new ModQueueStatsRepo(db(CollName("mod_queue_stat")))
+  private lazy val logRepo        = ModlogRepo(db(CollName("modlog")))
+  private lazy val assessmentRepo = AssessmentRepo(db(CollName("player_assessment")))
+  private lazy val historyRepo    = HistoryRepo(db(CollName("mod_gaming_history")))
+  private lazy val queueStatsRepo = ModQueueStatsRepo(db(CollName("mod_queue_stat")))
 
   lazy val logApi = wire[ModlogApi]
 
@@ -87,9 +87,8 @@ final class Env(
                 if (game.hasClock)
                   api.autoMark(
                     SuspectId(userId),
-                    User.lichessId into ModId,
                     s"Cheat detected during game, ${count} times"
-                  )
+                  )(using User.lichessIdAsMe)
                 else reportApi.autoCheatDetectedReport(userId, count)
               }
             }
@@ -102,16 +101,16 @@ final class Env(
       publicChat.deleteAll(userId).unit
     },
     "autoWarning" -> { case lila.hub.actorApi.mod.AutoWarning(userId, subject) =>
-      logApi.modMessage(User.lichessId into ModId, userId, subject).unit
+      logApi.modMessage(userId, subject)(using User.lichessIdAsMe).unit
     },
     "selfReportMark" -> { case lila.hub.actorApi.mod.SelfReportMark(suspectId, name) =>
       api
-        .autoMark(SuspectId(suspectId), User.lichessId into ModId, s"Self report: ${name}")
+        .autoMark(SuspectId(suspectId), s"Self report: ${name}")(using User.lichessIdAsMe)
         .unit
     },
     "chatTimeout" -> { case lila.hub.actorApi.mod.ChatTimeout(mod, user, reason, text) =>
-      logApi.chatTimeout(mod into ModId, user, reason, text).unit
+      logApi.chatTimeout(user, reason, text)(using mod.into(Me.Id)).unit
     },
-    "loginWithWeakPassword"    -> { case u: lila.user.User => logApi.loginWithWeakPassword(u.id) },
-    "loginWithBlankedPassword" -> { case u: lila.user.User => logApi.loginWithBlankedPassword(u.id) }
+    "loginWithWeakPassword"    -> { case u: User => logApi.loginWithWeakPassword(u.id) },
+    "loginWithBlankedPassword" -> { case u: User => logApi.loginWithBlankedPassword(u.id) }
   )

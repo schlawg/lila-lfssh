@@ -8,7 +8,14 @@ import * as xhr from './explorerXhr';
 import { winnerOf } from './explorerUtil';
 import * as gameUtil from 'game';
 import AnalyseCtrl from '../ctrl';
-import { Hovering, ExplorerData, ExplorerDb, OpeningData, SimpleTablebaseHit, ExplorerOpts } from './interfaces';
+import {
+  Hovering,
+  ExplorerData,
+  ExplorerDb,
+  OpeningData,
+  SimpleTablebaseHit,
+  ExplorerOpts,
+} from './interfaces';
 import { ExplorerConfigCtrl } from './explorerConfig';
 import { clearLastShow } from './explorerView';
 
@@ -33,7 +40,8 @@ function tablebasePieces(variant: VariantKey) {
   }
 }
 
-export const tablebaseGuaranteed = (variant: VariantKey, fen: Fen) => pieceCount(fen) <= tablebasePieces(variant);
+export const tablebaseGuaranteed = (variant: VariantKey, fen: Fen) =>
+  pieceCount(fen) <= tablebasePieces(variant);
 
 export default class ExplorerCtrl {
   allowed: Prop<boolean>;
@@ -52,10 +60,11 @@ export default class ExplorerCtrl {
   cache: Dictionary<ExplorerData> = {};
 
   constructor(readonly root: AnalyseCtrl, readonly opts: ExplorerOpts, previous?: ExplorerCtrl) {
-    this.allowed = prop(previous ? previous.allowed() : !root.embed);
-    this.enabled = root.embed ? prop(false) : storedBooleanProp('analyse.explorer.enabled', false);
+    this.allowed = prop(previous ? previous.allowed() : true);
+    this.enabled = storedBooleanProp('analyse.explorer.enabled', false);
     this.withGames = root.synthetic || gameUtil.replayable(root.data) || !!root.data.opponent.ai;
-    this.effectiveVariant = root.data.game.variant.key === 'fromPosition' ? 'standard' : root.data.game.variant.key;
+    this.effectiveVariant =
+      root.data.game.variant.key === 'fromPosition' ? 'standard' : root.data.game.variant.key;
     this.config = new ExplorerConfigCtrl(root, this.effectiveVariant, this.reload, previous?.config);
     window.addEventListener('hashchange', this.checkHash, false);
     this.checkHash();
@@ -63,7 +72,7 @@ export default class ExplorerCtrl {
 
   checkHash = (e?: HashChangeEvent) => {
     const parts = location.hash.split('/');
-    if ((parts[0] == '#explorer' || parts[0] == '#opening') && !this.root.embed) {
+    if (parts[0] == '#explorer' || parts[0] == '#opening') {
       this.enabled(true);
       if (parts[1] == 'lichess' || parts[1] === 'masters') this.config.data.db(parts[1]);
       else if (parts[1]?.match(/[A-Za-z0-9_-]{2,30}/)) {

@@ -4,7 +4,6 @@ package auth
 import controllers.routes
 import play.api.data.{ Field, Form }
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.security.HcaptchaForm
@@ -12,7 +11,9 @@ import lila.user.User
 
 object bits:
 
-  def formFields(username: Field, password: Field, email: Option[Field], register: Boolean)(using WebContext) =
+  def formFields(username: Field, password: Field, email: Option[Field], register: Boolean)(using
+      PageContext
+  ) =
     frag(
       form3.group(
         username,
@@ -35,7 +36,7 @@ object bits:
       }
     )
 
-  def passwordReset(form: HcaptchaForm[?], fail: Boolean)(using WebContext) =
+  def passwordReset(form: HcaptchaForm[?], fail: Boolean)(using PageContext) =
     views.html.base.layout(
       title = trans.passwordReset.txt(),
       moreCss = cssTag("auth"),
@@ -59,7 +60,7 @@ object bits:
       )
     }
 
-  def passwordResetSent(email: String)(using WebContext) =
+  def passwordResetSent(email: String)(using PageContext) =
     views.html.base.layout(
       title = trans.passwordReset.txt()
     ) {
@@ -70,16 +71,13 @@ object bits:
       )
     }
 
-  def passwordResetConfirm(u: User, token: String, form: Form[?], ok: Option[Boolean] = None)(using WebContext) =
+  def passwordResetConfirm(token: String, form: Form[?], ok: Option[Boolean] = None)(using PageContext)(using
+      me: Me
+  ) =
     views.html.base.layout(
-      title = s"${u.username} - ${trans.changePassword.txt()}",
+      title = s"${me.username} - ${trans.changePassword.txt()}",
       moreCss = cssTag("form3"),
-      moreJs = frag(
-        embedJsUnsafeLoadThen("""
-          lichess.loadModule('passwordComplexity').then(() =>
-            passwordComplexity.addPasswordChangeListener('form3-newPasswd1')
-          )""")
-      )
+      moreJs = jsModuleInit("passwordComplexity", "'form3-newPasswd1'")
     ) {
       main(cls := "page-small box box-pad")(
         boxTop(
@@ -88,7 +86,7 @@ object bits:
             case Some(false) => h1(cls := "is-red text", dataIcon := licon.X)
             case _           => h1
           })(
-            userLink(u, withOnline = false),
+            userLink(me.user, withOnline = false),
             " - ",
             trans.changePassword()
           )
@@ -109,7 +107,7 @@ object bits:
       )
     }
 
-  def magicLink(form: HcaptchaForm[?], fail: Boolean)(using WebContext) =
+  def magicLink(form: HcaptchaForm[?], fail: Boolean)(using PageContext) =
     views.html.base.layout(
       title = "Log in by email",
       moreCss = cssTag("auth"),
@@ -134,7 +132,7 @@ object bits:
       )
     }
 
-  def magicLinkSent(using WebContext) =
+  def magicLinkSent(using PageContext) =
     views.html.base.layout(
       title = "Log in by email"
     ) {
@@ -145,7 +143,7 @@ object bits:
       )
     }
 
-  def tokenLoginConfirmation(user: User, token: String, referrer: Option[String])(using WebContext) =
+  def tokenLoginConfirmation(user: User, token: String, referrer: Option[String])(using PageContext) =
     views.html.base.layout(
       title = s"Log in as ${user.username}",
       moreCss = cssTag("form3")
@@ -194,7 +192,7 @@ body { margin-top: 45px; }
       )
     )
 
-  def tor()(using WebContext) =
+  def tor()(using PageContext) =
     views.html.base.layout(
       title = "Tor exit node"
     ) {
@@ -205,7 +203,7 @@ body { margin-top: 45px; }
       )
     }
 
-  def logout()(using WebContext) =
+  def logout()(using PageContext) =
     views.html.base.layout(
       title = trans.logOut.txt()
     ) {

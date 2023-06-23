@@ -15,7 +15,7 @@ function confetti(data: TournamentData): VNode | undefined {
   if (data.me && data.isRecentlyFinished && lichess.once('tournament.end.canvas.' + data.id))
     return h('canvas#confetti', {
       hook: {
-        insert: _ => lichess.loadScript('javascripts/confetti.js'),
+        insert: _ => lichess.loadIife('javascripts/confetti.js'),
       },
     });
   return undefined;
@@ -123,7 +123,9 @@ export function main(ctrl: TournamentController): MaybeVNodes {
   const pag = pagination.players(ctrl);
   const teamS = teamStanding(ctrl, 'finished');
   return [
-    ...(teamS ? [header(ctrl), teamS] : [h('div.podium-wrap', [confetti(ctrl.data), header(ctrl), podium(ctrl)])]),
+    ...(teamS
+      ? [header(ctrl), teamS]
+      : [h('div.podium-wrap', [confetti(ctrl.data), header(ctrl), podium(ctrl)])]),
     controls(ctrl, pag),
     standing(ctrl, pag),
   ];

@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 import lila.pref.PrefCateg
@@ -10,7 +9,7 @@ import controllers.routes
 
 object bits:
 
-  def data(u: User)(using WebContext) =
+  def data(u: User)(using PageContext) =
     account.layout(title = s"${u.username} - personal data", active = "security") {
       div(cls := "account security personal-data box box-pad")(
         h1(cls := "box__top")("My personal data"),
@@ -23,7 +22,7 @@ object bits:
       )
     }
 
-  def categName(categ: lila.pref.PrefCateg)(using WebContext): String =
+  def categName(categ: lila.pref.PrefCateg)(using PageContext): String =
     categ match
       case PrefCateg.Display      => trans.preferences.display.txt()
       case PrefCateg.ChessClock   => trans.preferences.chessClock.txt()

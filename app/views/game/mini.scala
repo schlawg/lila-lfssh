@@ -4,7 +4,6 @@ import chess.format.Fen
 import controllers.routes
 import play.api.i18n.Lang
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.game.Pov
@@ -22,7 +21,7 @@ object mini:
       ownerLink: Boolean = false,
       tv: Boolean = false,
       withLink: Boolean = true
-  )(using ctx: WebContext): Tag =
+  )(using ctx: Context): Tag =
     renderMini(
       pov,
       withLink.option(gameLink(pov.game, pov.color, ownerLink, tv)),

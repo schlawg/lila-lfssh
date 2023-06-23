@@ -3,7 +3,6 @@ package stat
 
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -15,22 +14,20 @@ import controllers.routes
 
 object ratingDistribution:
 
-  def apply(perfType: PerfType, data: List[Int], otherUser: Option[User])(using ctx: WebContext) =
+  def apply(perfType: PerfType, data: List[Int], otherUser: Option[User])(using ctx: PageContext) =
     views.html.base.layout(
       title = trans.weeklyPerfTypeRatingDistribution.txt(perfType.trans),
       moreCss = cssTag("user.rating.stats"),
       wrapClass = "full-screen-force",
-      moreJs = frag(
-        jsModule("chart.ratingDistribution"),
-        embedJsUnsafeLoadThen(s"""LichessChartRatingDistribution(${safeJsonValue(
-            Json.obj(
-              "freq"        -> data,
-              "myRating"    -> ctx.me.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
-              "otherRating" -> otherUser.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
-              "otherPlayer" -> otherUser.map(_.username),
-              "i18n"        -> i18nJsObject(i18nKeys)
-            )
-          )})""")
+      moreJs = jsModuleInit(
+        "chart.ratingDistribution",
+        Json.obj(
+          "freq"        -> data,
+          "myRating"    -> ctx.me.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
+          "otherRating" -> otherUser.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
+          "otherPlayer" -> otherUser.map(_.username),
+          "i18n"        -> i18nJsObject(i18nKeys)
+        )
       )
     ) {
       main(cls := "page-menu")(

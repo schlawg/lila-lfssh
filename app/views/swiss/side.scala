@@ -3,7 +3,6 @@ package html.swiss
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.markdownLinksOrRichText
@@ -20,7 +19,7 @@ object side:
       verdicts: WithVerdicts,
       streamers: List[UserId],
       chat: Boolean
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     frag(
       div(cls := "swiss__meta")(
         st.section(dataIcon := s.perfType.icon.toString)(
@@ -38,7 +37,7 @@ object side:
               ),
               separator,
               a(href := routes.Swiss.home)("Swiss"),
-              (isGranted(_.ManageTournament) || (ctx.userId.has(s.createdBy) && !s.isFinished)) option frag(
+              (isGranted(_.ManageTournament) || (ctx.is(s.createdBy) && !s.isFinished)) option frag(
                 " ",
                 a(href := routes.Swiss.edit(s.id), title := "Edit tournament")(iconTag(licon.Gear))
               )

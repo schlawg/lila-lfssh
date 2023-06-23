@@ -5,7 +5,6 @@ import controllers.routes
 import play.api.i18n.Lang
 import play.api.libs.json.{ JsString, Json }
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.puzzle.{ PuzzleDifficulty, PuzzleTheme }
@@ -33,7 +32,7 @@ object bits:
         "static"  -> static.mkString(" ")
       )
 
-  def pageMenu(active: String, user: Option[User], days: Int = 30)(using ctx: WebContext) =
+  def pageMenu(active: String, user: Option[User], days: Int = 30)(using ctx: PageContext) =
     val u = user.filterNot(ctx.is).map(_.username)
     st.nav(cls := "page-menu__menu subnav")(
       a(href := routes.Puzzle.home)(

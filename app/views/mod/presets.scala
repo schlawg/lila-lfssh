@@ -2,7 +2,6 @@ package views.html.mod
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import play.api.data.Form
@@ -10,7 +9,7 @@ import lila.mod.ModPresets
 
 object presets:
 
-  def apply(group: String, form: Form[?])(using WebContext) =
+  def apply(group: String, form: Form[?])(using PageContext) =
     views.html.base.layout(
       title = s"$group presets",
       moreCss = frag(cssTag("mod.misc"), cssTag("form3"))

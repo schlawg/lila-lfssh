@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import play.api.i18n.Lang
@@ -16,7 +15,7 @@ object profile:
     trans.oneUrlPerLine()
   )
 
-  def apply(u: lila.user.User, form: play.api.data.Form[?])(using ctx: WebContext) =
+  def apply(u: lila.user.User, form: play.api.data.Form[?])(using ctx: PageContext) =
     account.layout(
       title = s"${u.username} - ${trans.editProfile.txt()}",
       active = "editProfile"

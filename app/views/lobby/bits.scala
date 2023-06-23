@@ -2,7 +2,6 @@ package views.html.lobby
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.ublog.UblogPost
@@ -19,7 +18,7 @@ object bits:
       simuls: List[lila.simul.Simul],
       leaderboard: List[lila.user.User.LightPerf],
       tournamentWinners: List[lila.tournament.Winner]
-  )(using ctx: WebContext) =
+  )(using ctx: Context) =
     frag(
       ctx.pref.showRatings option div(cls := "lobby__leaderboard lobby__box")(
         div(cls := "lobby__box__top")(
@@ -29,7 +28,7 @@ object bits:
         div(cls := "lobby__box__content")(
           table(
             tbody(
-              leaderboard map { l =>
+              leaderboard.map: l =>
                 tr(
                   td(lightUserLink(l.user)),
                   lila.rating.PerfType(l.perfKey) map { pt =>
@@ -37,7 +36,6 @@ object bits:
                   },
                   td(ratingProgress(l.progress))
                 )
-              }
             )
           )
         )
@@ -87,7 +85,7 @@ object bits:
     )
 
   def lastPosts(lichess: Option[lila.blog.MiniPost], uposts: List[lila.ublog.UblogPost.PreviewPost])(using
-      ctx: WebContext
+      ctx: PageContext
   ): Frag =
     div(cls := "lobby__blog ublog-post-cards")(
       lichess.map: post =>
@@ -119,7 +117,7 @@ object bits:
       )
     )
 
-  def playbanInfo(ban: lila.playban.TempBan)(using WebContext) =
+  def playbanInfo(ban: lila.playban.TempBan)(using PageContext) =
     nopeInfo(
       h1(trans.sorry()),
       p(trans.weHadToTimeYouOutForAWhile()),
@@ -147,7 +145,7 @@ object bits:
       )
     )
 
-  def currentGameInfo(current: lila.app.mashup.Preload.CurrentGame)(using WebContext) =
+  def currentGameInfo(current: lila.app.mashup.Preload.CurrentGame)(using PageContext) =
     nopeInfo(
       h1(trans.hangOn()),
       p(trans.gameInProgress(strong(current.opponent))),
@@ -182,7 +180,7 @@ object bits:
       )
     )
 
-  def spotlight(e: lila.event.Event)(using WebContext) =
+  def spotlight(e: lila.event.Event)(using PageContext) =
     a(
       href := (if (e.isNow || !e.countdown) e.url else routes.Event.show(e.id).url),
       cls := List(

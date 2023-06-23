@@ -2,7 +2,6 @@ package views.html.opening
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.opening.{ OpeningConfig, OpeningSearchResult }
@@ -37,7 +36,7 @@ object search:
       }
     )
 
-  def resultsPage(q: String, results: List[OpeningSearchResult], config: OpeningConfig)(using WebContext) =
+  def resultsPage(q: String, results: List[OpeningSearchResult], config: OpeningConfig)(using PageContext) =
     views.html.base.layout(
       moreCss = cssTag("opening"),
       moreJs = moreJs(none),

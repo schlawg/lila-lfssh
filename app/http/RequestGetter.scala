@@ -5,11 +5,10 @@ import play.api.mvc.RequestHeader
 
 import lila.common.Form.trueish
 import lila.common.HTTPRequest
-import lila.api.AnyContext
 
 trait RequestGetter:
 
-  private given (using ctx: AnyContext): RequestHeader = ctx.req
+  private given (using ctx: Context): RequestHeader = ctx.req
 
   protected def get(name: String)(using req: RequestHeader): Option[String] =
     HTTPRequest.queryStringGet(req, name)

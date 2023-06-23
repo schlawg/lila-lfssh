@@ -7,7 +7,6 @@ import controllers.routes
 import play.api.i18n.Lang
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -31,7 +30,7 @@ object replay:
       userTv: Option[lila.user.User],
       chatOption: Option[lila.chat.UserChat.Mine],
       bookmarked: Boolean
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
 
     import pov.*
 
@@ -124,19 +123,19 @@ object replay:
         ctx.blind option cssTag("round.nvui")
       ),
       moreJs = frag(
-        analyseTag,
         analyseNvuiTag,
-        embedJsUnsafeLoadThen(s"""LichessAnalyse.boot(${safeJsonValue(
-            Json
-              .obj(
-                "data"   -> data,
-                "i18n"   -> jsI18n(),
-                "userId" -> ctx.userId,
-                "chat"   -> chatJson
-              )
-              .add("hunter" -> isGranted(_.ViewBlurs)) ++
-              views.html.board.bits.explorerAndCevalConfig
-          )})""")
+        analyseInit(
+          "replay",
+          Json
+            .obj(
+              "data"   -> data,
+              "i18n"   -> jsI18n(),
+              "userId" -> ctx.userId,
+              "chat"   -> chatJson
+            )
+            .add("hunter" -> isGranted(_.ViewBlurs)) ++
+            views.html.board.bits.explorerAndCevalConfig
+        )
       ),
       openGraph = povOpenGraph(pov).some
     )(

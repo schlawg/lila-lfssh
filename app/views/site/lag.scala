@@ -1,6 +1,5 @@
 package views.html.site
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 
@@ -8,7 +7,7 @@ object lag:
 
   import trans.lag.*
 
-  def apply()(using WebContext) =
+  def apply()(using PageContext) =
     page.layout(
       title = "Is Lichess lagging?",
       active = "lag",
@@ -16,7 +15,7 @@ object lag:
       moreJs = frag(
         highchartsLatestTag,
         highchartsMoreTag,
-        jsTag("lag.js")
+        iifeModule("javascripts/lag.js")
       )
     ):
       div(cls := "box box-pad lag")(

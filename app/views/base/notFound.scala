@@ -1,7 +1,6 @@
 package views.html
 package base
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -9,7 +8,7 @@ import controllers.routes
 
 object notFound:
 
-  def apply()(using WebContext) =
+  def apply()(using PageContext) =
     layout(
       title = "Page not found",
       moreJs = prismicJs,

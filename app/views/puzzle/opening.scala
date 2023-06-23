@@ -3,7 +3,6 @@ package html.puzzle
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.LilaOpeningFamily
@@ -13,7 +12,7 @@ import lila.puzzle.{ PuzzleOpening, PuzzleOpeningCollection }
 object opening:
 
   def all(openings: PuzzleOpeningCollection, mine: Option[PuzzleOpening.Mine], order: Order)(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     views.html.base.layout(
       title = trans.puzzle.puzzlesByOpenings.txt(),
@@ -51,7 +50,7 @@ object opening:
       )
     )
 
-  private[puzzle] def listOf(families: List[PuzzleOpening.FamilyWithCount])(using WebContext) =
+  private[puzzle] def listOf(families: List[PuzzleOpening.FamilyWithCount])(using PageContext) =
     div(cls := "puzzle-openings__list")(families map { fam =>
       a(cls := "puzzle-openings__link", href := routes.Puzzle.show(fam.family.key.value))(
         h3(
@@ -61,7 +60,7 @@ object opening:
       )
     })
 
-  private def treeOf(openings: PuzzleOpening.TreeList, mine: Option[PuzzleOpening.Mine])(using WebContext) =
+  private def treeOf(openings: PuzzleOpening.TreeList, mine: Option[PuzzleOpening.Mine])(using PageContext) =
     openings map { (fam, openings) =>
       div(cls := "puzzle-openings__tree__family")(
         h2(
@@ -91,7 +90,7 @@ object opening:
     dataFen := family.full.map(_.fen)
   )(href := routes.Puzzle.show(family.key.value))(family.name)
 
-  def orderSelect(order: Order)(using WebContext) =
+  def orderSelect(order: Order)(using PageContext) =
     views.html.base.bits.mselect(
       "orders",
       span(order.name()),

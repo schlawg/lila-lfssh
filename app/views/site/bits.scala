@@ -1,13 +1,12 @@
 package views.html.site
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 import controllers.routes
 
 object bits:
 
-  def getFishnet()(using WebContext) =
+  def getFishnet()(using PageContext) =
     views.html.base.layout(
       title = "fishnet API key request",
       csp = defaultCsp.withGoogleForm.some
@@ -38,10 +37,8 @@ object bits:
   </body>
 </html>"""
 
-  def errorPage(using WebContext) =
-    views.html.base.layout(
-      title = "Internal server error"
-    ) {
+  def errorPage(using PageContext) =
+    views.html.base.layout(title = "Internal server error"):
       main(cls := "page-small box box-pad")(
         h1(cls := "box__top")("Something went wrong on this page"),
         p(
@@ -50,13 +47,12 @@ object bits:
           "."
         )
       )
-    }
 
-  def ghost(using WebContext) =
+  def ghost(using PageContext) =
     views.html.base.layout(
       moreCss = cssTag("ghost"),
       title = "Deleted user"
-    ) {
+    ):
       main(cls := "page-small box box-pad page")(
         h1(cls := "box__top")("Deleted user"),
         div(
@@ -64,4 +60,3 @@ object bits:
           p("Nothing to see here, move along.")
         )
       )
-    }

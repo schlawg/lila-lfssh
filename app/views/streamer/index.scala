@@ -2,7 +2,6 @@ package views.html.streamer
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -17,7 +16,7 @@ object index:
       live: List[lila.streamer.Streamer.WithUserAndStream],
       pager: Paginator[lila.streamer.Streamer.WithContext],
       requests: Boolean
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
 
     val title = if (requests) "Streamer approval requests" else lichessStreamers.txt()
 

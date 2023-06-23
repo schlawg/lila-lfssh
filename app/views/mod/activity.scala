@@ -1,8 +1,8 @@
 package views.html.mod
 
 import controllers.routes
+import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -10,16 +10,12 @@ import lila.mod.ModActivity.*
 
 object activity:
 
-  def apply(p: Result)(using WebContext) =
+  def apply(p: Result)(using PageContext) =
     views.html.base.layout(
       title = "Moderation activity",
       moreCss = cssTag("mod.activity"),
-      moreJs = frag(
-        jsModule("mod.activity"),
-        embedJsUnsafeLoadThen(
-          s"""LichessModActivity.activity(${safeJsonValue(lila.mod.ModActivity.json(p))})"""
-        )
-      )
+      moreJs =
+        jsModuleInit("mod.activity", Json.obj("op" -> "activity", "data" -> lila.mod.ModActivity.json(p)))
     ) {
       main(cls := "page-menu")(
         views.html.mod.menu("activity"),

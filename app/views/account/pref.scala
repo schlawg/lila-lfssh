@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.pref.PrefCateg
@@ -17,7 +16,7 @@ object pref:
 
   private def setting(name: Frag, body: Frag) = st.section(h2(name), body)
 
-  def apply(u: lila.user.User, form: play.api.data.Form[?], categ: lila.pref.PrefCateg)(using WebContext) =
+  def apply(u: lila.user.User, form: play.api.data.Form[?], categ: lila.pref.PrefCateg)(using PageContext) =
     account.layout(
       title = s"${bits.categName(categ)} - ${u.username} - ${preferences.txt()}",
       active = categ.slug

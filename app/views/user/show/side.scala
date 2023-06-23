@@ -3,7 +3,6 @@ package views.html.user.show
 import controllers.routes
 import play.api.i18n.Lang
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.rating.PerfType
@@ -15,7 +14,7 @@ object side:
       u: User,
       rankMap: lila.rating.UserRankMap,
       active: Option[lila.rating.PerfType]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
 
     def showNonEmptyPerf(perf: lila.rating.Perf, perfType: PerfType) =
       perf.nonEmpty option showPerf(perf, perfType)

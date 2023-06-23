@@ -5,7 +5,6 @@ import controllers.appeal.routes.{ Appeal as appealRoutes }
 import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.richText
@@ -39,7 +38,7 @@ object inquiry:
       )
     }
 
-  def apply(in: lila.mod.Inquiry)(using ctx: WebContext) =
+  def apply(in: lila.mod.Inquiry)(using ctx: PageContext) =
     def renderReport(r: Report) =
       div(cls := "doc report")(
         r.bestAtoms(10).map { atom =>
@@ -137,14 +136,12 @@ object inquiry:
       div(cls := "actions")(
         isGranted(_.ModMessage) option div(cls := "dropper warn buttons")(
           iconTag(licon.Envelope),
-          div(
-            env.mod.presets.getPmPresets(ctx.me).value.map { preset =>
+          div:
+            env.mod.presets.getPmPresetsOpt.value.map: preset =>
               postForm(action := routes.Mod.warn(in.user.username, preset.name))(
                 submitButton(cls := "fbt", title := preset.text)(preset.name),
                 autoNextInput
               )
-            }
-          )
         ),
         isGranted(_.MarkEngine) option {
           val url = routes.Mod.engine(in.user.username, !in.user.marks.engine).url
@@ -251,7 +248,7 @@ object inquiry:
       )
     )
 
-  def noteZone(u: User, notes: List[lila.user.Note])(using WebContext) = div(
+  def noteZone(u: User, notes: List[lila.user.Note])(using PageContext) = div(
     cls := List(
       "dropper counter notes" -> true,
       "empty"                 -> notes.isEmpty

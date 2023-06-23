@@ -3,19 +3,18 @@ package views.html.base
 import controllers.clas.routes.{ Clas as clasRoutes }
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
 object topnav:
 
-  private def linkTitle(url: String, name: Frag)(using ctx: WebContext) =
+  private def linkTitle(url: String, name: Frag)(using ctx: PageContext) =
     if (ctx.blind) h3(name) else a(href := url)(name)
 
-  private def canSeeClasMenu(using ctx: WebContext) =
+  private def canSeeClasMenu(using ctx: PageContext) =
     ctx.hasClas || ctx.me.exists(u => u.hasTitle || u.roles.contains("ROLE_COACH"))
 
-  def apply()(using ctx: WebContext) =
+  def apply()(using ctx: PageContext) =
     st.nav(id := "topnav", cls := "hover")(
       st.section(
         linkTitle(

@@ -105,7 +105,10 @@ declare global {
 }
 
 export class ThreadedWasmWorker implements CevalWorker {
-  private static failed: { Stockfish: boolean; StockfishMv: boolean } = { Stockfish: false, StockfishMv: false };
+  private static failed: { Stockfish: boolean; StockfishMv: boolean } = {
+    Stockfish: false,
+    StockfishMv: false,
+  };
   private static protocols = { Stockfish: new Protocol(), StockfishMv: new Protocol() };
   private static sf: { Stockfish?: Promise<void>; StockfishMv?: Promise<void> } = {};
 
@@ -163,7 +166,7 @@ export class ThreadedWasmWorker implements CevalWorker {
     }
 
     // Load Emscripten module.
-    await lichess.loadScript(this.opts.baseUrl + 'stockfish.js', { version });
+    await lichess.loadIife(this.opts.baseUrl + 'stockfish.js', { version });
     const sf = await window[this.opts.module]!({
       wasmBinary,
       locateFile: (path: string) =>

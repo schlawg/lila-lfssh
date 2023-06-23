@@ -84,7 +84,9 @@ lichess.load.then(() => {
     if (!quoted.has(quote)) {
       quoted.add(quote);
       response.value =
-        response.value.substring(0, response.selectionStart) + quote + response.value.substring(response.selectionEnd);
+        response.value.substring(0, response.selectionStart) +
+        quote +
+        response.value.substring(response.selectionEnd);
     }
   });
 
@@ -93,7 +95,7 @@ lichess.load.then(() => {
       topicId = $(this).attr('data-topic');
 
     if (topicId)
-      lichess.loadScript('vendor/textcomplete.min.js').then(function () {
+      lichess.loadIife('vendor/textcomplete.min.js').then(function () {
         const searchCandidates = function (term: string, candidateUsers: string[]) {
           return candidateUsers.filter((user: string) => user.toLowerCase().startsWith(term.toLowerCase()));
         };

@@ -4,11 +4,9 @@ import controllers.routes
 import controllers.appeal.routes.{ Appeal as appealRoutes }
 import controllers.report.routes.{ Report as reportRoutes }
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.report.Report.WithSuspect
-import lila.user.Holder
 
 object list:
 
@@ -18,7 +16,7 @@ object list:
       scores: lila.report.Room.Scores,
       streamers: Int,
       appeals: Int
-  )(using WebContext) =
+  )(using PageContext) =
     layout(filter, scores, streamers, appeals)(
       table(cls := "slist slist-pad see")(
         thead(
@@ -92,7 +90,7 @@ object list:
 
   def layout(filter: String, scores: lila.report.Room.Scores, streamers: Int, appeals: Int)(
       body: Frag
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       title = "Reports",
       moreCss = cssTag("mod.report")
@@ -112,7 +110,7 @@ object list:
               ),
               ctx.me so { me =>
                 lila.report.Room.values
-                  .filter(lila.report.Room.isGrantedFor(Holder(me)))
+                  .filter(lila.report.Room.isGrantedFor(Me(me)))
                   .map { room =>
                     a(
                       href := reportRoutes.listWithFilter(room.key),

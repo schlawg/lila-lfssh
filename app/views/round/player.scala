@@ -3,7 +3,6 @@ package round
 
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -20,7 +19,7 @@ object player:
       playing: List[Pov],
       chatOption: Option[lila.chat.Chat.GameOrEvent],
       bookmarked: Boolean
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
 
     val chatJson = chatOption.map(_.either).map {
       case Left(c) =>
@@ -48,17 +47,17 @@ object player:
       title = s"${trans.play.txt()} ${if (ctx.pref.isZen) "ZEN" else playerText(pov.opponent)}",
       moreJs = frag(
         roundNvuiTag,
-        roundTag,
-        embedJsUnsafeLoadThen(s"""LichessRound.boot(${safeJsonValue(
-            Json
-              .obj(
-                "data"   -> data,
-                "i18n"   -> jsI18n(pov.game),
-                "userId" -> ctx.userId,
-                "chat"   -> chatJson
-              )
-              .add("noab" -> ctx.me.exists(_.marks.engine))
-          )})""")
+        jsModuleInit(
+          "round",
+          Json
+            .obj(
+              "data"   -> data,
+              "i18n"   -> jsI18n(pov.game),
+              "userId" -> ctx.userId,
+              "chat"   -> chatJson
+            )
+            .add("noab" -> ctx.me.exists(_.marks.engine))
+        )
       ),
       openGraph = povOpenGraph(pov).some,
       chessground = false,

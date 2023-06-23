@@ -4,7 +4,6 @@ package swiss
 import controllers.routes
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -25,35 +24,35 @@ object show:
       chatOption: Option[lila.chat.UserChat.Mine],
       streamers: List[UserId],
       isLocalMod: Boolean
-  )(using ctx: WebContext): Frag =
-    val isDirector       = ctx.userId.has(s.createdBy)
+  )(using ctx: PageContext): Frag =
+    val isDirector       = ctx is s.createdBy
     val hasScheduleInput = isDirector && s.settings.manualRounds && s.isNotFinished
     views.html.base.layout(
       title = fullName(s),
       moreJs = frag(
-        jsModule("swiss"),
         hasScheduleInput option jsModule("flatpickr"),
-        embedJsUnsafeLoadThen(s"""LichessSwiss.start(${safeJsonValue(
-            Json
-              .obj(
-                "data"   -> data,
-                "i18n"   -> bits.jsI18n,
-                "userId" -> ctx.userId,
-                "chat" -> chatOption.map { c =>
-                  chat.json(
-                    c.chat,
-                    name = trans.chatRoom.txt(),
-                    timeout = c.timeout,
-                    public = true,
-                    resourceId = lila.chat.Chat.ResourceId(s"swiss/${c.chat.id}"),
-                    localMod = isLocalMod,
-                    writeable = !c.locked
-                  )
-                },
-                "showRatings" -> ctx.pref.showRatings
-              )
-              .add("schedule" -> hasScheduleInput)
-          )})""")
+        jsModuleInit(
+          "swiss",
+          Json
+            .obj(
+              "data"   -> data,
+              "i18n"   -> bits.jsI18n,
+              "userId" -> ctx.userId,
+              "chat" -> chatOption.map { c =>
+                chat.json(
+                  c.chat,
+                  name = trans.chatRoom.txt(),
+                  timeout = c.timeout,
+                  public = true,
+                  resourceId = lila.chat.Chat.ResourceId(s"swiss/${c.chat.id}"),
+                  localMod = isLocalMod,
+                  writeable = !c.locked
+                )
+              },
+              "showRatings" -> ctx.pref.showRatings
+            )
+            .add("schedule" -> hasScheduleInput)
+        )
       ),
       moreCss = frag(
         cssTag("swiss.show"),
@@ -81,7 +80,7 @@ object show:
       )
     )
 
-  def round(s: Swiss, r: SwissRoundNumber, pairings: Paginator[SwissPairing])(using WebContext) =
+  def round(s: Swiss, r: SwissRoundNumber, pairings: Paginator[SwissPairing])(using PageContext) =
     views.html.base.layout(
       title = s"${fullName(s)} • Round $r/${s.round}",
       moreCss = cssTag("swiss.show")

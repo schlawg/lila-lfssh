@@ -2,14 +2,13 @@ package views.html.team
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
 
 object declinedRequest:
 
-  def all(team: lila.team.Team, requests: Paginator[lila.team.RequestWithUser])(using WebContext) =
+  def all(team: lila.team.Team, requests: Paginator[lila.team.RequestWithUser])(using PageContext) =
     val title = s"${team.name} • ${trans.team.declinedRequests.txt()}"
 
     views.html.base.layout(

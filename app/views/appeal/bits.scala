@@ -1,13 +1,12 @@
 package views.html
 package appeal
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 
 object bits:
 
-  def layout(title: String)(body: Frag)(using WebContext) =
+  def layout(title: String)(body: Frag)(using PageContext) =
     views.html.base.layout(
       title = title,
       moreCss = frag(

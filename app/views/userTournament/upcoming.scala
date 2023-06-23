@@ -1,7 +1,6 @@
 package views.html
 package userTournament
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -9,7 +8,7 @@ import lila.user.User
 
 object upcoming:
 
-  def apply(u: User, pager: Paginator[lila.tournament.Tournament])(using WebContext) =
+  def apply(u: User, pager: Paginator[lila.tournament.Tournament])(using PageContext) =
     bits.layout(
       u = u,
       title = s"${u.username} upcoming tournaments",

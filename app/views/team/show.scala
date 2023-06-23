@@ -3,7 +3,6 @@ package views.html.team
 import controllers.routes
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.mashup.TeamInfo
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
@@ -28,7 +27,7 @@ object show:
       requestedModView: Boolean = false,
       log: List[Modlog] = Nil
   )(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     bits.layout(
       title = t.name,
@@ -39,23 +38,21 @@ object show:
           description = t.intro so { shorten(_, 152) }
         )
         .some,
-      moreJs = frag(
-        jsModule("team"),
-        embedJsUnsafeLoadThen(s"""teamStart(${safeJsonValue(
-            Json
-              .obj("id" -> t.id)
-              .add("socketVersion" -> socketVersion)
-              .add("chat" -> chatOption.map { chat =>
-                views.html.chat.json(
-                  chat.chat,
-                  name = if (t.isChatFor(_.LEADERS)) leadersChat.txt() else trans.chatRoom.txt(),
-                  timeout = chat.timeout,
-                  public = true,
-                  resourceId = lila.chat.Chat.ResourceId(s"team/${chat.chat.id}"),
-                  localMod = ctx.userId exists t.leaders.contains
-                )
-              })
-          )})""")
+      moreJs = jsModuleInit(
+        "team",
+        Json
+          .obj("id" -> t.id)
+          .add("socketVersion" -> socketVersion)
+          .add("chat" -> chatOption.map { chat =>
+            views.html.chat.json(
+              chat.chat,
+              name = if (t.isChatFor(_.LEADERS)) leadersChat.txt() else trans.chatRoom.txt(),
+              timeout = chat.timeout,
+              public = true,
+              resourceId = lila.chat.Chat.ResourceId(s"team/${chat.chat.id}"),
+              localMod = ctx.userId exists t.leaders.contains
+            )
+          })
       )
     ) {
       val manageTeamEnabled = isGranted(_.ManageTeam) && requestedModView
@@ -89,7 +86,7 @@ object show:
               ),
               info.ledByMe option a(
                 dataIcon := licon.InfoCircle,
-                href     := routes.Page.loneBookmark("team-etiquette"),
+                href     := routes.ContentPage.loneBookmark("team-etiquette"),
                 cls      := "text"
               )("Team Etiquette")
             ),
@@ -252,7 +249,7 @@ object show:
     }
 
   // handle special teams here
-  private def joinButton(t: Team)(using WebContext) =
+  private def joinButton(t: Team)(using PageContext) =
     t.id.value match
       case "english-chess-players" => joinAt("https://ecf.octoknight.com/")
       case "ecf"                   => joinAt(routes.Team.show("english-chess-players").url)
@@ -261,10 +258,10 @@ object show:
           submitButton(cls := "button button-green")(joinTeam())
         )
 
-  private def joinAt(url: String)(using WebContext) =
+  private def joinAt(url: String)(using PageContext) =
     a(cls := "button button-green", href := url)(joinTeam())
 
-  private def renderLog(entries: List[Modlog])(using WebContext) = div(cls := "team-show__log")(
+  private def renderLog(entries: List[Modlog])(using PageContext) = div(cls := "team-show__log")(
     h2("Mod log"),
     ul(
       entries.map { e =>

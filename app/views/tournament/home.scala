@@ -3,7 +3,6 @@ package views.html.tournament
 import controllers.routes
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -18,20 +17,14 @@ object home:
       finished: List[Tournament],
       winners: lila.tournament.AllWinners,
       json: play.api.libs.json.JsObject
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       title = trans.tournaments.txt(),
       moreCss = cssTag("tournament.home"),
       wrapClass = "full-screen-force",
       moreJs = frag(
         infiniteScrollTag,
-        jsModule("tournament.schedule"),
-        embedJsUnsafeLoadThen(s"""LichessTournamentSchedule(${safeJsonValue(
-            Json.obj(
-              "data" -> json,
-              "i18n" -> bits.scheduleJsI18n
-            )
-          )})""")
+        jsModuleInit("tournament.schedule", Json.obj("data" -> json, "i18n" -> bits.scheduleJsI18n))
       ),
       openGraph = lila.app.ui
         .OpenGraph(

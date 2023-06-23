@@ -1,6 +1,5 @@
 package views.html.plan
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -15,7 +14,7 @@ object thanks:
       stripeCustomer: Option[lila.plan.StripeCustomer],
       gift: Option[lila.plan.Patron]
   )(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     views.html.base.layout(
       moreCss = cssTag("page"),

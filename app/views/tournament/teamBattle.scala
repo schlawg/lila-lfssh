@@ -5,7 +5,6 @@ import cats.syntax.all.*
 import controllers.routes
 import play.api.data.Form
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.tournament.TeamBattle
@@ -13,12 +12,12 @@ import lila.tournament.Tournament
 
 object teamBattle:
 
-  def edit(tour: Tournament, form: Form[?])(using WebContext) =
+  def edit(tour: Tournament, form: Form[?])(using PageContext) =
     views.html.base.layout(
       title = tour.name(),
       moreCss = cssTag("tournament.form"),
       moreJs = frag(
-        jsAt("vendor/textcomplete.min.js"),
+        iifeModule("vendor/textcomplete.min.js"),
         jsModule("teamBattleForm")
       )
     )(
@@ -56,7 +55,7 @@ object teamBattle:
 
   private val scoreTag = tag("score")
 
-  def standing(tour: Tournament, standing: List[TeamBattle.RankedTeam])(using WebContext) =
+  def standing(tour: Tournament, standing: List[TeamBattle.RankedTeam])(using PageContext) =
     views.html.base.layout(
       title = tour.name(),
       moreCss = cssTag("tournament.show.team-battle")
@@ -88,7 +87,7 @@ object teamBattle:
     )
 
   def teamInfo(tour: Tournament, team: lila.team.Team.Mini, info: TeamBattle.TeamInfo)(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     views.html.base.layout(
       title = s"${tour.name()} • ${team.name}",

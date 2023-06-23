@@ -6,7 +6,6 @@ import play.api.libs.json.*
 import play.api.mvc.*
 import views.*
 
-import lila.api.WebContext
 import lila.app.{ *, given }
 import lila.hub.actorApi.captcha.ValidCaptcha
 
@@ -28,17 +27,12 @@ final class Main(
       .bindFromRequest()
       .fold(
         _ => BadRequest,
-        { case (enable, redirect) =>
-          Redirect(redirect) withCookies env.lilaCookie.cookie(
-            env.api.config.accessibility.blindCookieName,
-            if (enable == "0") "" else env.api.config.accessibility.hash,
-            maxAge = env.api.config.accessibility.blindCookieMaxAge.toSeconds.toInt.some,
-            httpOnly = true.some
-          )
-        }
+        (enable, redirect) =>
+          Redirect(redirect).withCookies:
+            lila.api.ApiConfig.blindCookie.make(env.lilaCookie)(enable != "0")
       )
 
-  def handlerNotFound(using RequestHeader) = webContext map { renderNotFound(using _) }
+  def handlerNotFound(using RequestHeader) = makeContext flatMap { renderNotFound(using _) }
 
   def captchaCheck(id: GameId) = Open:
     import makeTimeout.long
@@ -48,23 +42,23 @@ final class Main(
 
   def webmasters = Open:
     pageHit
-    html.site.page.webmasters
+    Ok.page(html.site.page.webmasters)
 
   def lag = Open:
     pageHit
-    html.site.lag()
+    Ok.page(html.site.lag())
 
   def mobile     = Open(serveMobile)
   def mobileLang = LangPage(routes.Main.mobile)(serveMobile)
 
-  private def serveMobile(using WebContext) =
+  private def serveMobile(using Context) =
     pageHit
-    OptionOk(prismicC getBookmark "mobile-apk"): (doc, resolver) =>
+    OptionPage(prismicC getBookmark "mobile-apk"): (doc, resolver) =>
       html.mobile(doc, resolver)
 
   def dailyPuzzleSlackApp = Open:
     pageHit
-    html.site.dailyPuzzleSlackApp()
+    Ok.page(html.site.dailyPuzzleSlackApp())
 
   def jslog(id: GameFullId) = Open:
     env.round.selfReport(
@@ -87,7 +81,7 @@ final class Main(
 
   def getFishnet = Open:
     pageHit
-    html.site.bits.getFishnet()
+    Ok.page(html.site.bits.getFishnet())
 
   def costs = Anon:
     pageHit
@@ -101,23 +95,23 @@ final class Main(
 
   def contact = Open:
     pageHit
-    html.site.contact()
+    Ok.page(html.site.contact())
 
   def faq = Open:
     pageHit
-    html.site.faq()
+    Ok.page(html.site.faq())
 
   def temporarilyDisabled = Open:
     pageHit
-    NotImplemented(html.site.message.temporarilyDisabled)
+    NotImplemented.page(html.site.message.temporarilyDisabled)
 
   def keyboardMoveHelp = Open:
-    html.site.helpModal.keyboardMove
+    Ok.page(html.site.helpModal.keyboardMove)
 
   def voiceHelp(module: String) = Open:
     module match
-      case "move"   => html.site.helpModal.voiceMove
-      case "coords" => html.site.helpModal.voiceCoords
+      case "move"   => Ok.page(html.site.helpModal.voiceMove)
+      case "coords" => Ok.page(html.site.helpModal.voiceCoords)
       case _        => NotFound(s"Unknown voice help module: $module")
 
   def movedPermanently(to: String) = Anon:
@@ -149,7 +143,7 @@ final class Main(
         case 547  => s"$faq#leaving"
         case 259  => s"$faq#trophies"
         case 342  => s"$faq#provisional"
-        case 50   => routes.Page.help.url
+        case 50   => routes.ContentPage.help.url
         case 46   => s"$faq#name"
         case 122  => s"$faq#marks"
         case _    => faq
@@ -163,11 +157,11 @@ final class Main(
     ("slow", 60, 1.day)
   )
 
-  def uploadImage(rel: String) = AuthBody(parse.multipartFormData) { ctx ?=> me =>
+  def uploadImage(rel: String) = AuthBody(parse.multipartFormData) { ctx ?=> me ?=>
     ctx.body.body.file("image") match
       case Some(image) =>
         env.memo.picfitApi.bodyImage
-          .upload(rel = rel, image = image, me = me.id, ip = ctx.ip)
+          .upload(rel = rel, image = image, me = me, ip = ctx.ip)
           .map(url => JsonOk(Json.obj("imageUrl" -> url)))
       case None => JsonBadRequest(jsonError("Image content only"))
   }

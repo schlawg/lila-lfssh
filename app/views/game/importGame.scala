@@ -1,7 +1,6 @@
 package views.html
 package game
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import chess.format.pgn.PgnStr
@@ -10,14 +9,14 @@ import controllers.routes
 
 object importGame:
 
-  private def analyseHelp(using ctx: WebContext) =
+  private def analyseHelp(using ctx: PageContext) =
     ctx.isAnon option a(cls := "blue", href := routes.Auth.signup)(trans.youNeedAnAccountToDoThat())
 
-  def apply(form: play.api.data.Form[?])(using ctx: WebContext) =
+  def apply(form: play.api.data.Form[?])(using ctx: PageContext) =
     views.html.base.layout(
       title = trans.importGame.txt(),
       moreCss = cssTag("importer"),
-      moreJs = jsTag("importer.js"),
+      moreJs = iifeModule("javascripts/importer.js"),
       openGraph = lila.app.ui
         .OpenGraph(
           title = "Paste PGN chess game",

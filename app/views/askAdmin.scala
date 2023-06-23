@@ -1,7 +1,6 @@
 package views.html
 
 import controllers.routes
-import lila.api.context.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.ask.Ask
@@ -10,7 +9,7 @@ import views.html.ask._
 // thrown together, half-baked, prototype code
 object askAdmin {
 
-  def show(asks: List[Ask], user: lila.common.LightUser)(using ctx: WebContext): Frag =
+  def show(asks: List[Ask], user: lila.common.LightUser)(using ctx: PageContext): Frag =
     views.html.base.layout(
       title = s"${user.titleName} polls",
       moreJs = jsModule("ask"),
@@ -24,7 +23,7 @@ object askAdmin {
       )
     }
 
-  def showAsks(urlopt: Option[String], asks: List[Ask])(using ctx: WebContext) =
+  def showAsks(urlopt: Option[String], asks: List[Ask])(using ctx: PageContext) =
     div(
       hr,
       h2(
@@ -39,7 +38,7 @@ object askAdmin {
       asks map renderOne
     )
 
-  def renderOne(as: Ask)(using ctx: WebContext) = {
+  def renderOne(as: Ask)(using ctx: PageContext) = {
     div(cls := "ask-admin")(
       a(name := as._id),
       div(cls := "header")(

@@ -3,14 +3,13 @@ package views.html.oAuth.token
 import controllers.routes
 import play.api.data.Form
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.i18n.I18nKeys.{ oauthScope as ot }
 
 object create:
 
-  def apply(form: Form[lila.oauth.OAuthTokenForm.Data], me: lila.user.User)(using WebContext) =
+  def apply(form: Form[lila.oauth.OAuthTokenForm.Data], me: lila.user.User)(using PageContext) =
 
     val title = ot.newAccessToken
 

@@ -219,19 +219,18 @@ export function view(ctrl: StudyChapterNewFormCtrl): VNode {
                 {
                   hook: {
                     insert(vnode) {
-                      Promise.all([lichess.loadModule('editor'), xhr.json('/editor.json')]).then(
-                        ([_, data]: [unknown, Editor.Config]) => {
-                          data.fen = ctrl.root.node.fen;
-                          data.embed = true;
-                          data.options = {
-                            inlineCastling: true,
-                            orientation: currentChapter.setup.orientation,
-                            onChange: ctrl.vm.editorFen,
-                          };
-                          ctrl.vm.editor = window.LichessEditor!(vnode.elm as HTMLElement, data);
-                          ctrl.vm.editorFen(ctrl.vm.editor.getFen());
-                        }
-                      );
+                      xhr.json('/editor.json').then(async data => {
+                        data.el = vnode.elm;
+                        data.fen = ctrl.root.node.fen;
+                        data.embed = true;
+                        data.options = {
+                          inlineCastling: true,
+                          orientation: currentChapter.setup.orientation,
+                          onChange: ctrl.vm.editorFen,
+                        };
+                        ctrl.vm.editor = await lichess.loadEsm<LichessEditor>('editor', { init: data });
+                        ctrl.vm.editorFen(ctrl.vm.editor.getFen());
+                      });
                     },
                     destroy: _ => {
                       ctrl.vm.editor = null;
@@ -294,7 +293,9 @@ export function view(ctrl: StudyChapterNewFormCtrl): VNode {
           activeTab === 'pgn'
             ? h('div.form-group', [
                 h('textarea#chapter-pgn.form-control', {
-                  attrs: { placeholder: trans.pluralSame('pasteYourPgnTextHereUpToNbGames', ctrl.multiPgnMax) },
+                  attrs: {
+                    placeholder: trans.pluralSame('pasteYourPgnTextHereUpToNbGames', ctrl.multiPgnMax),
+                  },
                 }),
                 h(
                   'a.button.button-empty',
@@ -366,7 +367,8 @@ export function view(ctrl: StudyChapterNewFormCtrl): VNode {
                 'select#chapter-orientation.form-control',
                 {
                   hook: bind('change', e => {
-                    ctrl.vm.editor && ctrl.vm.editor.setOrientation((e.target as HTMLInputElement).value as Color);
+                    ctrl.vm.editor &&
+                      ctrl.vm.editor.setOrientation((e.target as HTMLInputElement).value as Color);
                   }),
                 },
                 [...(activeTab === 'pgn' ? ['automatic'] : []), 'white', 'black'].map(c =>

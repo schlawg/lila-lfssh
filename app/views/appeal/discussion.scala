@@ -5,7 +5,6 @@ import controllers.routes
 import controllers.appeal.routes.{ Appeal as appealRoutes }
 import play.api.data.Form
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.appeal.Appeal
@@ -14,12 +13,12 @@ import lila.mod.IpRender.RenderIp
 import lila.mod.{ ModPreset, ModPresets, UserWithModlog }
 import lila.report.Report.Inquiry
 import lila.report.Suspect
-import lila.user.{ Holder, User }
+import lila.user.{ Me, User }
 
 object discussion:
 
   case class ModData(
-      mod: Holder,
+      mod: Me,
       suspect: Suspect,
       presets: ModPresets,
       logins: lila.security.UserLogins.TableData[UserWithModlog],
@@ -29,7 +28,7 @@ object discussion:
       markedByMe: Boolean
   )
 
-  def apply(appeal: Appeal, me: User, textForm: Form[?])(using WebContext) =
+  def apply(appeal: Appeal, me: User, textForm: Form[?])(using PageContext) =
     bits.layout("Appeal") {
       main(cls := "page-small box box-pad appeal")(
         renderAppeal(appeal, textForm, Right(me))
@@ -40,7 +39,7 @@ object discussion:
       appeal: Appeal,
       textForm: Form[?],
       modData: ModData
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     bits.layout(s"Appeal by ${modData.suspect.user.username}") {
       main(cls := "box box-pad appeal")(
         renderAppeal(appeal, textForm, Left(modData)),
@@ -79,7 +78,7 @@ object discussion:
       appeal: Appeal,
       textForm: Form[?],
       as: Either[ModData, User]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     frag(
       h1(
         div(cls := "title")(
@@ -133,7 +132,7 @@ object discussion:
       )
     )
 
-  private def renderMark(suspect: User)(using ctx: WebContext) =
+  private def renderMark(suspect: User)(using ctx: PageContext) =
     val query = isGranted(_.Appeals) so ctx.req.queryString.toMap
     if (suspect.enabled.no || query.contains("alt")) tree.closedByModerators
     else if (suspect.marks.engine || query.contains("engine")) tree.engineMarked
@@ -142,7 +141,7 @@ object discussion:
     else if (suspect.marks.rankban || query.contains("rankban")) tree.excludedFromLeaderboards
     else tree.cleanAllGood
 
-  private def renderUser(appeal: Appeal, userId: UserId, asMod: Boolean)(using WebContext) =
+  private def renderUser(appeal: Appeal, userId: UserId, asMod: Boolean)(using PageContext) =
     if (appeal isAbout userId) userIdLink(userId.some, params = asMod so "?mod")
     else
       span(
@@ -154,7 +153,9 @@ object discussion:
         )
       )
 
-  def renderForm(form: Form[?], action: String, isNew: Boolean, presets: Option[ModPresets])(using WebContext) =
+  def renderForm(form: Form[?], action: String, isNew: Boolean, presets: Option[ModPresets])(using
+      PageContext
+  ) =
     postForm(st.action := action)(
       form3.globalError(form),
       form3.group(

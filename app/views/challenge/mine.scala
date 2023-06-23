@@ -1,6 +1,5 @@
 package views.html.challenge
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.challenge.Challenge.Status
@@ -14,7 +13,7 @@ object mine:
       json: play.api.libs.json.JsObject,
       error: Option[String],
       color: Option[chess.Color]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
 
     val cancelForm =
       postForm(action := routes.Challenge.cancel(c.id), cls := "cancel xhr")(

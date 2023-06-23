@@ -1,6 +1,5 @@
 package views.html.mod
 
-import lila.api.WebContext
 import lila.app.templating.Environment.*
 import lila.app.ui.ScalatagsTemplate.{ given, * }
 
@@ -8,7 +7,7 @@ import controllers.routes
 
 object chatPanic:
 
-  def apply(state: Option[Instant])(using WebContext) =
+  def apply(state: Option[Instant])(using PageContext) =
     val title = "Chat Panic"
     views.html.base.layout(
       title = title,

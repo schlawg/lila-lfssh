@@ -1,12 +1,11 @@
 package views.html.mod
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 
 object log:
 
-  def apply(logs: List[lila.mod.Modlog])(using WebContext) =
+  def apply(logs: List[lila.mod.Modlog])(using PageContext) =
 
     val title = "My logs"
 

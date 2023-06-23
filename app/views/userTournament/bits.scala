@@ -1,7 +1,6 @@
 package views.html
 package userTournament
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -11,7 +10,7 @@ import controllers.routes
 
 object bits:
 
-  def best(u: User, pager: Paginator[lila.tournament.LeaderboardApi.TourEntry])(using WebContext) =
+  def best(u: User, pager: Paginator[lila.tournament.LeaderboardApi.TourEntry])(using PageContext) =
     layout(
       u,
       title = s"${u.username} best tournaments",
@@ -21,7 +20,7 @@ object bits:
       views.html.userTournament.list(u, "best", pager, "BEST")
     }
 
-  def recent(u: User, pager: Paginator[lila.tournament.LeaderboardApi.TourEntry])(using WebContext) =
+  def recent(u: User, pager: Paginator[lila.tournament.LeaderboardApi.TourEntry])(using PageContext) =
     layout(
       u,
       title = s"${u.username} recent tournaments",
@@ -33,7 +32,7 @@ object bits:
 
   def layout(u: User, title: String, path: String, moreJs: Frag = emptyFrag)(
       body: Frag
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       title = title,
       moreCss = cssTag("user-tournament"),

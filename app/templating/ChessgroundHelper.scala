@@ -2,7 +2,6 @@ package lila.app
 package templating
 
 import chess.{ Board, Color, Square }
-import lila.api.WebContext
 
 import lila.app.ui.ScalatagsTemplate.*
 import lila.game.Pov
@@ -14,7 +13,7 @@ trait ChessgroundHelper:
   private val cgBoard     = tag("cg-board")
   val cgWrapContent       = cgContainer(cgBoard)
 
-  def chessground(board: Board, orient: Color, lastMove: List[Square] = Nil)(using ctx: WebContext): Frag =
+  def chessground(board: Board, orient: Color, lastMove: List[Square] = Nil)(using ctx: Context): Frag =
     wrap {
       cgBoard {
         raw {
@@ -37,7 +36,7 @@ trait ChessgroundHelper:
       }
     }
 
-  def chessground(pov: Pov)(using ctx: WebContext): Frag =
+  def chessground(pov: Pov)(using ctx: Context): Frag =
     chessground(
       board = pov.game.board,
       orient = pov.color,

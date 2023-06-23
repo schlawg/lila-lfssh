@@ -3,7 +3,6 @@ package controllers
 import play.api.mvc.*
 import views.*
 
-import lila.api.WebContext
 import lila.app.{ given, * }
 import lila.common.HTTPRequest
 import lila.notify.NotificationPref
@@ -13,8 +12,8 @@ final class Pref(env: Env) extends LilaController(env):
   private def api   = env.pref.api
   private def forms = lila.pref.PrefForm
 
-  def apiGet = Scoped(_.Preference.Read) { _ ?=> me =>
-    env.pref.api.getPref(me) map { prefs =>
+  def apiGet = Scoped(_.Preference.Read) { _ ?=> me ?=>
+    env.pref.api.get(me) map { prefs =>
       JsonOk:
         import play.api.libs.json.*
         import lila.pref.JsonView.given
@@ -31,17 +30,18 @@ final class Pref(env: Env) extends LilaController(env):
     redirects get categSlug match
       case Some(redir) => Action(Redirect(routes.Pref.form(redir)))
       case None =>
-        Auth { ctx ?=> me =>
+        Auth { ctx ?=> me ?=>
           lila.pref.PrefCateg(categSlug) match
             case None if categSlug == "notification" =>
-              env.notifyM.api.prefs.form(me) map { form =>
-                Ok(html.account.notification(form))
-              }
+              Ok.pageAsync:
+                env.notifyM.api.prefs.form(me) map {
+                  html.account.notification(_)
+                }
             case None        => notFound
-            case Some(categ) => Ok(html.account.pref(me, forms prefOf ctx.pref, categ))
+            case Some(categ) => Ok.page(html.account.pref(me, forms prefOf ctx.pref, categ))
         }
 
-  def formApply = AuthBody { ctx ?=> _ =>
+  def formApply = AuthBody { ctx ?=> _ ?=>
     def onSuccess(data: lila.pref.PrefForm.PrefData) = api.setPref(data(ctx.pref)) inject Ok("saved")
     forms.pref
       .bindFromRequest()
@@ -57,7 +57,7 @@ final class Pref(env: Env) extends LilaController(env):
       )
   }
 
-  def notifyFormApply = AuthBody { ctx ?=> me =>
+  def notifyFormApply = AuthBody { ctx ?=> me ?=>
     NotificationPref.form.form
       .bindFromRequest()
       .fold(
@@ -70,7 +70,7 @@ final class Pref(env: Env) extends LilaController(env):
     if name == "zoom"
     then Ok.withCookies(env.lilaCookie.cookie("zoom", (getInt("v") | 85).toString))
     else if name == "agreement" then
-      ctx.me so api.agree inject {
+      ctx.me.so(api.agree(_)) inject {
         if HTTPRequest.isXhr(ctx.req) then NoContent else Redirect(routes.Lobby.home)
       }
     else
@@ -100,7 +100,7 @@ final class Pref(env: Env) extends LilaController(env):
     "keyboardMove" -> (forms.keyboardMove -> save("keyboardMove"))
   )
 
-  private def save(name: String)(value: String, ctx: WebContext): Fu[Cookie] =
+  private def save(name: String)(value: String, ctx: Context): Fu[Cookie] =
     ctx.me so {
       api.setPrefString(_, name, value)
     } inject env.lilaCookie.session(name, value)(using ctx.req)

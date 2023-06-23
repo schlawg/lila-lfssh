@@ -1,6 +1,5 @@
 package views.html.analyse
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 import lila.game.Pov
@@ -13,7 +12,7 @@ object replayBot:
       pgn: String,
       simul: Option[lila.simul.Simul],
       cross: Option[lila.game.Crosstable.WithMatchup]
-  )(using WebContext) =
+  )(using PageContext) =
     views.html.analyse.bits.layout(
       title = replay titleOf pov,
       moreCss = cssTag("analyse.round"),

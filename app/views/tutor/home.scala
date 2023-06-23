@@ -2,7 +2,6 @@ package views.html.tutor
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.tutor.{ TutorFullReport, TutorPerfReport }
@@ -10,7 +9,7 @@ import lila.user.User
 
 object home:
 
-  def apply(full: TutorFullReport.Available, user: User)(using WebContext) =
+  def apply(full: TutorFullReport.Available, user: User)(using PageContext) =
     bits.layout(menu = menu(full, user, none))(
       cls := "tutor__home box",
       boxTop(h1(bits.otherUser(user), "Lichess Tutor")),
@@ -37,7 +36,7 @@ object home:
     )
 
   private[tutor] def menu(full: TutorFullReport.Available, user: User, report: Option[TutorPerfReport])(using
-      WebContext
+      PageContext
   ) = frag(
     a(href := routes.Tutor.user(user.username), cls := report.isEmpty.option("active"))("Tutor"),
     full.report.perfs.map { p =>
@@ -49,7 +48,7 @@ object home:
   )
 
   private def perfReportCard(report: TutorFullReport, perfReport: TutorPerfReport, user: User)(using
-      WebContext
+      PageContext
   ) =
     st.article(
       cls      := "tutor__perfs__perf tutor-card tutor-card--link",

@@ -2,7 +2,6 @@ package views.html.user.show
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -18,7 +17,7 @@ object gamesContent:
       filters: lila.app.mashup.GameFilterMenu,
       filterName: String,
       notes: Map[GameId, String]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     frag(
       div(cls := "number-menu number-menu--tabs menu-box-pop", id := "games")(
         filters.list.map { f =>
@@ -43,8 +42,7 @@ object gamesContent:
                 pagerNext(pager, np => routes.User.games(u.username, filterName, np).url)
               )
             )
-          else
-            div(cls := "search__status")(strong(trans.noGameFound.txt()))
+          else div(cls := "search__status")(strong(trans.noGameFound.txt()))
         } else
           div(
             cls := List(
@@ -57,7 +55,8 @@ object gamesContent:
                 views.html.game.mini(pov)(cls := "paginated")
               }
             else
-              views.html.game.widgets(pager.currentPageResults, notes, user = u.some, ownerLink = ctx is u),
+              views.html.game
+                .widgets(pager.currentPageResults, notes, user = u.some, ownerLink = ctx is u),
             pagerNext(pager, np => routes.User.games(u.username, filterName, np).url)
           )
       )

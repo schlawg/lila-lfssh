@@ -2,14 +2,13 @@ package views.html.tv
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 
 object games:
 
   def apply(channel: lila.tv.Tv.Channel, povs: List[lila.game.Pov], champions: lila.tv.Tv.Champions)(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     views.html.base.layout(
       title = s"${channel.name} • ${trans.currentGames.txt()}",

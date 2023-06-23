@@ -93,19 +93,16 @@ lichess.load.then(() => {
     $('.user-autocomplete').each(function (this: HTMLInputElement) {
       const focus = !!this.autofocus;
       const start = () =>
-        userComplete().then(uac =>
-          uac({
-            input: this,
-            friend: $(this).data('friend'),
-            tag: $(this).data('tag'),
-            focus,
-          })
-        );
+        userComplete({
+          input: this,
+          friend: $(this).data('friend'),
+          tag: $(this).data('tag'),
+          focus,
+        });
+
       if (focus) start();
       else $(this).one('focus', start);
     });
-
-    if (window.InfiniteScroll) window.InfiniteScroll('.infinite-scroll');
 
     $('input.confirm, button.confirm').on('click', function (this: HTMLElement) {
       return confirm(this.title || 'Confirm this action?');
@@ -193,7 +190,9 @@ lichess.load.then(() => {
                   })
               )
               .append(
-                $(`<a class="text" data-icon="${licon.PlayTriangle}">`).attr('href', url).text(siteTrans('resume'))
+                $(`<a class="text" data-icon="${licon.PlayTriangle}">`)
+                  .attr('href', url)
+                  .text(siteTrans('resume'))
               )
           )
       );

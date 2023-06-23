@@ -1,6 +1,5 @@
 package views.html
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -15,7 +14,7 @@ object kaladin:
     case p if p < 80 => "orange"
     case _           => "red"
 
-  def dashboard(dashboard: lila.irwin.KaladinUser.Dashboard)(using WebContext) =
+  def dashboard(dashboard: lila.irwin.KaladinUser.Dashboard)(using PageContext) =
     views.html.base.layout(
       title = "Kaladin dashboard",
       moreCss = cssTag("mod.misc")

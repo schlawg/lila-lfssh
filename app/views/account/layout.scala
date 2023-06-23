@@ -1,6 +1,5 @@
 package views.html.account
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -13,7 +12,7 @@ object layout:
       active: String,
       evenMoreCss: Frag = emptyFrag,
       evenMoreJs: Frag = emptyFrag
-  )(body: Frag)(using ctx: WebContext): Frag =
+  )(body: Frag)(using ctx: PageContext): Frag =
     views.html.base.layout(
       title = title,
       moreCss = frag(cssTag("account"), evenMoreCss),

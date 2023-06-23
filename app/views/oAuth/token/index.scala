@@ -1,6 +1,5 @@
 package views.html.oAuth.token
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -8,7 +7,7 @@ import controllers.routes
 
 object index:
 
-  def apply(tokens: List[lila.oauth.AccessToken])(using WebContext) =
+  def apply(tokens: List[lila.oauth.AccessToken])(using PageContext) =
 
     val title = "Personal API access tokens"
 

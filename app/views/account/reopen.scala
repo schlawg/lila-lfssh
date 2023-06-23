@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -10,7 +9,7 @@ import controllers.routes
 object reopen:
 
   def form(form: lila.security.HcaptchaForm[?], error: Option[String] = None)(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
     views.html.base.layout(
       title = trans.reopenYourAccount.txt(),
@@ -39,7 +38,7 @@ object reopen:
       )
     }
 
-  def sent(using WebContext) =
+  def sent(using PageContext) =
     views.html.base.layout(
       title = trans.reopenYourAccount.txt()
     ) {

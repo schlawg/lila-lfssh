@@ -4,7 +4,6 @@ package appeal
 import controllers.routes
 import controllers.appeal.routes.{ Appeal as appealRoutes }
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.appeal.Appeal
@@ -19,7 +18,7 @@ object queue:
       scores: lila.report.Room.Scores,
       streamers: Int,
       nbAppeals: Int
-  )(using WebContext) =
+  )(using PageContext) =
     views.html.report.list.layout("appeal", scores, streamers, nbAppeals)(
       table(cls := "slist slist-pad see appeal-queue")(
         thead(

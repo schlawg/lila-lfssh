@@ -67,7 +67,11 @@ export function view(ctrl: ReturnType<typeof makeCtrl>): VNode {
     },
     content: [
       h('h2', ctrl.trans.noarg('inviteToTheStudy')),
-      h('p.info', { attrs: { 'data-icon': licon.InfoCircle } }, ctrl.trans.noarg('pleaseOnlyInvitePeopleYouKnow')),
+      h(
+        'p.info',
+        { attrs: { 'data-icon': licon.InfoCircle } },
+        ctrl.trans.noarg('pleaseOnlyInvitePeopleYouKnow')
+      ),
       h('div.input-wrapper', [
         // because typeahead messes up with snabbdom
         h('input', {
@@ -76,8 +80,8 @@ export function view(ctrl: ReturnType<typeof makeCtrl>): VNode {
             spellcheck: 'false',
           },
           hook: onInsert<HTMLInputElement>(input =>
-            lichess.userComplete().then(uac => {
-              uac({
+            lichess
+              .userComplete({
                 input,
                 tag: 'span',
                 onSelect(v) {
@@ -85,9 +89,8 @@ export function view(ctrl: ReturnType<typeof makeCtrl>): VNode {
                   ctrl.invite(v.name);
                   ctrl.redraw();
                 },
-              });
-              input.focus();
-            })
+              })
+              .then(() => input.focus())
           ),
         }),
       ]),

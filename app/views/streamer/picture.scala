@@ -2,7 +2,6 @@ package views.html.streamer
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.streamer.Streamer
@@ -12,7 +11,7 @@ object picture:
 
   import trans.streamer.*
 
-  def apply(s: Streamer.WithContext, error: Option[String] = None)(using WebContext) =
+  def apply(s: Streamer.WithContext, error: Option[String] = None)(using PageContext) =
     views.html.base.layout(
       title = xStreamerPicture.txt(s.user.username),
       moreJs = embedJsUnsafeLoadThen("""

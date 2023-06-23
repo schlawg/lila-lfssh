@@ -1,6 +1,5 @@
 package views.html.relation
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -16,7 +15,7 @@ object actions:
       followable: Boolean,
       blocked: Boolean,
       signup: Boolean = false
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     div(cls := "relation-actions btn-rack")(
       (!ctx.is(user) && !blocked) option a(
         titleOrText(trans.challenge.challengeToPlay.txt()),

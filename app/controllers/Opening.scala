@@ -13,21 +13,23 @@ final class Opening(env: Env) extends LilaController(env):
     val searchQuery = ~q
     if searchQuery.nonEmpty then
       val results = env.opening.search(searchQuery)
-      if HTTPRequest isXhr ctx.req
-      then html.opening.search.resultsList(results)
-      else html.opening.search.resultsPage(searchQuery, results, env.opening.api.readConfig)
+      Ok.page:
+        if HTTPRequest isXhr ctx.req
+        then html.opening.search.resultsList(results)
+        else html.opening.search.resultsPage(searchQuery, results, env.opening.api.readConfig)
     else
       env.opening.api.index flatMapz { page =>
-        isGranted(_.OpeningWiki).so(env.opening.wiki.popularOpeningsWithShortWiki) map {
-          html.opening.index(page, _)
-        }
+        Ok.pageAsync:
+          isGrantedOpt(_.OpeningWiki).so(env.opening.wiki.popularOpeningsWithShortWiki) map {
+            html.opening.index(page, _)
+          }
       }
 
   def byKeyAndMoves(key: String, moves: String) = Open:
     val crawler = HTTPRequest.isCrawler(ctx.req)
     if moves.sizeIs > 40 && crawler.yes then Forbidden
     else
-      env.opening.api.lookup(queryFromUrl(key, moves.some), isGranted(_.OpeningWiki), crawler) flatMap {
+      env.opening.api.lookup(queryFromUrl(key, moves.some), isGrantedOpt(_.OpeningWiki), crawler) flatMap {
         case None => Redirect(routes.Opening.index(key.some))
         case Some(page) =>
           val query = page.query.query
@@ -38,10 +40,11 @@ final class Opening(env: Env) extends LilaController(env):
             Redirect:
               s"${routes.Opening.byKeyAndMoves(query.key, page.query.pgnUnderscored)}?r=1"
           else
-            page.query.exactOpening.so(env.puzzle.opening.getClosestTo) map { puzzle =>
-              val puzzleKey = puzzle.map(_.fold(_.family.key.value, _.opening.key.value))
-              Ok(html.opening.show(page, puzzleKey))
-            }
+            Ok.pageAsync:
+              page.query.exactOpening.so(env.puzzle.opening.getClosestTo) map { puzzle =>
+                val puzzleKey = puzzle.map(_.fold(_.family.key.value, _.opening.key.value))
+                html.opening.show(page, puzzleKey)
+              }
       }
 
   def config(thenTo: String) = OpenBody:
@@ -56,7 +59,7 @@ final class Opening(env: Env) extends LilaController(env):
         .bindFromRequest()
         .fold(_ => redir, cfg => redir.withCookies(env.opening.config.write(cfg)))
 
-  def wikiWrite(key: String, moves: String) = SecureBody(_.OpeningWiki) { ctx ?=> me =>
+  def wikiWrite(key: String, moves: String) = SecureBody(_.OpeningWiki) { ctx ?=> me ?=>
     env.opening.api
       .lookup(queryFromUrl(key, moves.some), isGranted(_.OpeningWiki), Crawler.No)
       .map(_.flatMap(_.query.exactOpening))
@@ -71,4 +74,4 @@ final class Opening(env: Env) extends LilaController(env):
   }
 
   def tree = Open:
-    html.opening.tree(lila.opening.OpeningTree.compute, env.opening.api.readConfig)
+    Ok.page(html.opening.tree(lila.opening.OpeningTree.compute, env.opening.api.readConfig))

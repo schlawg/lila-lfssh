@@ -4,7 +4,6 @@ import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 import play.api.mvc.Call
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.ublog.{ UblogBlog, UblogPost }
@@ -21,7 +20,7 @@ object post:
       liked: Boolean,
       followed: Boolean,
       asks: Iterable[Option[lila.ask.Ask]]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       moreCss = frag(
         cssTag("ublog"),
@@ -136,13 +135,13 @@ object post:
       )
     }
 
-  private def editButton(post: UblogPost)(using WebContext) = a(
+  private def editButton(post: UblogPost)(using PageContext) = a(
     href     := editUrlOfPost(post),
     cls      := "button button-empty text",
     dataIcon := licon.Pencil
   )(trans.edit())
 
-  private def likeButton(post: UblogPost, liked: Boolean, showText: Boolean)(using WebContext) =
+  private def likeButton(post: UblogPost, liked: Boolean, showText: Boolean)(using PageContext) =
     val text = if (liked) trans.study.unlike.txt() else trans.study.like.txt()
     button(
       tpe := "button",
@@ -163,7 +162,7 @@ object post:
       )(text)
     )
 
-  private def followButton(user: User, followed: Boolean)(using WebContext) =
+  private def followButton(user: User, followed: Boolean)(using PageContext) =
     div(
       cls := List(
         "ublog-post__follow" -> true,
@@ -189,7 +188,7 @@ object post:
       makeUrl: UblogPost.BasePost => Call = urlOfPost,
       showAuthor: Boolean = false,
       showIntro: Boolean = true
-  )(using WebContext) =
+  )(using PageContext) =
     a(cls := "ublog-post-card ublog-post-card--link", href := makeUrl(post))(
       thumbnail(post, _.Size.Small)(cls := "ublog-post-card__image"),
       span(cls := "ublog-post-card__content")(
@@ -212,7 +211,7 @@ object post:
 
   def editUrlOfPost(post: UblogPost.BasePost) = routes.Ublog.edit(post.id)
 
-  private[ublog] def newPostLink(using ctx: WebContext) = ctx.me.map: u =>
+  private[ublog] def newPostLink(using ctx: PageContext) = ctx.me.map: u =>
     a(
       href     := routes.Ublog.form(u.username),
       cls      := "button button-green",

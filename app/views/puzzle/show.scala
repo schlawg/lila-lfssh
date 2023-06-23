@@ -3,7 +3,6 @@ package views.html.puzzle
 import controllers.routes
 import play.api.libs.json.{ JsObject, Json }
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 import lila.common.Json.given
@@ -17,7 +16,7 @@ object show:
       pref: JsObject,
       settings: lila.puzzle.PuzzleSettings,
       langPath: Option[lila.common.LangPath] = None
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     val isStreak = data.value.contains("streak")
     views.html.base.layout(
       title = if (isStreak) "Puzzle Streak" else trans.puzzles.txt(),
@@ -28,19 +27,19 @@ object show:
         ctx.blind option cssTag("round.nvui")
       ),
       moreJs = frag(
-        puzzleTag,
         puzzleNvuiTag,
-        embedJsUnsafeLoadThen(s"""LichessPuzzle(${safeJsonValue(
-            Json
-              .obj(
-                "data"        -> data,
-                "pref"        -> pref,
-                "i18n"        -> bits.jsI18n(streak = isStreak),
-                "showRatings" -> ctx.pref.showRatings,
-                "settings" -> Json.obj("difficulty" -> settings.difficulty.key).add("color" -> settings.color)
-              )
-              .add("themes" -> ctx.isAuth.option(bits.jsonThemes))
-          )})""")
+        jsModuleInit(
+          "puzzle",
+          Json
+            .obj(
+              "data"        -> data,
+              "pref"        -> pref,
+              "i18n"        -> bits.jsI18n(streak = isStreak),
+              "showRatings" -> ctx.pref.showRatings,
+              "settings" -> Json.obj("difficulty" -> settings.difficulty.key).add("color" -> settings.color)
+            )
+            .add("themes" -> ctx.isAuth.option(bits.jsonThemes))
+        )
       ),
       csp = analysisCsp.some,
       chessground = false,

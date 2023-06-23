@@ -3,7 +3,6 @@ package tv
 
 import play.api.libs.json.Json
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 import lila.common.String.html.safeJsonValue
@@ -19,21 +18,11 @@ object index:
       data: play.api.libs.json.JsObject,
       cross: Option[lila.game.Crosstable.WithMatchup],
       history: List[lila.game.Pov]
-  )(using WebContext) =
+  )(using PageContext) =
     views.html.round.bits.layout(
       variant = pov.game.variant,
       title = s"${channel.name} TV: ${playerText(pov.player)} vs ${playerText(pov.opponent)}",
-      moreJs = frag(
-        roundTag,
-        embedJsUnsafeLoadThen(
-          s"""LichessRound.boot(${safeJsonValue(
-              Json.obj(
-                "data" -> data,
-                "i18n" -> views.html.round.jsI18n(pov.game)
-              )
-            )})"""
-        )
-      ),
+      moreJs = jsModuleInit("round", Json.obj("data" -> data, "i18n" -> views.html.round.jsI18n(pov.game))),
       moreCss = cssTag("tv.single"),
       chessground = false,
       openGraph = lila.app.ui

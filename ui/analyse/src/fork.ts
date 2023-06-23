@@ -78,11 +78,13 @@ export function make(root: AnalyseCtrl): ForkCtrl {
 
 const eventToIndex = (e: MouseEvent): number | undefined => {
   const target = e.target as HTMLElement;
-  return parseInt((target.parentNode as HTMLElement).getAttribute('data-it') || target.getAttribute('data-it') || '');
+  return parseInt(
+    (target.parentNode as HTMLElement).getAttribute('data-it') || target.getAttribute('data-it') || ''
+  );
 };
 
 export function view(root: AnalyseCtrl, concealOf?: ConcealOf) {
-  if (root.embed || root.retro) return;
+  if (root.retro) return;
   const state = root.fork.state();
   if (!state.displayed) return;
   const isMainline = concealOf && root.onMainline;

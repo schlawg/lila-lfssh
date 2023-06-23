@@ -3,7 +3,6 @@ package views.html
 import controllers.routes
 import play.api.libs.json.*
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.LangPath
@@ -12,7 +11,7 @@ import lila.i18n.I18nKeys.{ storm as s }
 
 object racer:
 
-  def home(using WebContext) =
+  def home(using PageContext) =
     views.html.base.layout(
       moreCss = cssTag("racer-home"),
       title = "Puzzle Racer",
@@ -29,22 +28,15 @@ object racer:
           )
         ),
         div(cls := "racer-home__about")(
-          a(href := routes.Page.loneBookmark("racer"))(trans.aboutX("Puzzle Racer"))
+          a(href := routes.ContentPage.loneBookmark("racer"))(trans.aboutX("Puzzle Racer"))
         )
       )
     }
 
-  def show(data: JsObject)(using WebContext) =
+  def show(data: JsObject)(using PageContext) =
     views.html.base.layout(
       moreCss = frag(cssTag("racer")),
-      moreJs = frag(
-        jsModule("racer"),
-        embedJsUnsafeLoadThen(
-          s"""LichessRacer.start(${safeJsonValue(
-              data ++ Json.obj("i18n" -> i18nJsObject(i18nKeys))
-            )})"""
-        )
-      ),
+      moreJs = jsModuleInit("racer", data ++ Json.obj("i18n" -> i18nJsObject(i18nKeys))),
       title = "Puzzle Racer",
       zoomable = true,
       zenable = true,

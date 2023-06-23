@@ -4,7 +4,6 @@ import play.api.libs.json.{ JsObject, Json }
 
 import chess.variant.{ Variant, FromPosition, Crazyhouse }
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -19,7 +18,7 @@ object userAnalysis:
       pov: lila.game.Pov,
       withForecast: Boolean = false,
       inlinePgn: Option[String] = None
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       title = trans.analysis.txt(),
       moreCss = frag(
@@ -29,18 +28,18 @@ object userAnalysis:
         ctx.blind option cssTag("round.nvui")
       ),
       moreJs = frag(
-        analyseTag,
         analyseNvuiTag,
-        embedJsUnsafe(s"""lichess.userAnalysis=${safeJsonValue(
-            Json
-              .obj(
-                "data" -> data,
-                "i18n" -> userAnalysisI18n(withForecast = withForecast),
-                "wiki" -> pov.game.variant.standard
-              )
-              .add("inlinePgn", inlinePgn) ++
-              views.html.board.bits.explorerAndCevalConfig
-          )}""")
+        analyseInit(
+          "userAnalysis",
+          Json
+            .obj(
+              "data" -> data,
+              "i18n" -> userAnalysisI18n(withForecast = withForecast),
+              "wiki" -> pov.game.variant.standard
+            )
+            .add("inlinePgn", inlinePgn) ++
+            views.html.board.bits.explorerAndCevalConfig
+        )
       ),
       csp = analysisCsp.withWikiBooks.some,
       chessground = false,

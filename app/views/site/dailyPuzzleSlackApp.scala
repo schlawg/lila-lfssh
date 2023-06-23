@@ -1,13 +1,12 @@
 package views.html.site
 
-import lila.api.WebContext
 import lila.app.templating.Environment.*
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import controllers.routes
 
 object dailyPuzzleSlackApp:
 
-  def apply()(using WebContext) =
+  def apply()(using PageContext) =
     views.html.base.layout(
       title = "Daily Chess Puzzle by Lichess (Slack App)",
       moreCss = cssTag("page")

@@ -1,6 +1,5 @@
 package views.html.video
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -10,7 +9,7 @@ import controllers.routes
 object index:
 
   def apply(videos: Paginator[lila.video.VideoView], count: Long, control: lila.video.UserControl)(using
-      ctx: WebContext
+      ctx: PageContext
   ) =
 
     val tagString =

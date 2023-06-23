@@ -5,22 +5,24 @@ import play.api.libs.json.*
 import play.api.http.*
 import play.api.mvc.*
 
-import lila.api.context.*
 import lila.common.{ HTTPRequest, ApiVersion }
 
 trait ResponseBuilder(using Executor)
     extends ControllerHelpers
+    with RequestContext
     with ResponseWriter
     with CtrlExtensions
-    with CtrlConversions:
+    with CtrlConversions
+    with CtrlPage:
 
   val keyPages = KeyPages(env)
   export keyPages.{ notFound as renderNotFound }
+  export scalatags.Text.Frag
 
-  given Conversion[scalatags.Text.Frag, Result]     = Ok(_)
-  given Conversion[Result, Fu[Result]]              = fuccess(_)
-  given Conversion[scalatags.Text.Frag, Fu[Result]] = html => fuccess(Ok(html))
-  given (using AnyContext): Conversion[Funit, Fu[Result]] =
+  // given Conversion[scalatags.Text.Frag, Result] = Ok(_)
+  given Conversion[Result, Fu[Result]] = fuccess(_)
+  // given Conversion[scalatags.Text.Frag, Fu[Result]] = html => fuccess(Ok(html))
+  given (using Context): Conversion[Funit, Fu[Result]] =
     _ => negotiate(fuccess(Ok("ok")), _ => fuccess(jsonOkResult))
   given alleycats.Zero[Result] = alleycats.Zero(Results.NotFound)
 
@@ -43,14 +45,15 @@ trait ResponseBuilder(using Executor)
   def JsonStrOk(str: JsonStr): Result       = Ok(str) as JSON
   def JsonBadRequest(body: JsValue): Result = BadRequest(body) as JSON
 
-  def negotiate(html: => Fu[Result], api: ApiVersion => Fu[Result])(using
-      ctx: AnyContext
-  ): Fu[Result] =
+  def negotiate(html: => Fu[Result], api: ApiVersion => Fu[Result])(using ctx: Context): Fu[Result] =
     lila.api.Mobile.Api
       .requestVersion(ctx.req)
       .fold(html): v =>
         api(v).dmap(_ as JSON)
       .dmap(_.withHeaders(VARY -> "Accept"))
+
+  def negotiateHtmlOrJson(html: => Fu[Result], json: => Fu[Result])(using ctx: Context): Fu[Result] =
+    if HTTPRequest.acceptsJson(ctx.req) then json else html
 
   def jsonError[A: Writes](err: A): JsObject = Json.obj("error" -> err)
 
@@ -60,16 +63,16 @@ trait ResponseBuilder(using Executor)
 
   def notForBotAccounts = JsonBadRequest(jsonError("This API endpoint is not for Bot accounts."))
 
-  def notFound(using ctx: AnyContext): Fu[Result] =
+  def notFound(using ctx: Context): Fu[Result] =
     negotiate(
       html = ctx match
-        case web: WebContext if HTTPRequest.isSynchronousHttp(ctx.req) => renderNotFound(using web)
+        case web: Context if HTTPRequest.isSynchronousHttp(ctx.req) => renderNotFound(using web)
         case _ => fuccess(Results.NotFound("Resource not found"))
       ,
       api = _ => notFoundJson("Resource not found")
     )
 
-  def authenticationFailed(using ctx: WebContext): Fu[Result] =
+  def authenticationFailed(using ctx: Context): Fu[Result] =
     negotiate(
       html = fuccess:
         Redirect(
@@ -85,21 +88,16 @@ trait ResponseBuilder(using Executor)
 
   private val forbiddenJsonResult = Forbidden(jsonError("Authorization failed"))
 
-  def authorizationFailed(using ctx: WebContext): Fu[Result] =
-    negotiate(
-      html =
-        if HTTPRequest.isSynchronousHttp(ctx.req)
-        then Forbidden(views.html.site.message.authFailed)
-        else Results.Forbidden("Authorization failed"),
-      api = _ => fuccess(forbiddenJsonResult)
-    )
-  def authorizationFailed(using AnyContext): Fu[Result] =
-    negotiate(
-      html = fuccess(Results.Forbidden("Authorization failed")),
-      api = _ => fuccess(forbiddenJsonResult)
-    )
+  def authorizationFailed(using ctx: Context): Fu[Result] =
+    if HTTPRequest.isSynchronousHttp(ctx.req)
+    then Forbidden.page(views.html.site.message.authFailed)
+    else
+      fuccess:
+        render:
+          case Accepts.Json() => forbiddenJsonResult
+          case _              => Results.Forbidden("Authorization failed")
 
-  def playbanJsonError(ban: lila.playban.TempBan) = fuccess:
+  def playbanJsonError(ban: lila.playban.TempBan) =
     Forbidden(
       jsonError(
         s"Banned from playing for ${ban.remainingMinutes} minutes. Reason: Too many aborts, unplayed games, or rage quits."

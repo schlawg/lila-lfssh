@@ -7,9 +7,10 @@ import { build, postBuild } from './build';
 export function main() {
   const configPath = path.resolve(__dirname, '../build-config.json');
   const config: BuildOpts = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
+  const oneDashArgs = ps.argv.filter(x => /^-([hpsw]+)$/.test(x))?.flatMap(x => x.slice(1).split(''));
 
   if (ps.argv.includes('--tsc') || ps.argv.includes('--sass') || ps.argv.includes('--esbuild')) {
-    // cli args override json
+    // cli args override json, including any of these flags sets those not present to false
     config.sass = ps.argv.includes('--sass');
     config.tsc = ps.argv.includes('--tsc');
     config.esbuild = ps.argv.includes('--esbuild');
@@ -20,12 +21,14 @@ export function main() {
 
   init(path.resolve(__dirname, '../../..'), config);
 
-  if (ps.argv.includes('--help') || ps.argv.includes('-h')) {
+  if (ps.argv.includes('--help') || oneDashArgs.includes('h')) {
     console.log(fs.readFileSync(path.resolve(__dirname, '../readme'), 'utf8'));
     return;
   }
-  env.watch = ps.argv.includes('--watch') || ps.argv.includes('-w');
-  env.prod = ps.argv.includes('--prod') || ps.argv.includes('-p');
+  env.watch = ps.argv.includes('--watch') || oneDashArgs.includes('w');
+  env.prod = ps.argv.includes('--prod') || oneDashArgs.includes('p');
+  env.split = ps.argv.includes('--split') || oneDashArgs.includes('s');
+
   if (env.prod && env.watch) {
     env.error('You cannot watch prod builds! Think of the children');
     return;
@@ -36,6 +39,7 @@ export function main() {
 export interface BuildOpts {
   sass?: boolean; // compile scss, default = true
   esbuild?: boolean; // bundle with esbuild, default = true
+  splitting?: boolean; // enable code splitting for esm modules, default = false
   tsc?: boolean; // use tsc for type checking, default = true
   time?: boolean; // show time in log statements, default = true
   ctx?: boolean; // show context (tsc, rollup, etc), default = true
@@ -49,7 +53,9 @@ export interface LichessModule {
   pre: string[][]; // pre-bundle build steps from package.json scripts
   post: string[][]; // post-bundle build steps from package.json scripts
   hasTsconfig?: boolean; // fileExists('tsconfig.json')
-  bundle?: LichessBundle[]; // bundle targets from package json
+  bundles?: {
+    [moduleType: string]: LichessBundle[];
+  };
   copy?: Copy[]; // pre-bundle filesystem copies from package json
 }
 
@@ -107,6 +113,7 @@ class Env {
   opts: BuildOpts; // configure logging mostly
   watch = false;
   prod = false;
+  split = false;
   exitCode = new Map<'sass' | 'tsc' | 'esbuild', number | false>();
   startTime: number | undefined = Date.now();
 
@@ -164,7 +171,9 @@ class Env {
 
     lines(text).forEach(line =>
       console.log(
-        `${prefix ? prefix + ' - ' : ''}${error ? esc(line, codes.error) : warn ? esc(line, codes.warn) : line}`
+        `${prefix ? prefix + ' - ' : ''}${
+          error ? esc(line, codes.error) : warn ? esc(line, codes.warn) : line
+        }`
       )
     );
   }
@@ -173,13 +182,18 @@ class Env {
     const err = [...this.exitCode.values()].find(x => x);
     const allDone = this.exitCode.size === 3;
 
-    this.log(`${code === 0 ? 'Done' : colors.red('Failed')}` + (this.watch ? ` - ${colors.grey('Watching')}...` : ''), {
-      ctx: ctx,
-    });
+    this.log(
+      `${code === 0 ? 'Done' : colors.red('Failed')}` +
+        (this.watch ? ` - ${colors.grey('Watching')}...` : ''),
+      {
+        ctx: ctx,
+      }
+    );
 
     if (allDone) {
       if (!err) postBuild();
-      if (this.startTime && !err) this.log(`Done in ${colors.green((Date.now() - this.startTime) / 1000 + '')}s`);
+      if (this.startTime && !err)
+        this.log(`Done in ${colors.green((Date.now() - this.startTime) / 1000 + '')}s`);
       this.startTime = undefined; // it's pointless to time subsequent builds, they are too fast
       if (!env.watch) {
         process.exitCode = err || 0;

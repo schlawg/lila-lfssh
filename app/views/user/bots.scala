@@ -3,14 +3,13 @@ package user
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.user.User
 
 object bots:
 
-  def apply(users: List[User])(using WebContext) =
+  def apply(users: List[User])(using PageContext) =
 
     val title = s"${users.size} Online bots"
 
@@ -47,7 +46,7 @@ object bots:
       )
     )
 
-  private def botTable(users: List[User])(using ctx: WebContext) = div(cls := "bots__list")(
+  private def botTable(users: List[User])(using ctx: PageContext) = div(cls := "bots__list")(
     users map { u =>
       div(cls := "bots__list__entry")(
         div(cls := "bots__list__entry__desc")(

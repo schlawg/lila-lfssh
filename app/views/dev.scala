@@ -2,7 +2,6 @@ package views.html
 
 import play.api.data.Form
 
-import lila.api.WebContext
 import lila.app.templating.Environment.*
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -10,7 +9,7 @@ import controllers.routes
 
 object dev:
 
-  def settings(settings: List[lila.memo.SettingStore[?]])(using WebContext) =
+  def settings(settings: List[lila.memo.SettingStore[?]])(using PageContext) =
     val title = "Settings"
     views.html.base.layout(
       title = title,
@@ -35,12 +34,12 @@ object dev:
       )
     )
 
-  def cli(form: Form[?], res: Option[String])(using WebContext) =
+  def cli(form: Form[?], res: Option[String])(using PageContext) =
     val title = "Command Line Interface"
     views.html.base.layout(
       title = title,
       moreCss = frag(cssTag("mod.misc"), cssTag("form3"))
-    ) {
+    ):
       main(cls := "page-menu")(
         views.html.mod.menu("cli"),
         div(id := "dev-cli", cls := "page-menu__content box box-pad")(
@@ -64,13 +63,20 @@ object dev:
             form3.submit(frag("Submit"))
           ),
           h2("Command examples:"),
-          pre("""uptime
+          pre(cliExamples)
+        )
+      )
+
+  private val cliExamples = """uptime
 announce 10 minutes Lichess will restart!
 announce cancel
 change asset version
 fishnet client create {username}
 gdpr erase {username} forever
 msg multi {sender} {recipient1,recipient2} {message}
+team members add {teamId} {username1,username2,username3}
+notify url users {username1,username2,username3} {url} {link title} | {link description}
+notify url titled {url} {link title} | {link description}
 patron lifetime {username}
 patron month {username}
 patron remove {username}
@@ -80,7 +86,4 @@ eval-cache drop standard 8/8/1k6/8/2K5/1P6/8/8 w - - 0 1
 disposable test msumain.edu.ph
 disposable reload msumain.edu.ph
 video sheet
-""")
-        )
-      )
-    }
+"""

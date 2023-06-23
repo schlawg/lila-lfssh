@@ -1,7 +1,6 @@
 package views.html
 package oAuth
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.user.User
@@ -18,7 +17,7 @@ object authorize:
     src := assetUrl("images/icons/linked-rings.png")
   )
 
-  def apply(prompt: AuthorizationRequest.Prompt, me: User, authorizeUrl: String)(using WebContext) =
+  def apply(prompt: AuthorizationRequest.Prompt, me: User, authorizeUrl: String)(using PageContext) =
     import prompt.{ isDanger, looksLikeLichessMobile as mobile }
     val buttonClass        = s"button${isDanger so " button-red confirm text"}"
     val buttonDelay        = if isDanger then 5000 else 2000
@@ -72,14 +71,14 @@ object authorize:
         )
       )
 
-  private def switchLoginUrl(to: Option[UserName])(using ctx: WebContext) =
+  private def switchLoginUrl(to: Option[UserName])(using ctx: PageContext) =
     addQueryParams(routes.Auth.login.url, Map("switch" -> to.fold("1")(_.value), "referrer" -> ctx.req.uri))
 
   private def footer(
       prompt: AuthorizationRequest.Prompt,
       isDanger: Boolean,
       otherUserRequested: Option[LightUser]
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     div(cls := "oauth__footer")(
       ctx.me ifTrue otherUserRequested.isEmpty map { me =>
         p(

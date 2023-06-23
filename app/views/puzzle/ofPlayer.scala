@@ -3,7 +3,6 @@ package html.puzzle
 
 import controllers.routes
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -12,7 +11,7 @@ import lila.user.User
 
 object ofPlayer:
 
-  def apply(query: String, user: Option[User], puzzles: Option[Paginator[Puzzle]])(using ctx: WebContext) =
+  def apply(query: String, user: Option[User], puzzles: Option[Paginator[Puzzle]])(using ctx: PageContext) =
     views.html.base.layout(
       title = user.fold(trans.puzzle.lookupOfPlayer.txt())(u => trans.puzzle.fromXGames.txt(u.username)),
       moreCss = cssTag("puzzle.page"),

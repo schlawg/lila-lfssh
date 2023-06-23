@@ -4,7 +4,6 @@ import controllers.routes
 import java.util.Currency
 import play.api.i18n.Lang
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.String.html.safeJsonValue
@@ -25,7 +24,7 @@ object index:
       recentIds: List[UserId],
       bestIds: List[UserId],
       pricing: lila.plan.PlanPricing
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     val localeParam = lila.plan.PayPalClient.locale(ctx.lang) so { l => s"&locale=$l" }
     views.html.base.layout(
       title = becomePatron.txt(),
@@ -258,7 +257,7 @@ object index:
       )
     }
 
-  private def showCurrency(cur: Currency)(using ctx: WebContext) =
+  private def showCurrency(cur: Currency)(using ctx: PageContext) =
     s"${cur.getSymbol(ctx.lang.locale)} ${cur.getDisplayName(ctx.lang.locale)}"
 
   private def faq(using Lang) =

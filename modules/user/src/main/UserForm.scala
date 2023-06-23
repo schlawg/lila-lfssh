@@ -27,14 +27,14 @@ final class UserForm:
 
   def usernameOf(user: User) = username(user) fill user.username
 
-  val profile = Form(
+  val profile: Form[Profile] = Form(
     mapping(
       "country"    -> optional(text.verifying(Countries.codeSet contains _)),
       "location"   -> optional(cleanNonEmptyText(maxLength = 80)),
       "bio"        -> optional(cleanNonEmptyText(maxLength = 400)),
       "firstName"  -> nameField,
       "lastName"   -> nameField,
-      "fideRating" -> optional(number(min = 600, max = 3000)),
+      "fideRating" -> optional(number(min = 1000, max = 3000)),
       "uscfRating" -> optional(number(min = 100, max = 3000)),
       "ecfRating"  -> optional(number(min = 0, max = 3000)),
       "rcfRating"  -> optional(number(min = 0, max = 3000)),

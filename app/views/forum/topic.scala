@@ -5,14 +5,13 @@ import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 import play.api.data.Form
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
 
 object topic:
 
-  def form(categ: lila.forum.ForumCateg, form: Form[?], captcha: lila.common.Captcha)(using WebContext) =
+  def form(categ: lila.forum.ForumCateg, form: Form[?], captcha: lila.common.Captcha)(using PageContext) =
     views.html.base.layout(
       title = "New forum topic",
       moreCss = cssTag("forum"),
@@ -47,7 +46,7 @@ object topic:
           ),
           p(
             trans.makeSureToRead(
-              strong(a(href := routes.Page.loneBookmark("forum-etiquette"))(trans.theForumEtiquette()))
+              strong(a(href := routes.ContentPage.loneBookmark("forum-etiquette"))(trans.theForumEtiquette()))
             )
           )
         ),
@@ -78,7 +77,7 @@ object topic:
       formWithCaptcha: Option[FormWithCaptcha],
       unsub: Option[Boolean],
       canModCateg: Boolean
-  )(using ctx: WebContext) =
+  )(using ctx: PageContext) =
     views.html.base.layout(
       title = s"${topic.name} • page ${posts.currentPage}/${posts.nbPages} • ${categ.name}",
       moreJs = frag(
@@ -189,7 +188,7 @@ object topic:
               help = a(
                 dataIcon := licon.InfoCircle,
                 cls      := "text",
-                href     := routes.Page.loneBookmark("forum-etiquette")
+                href     := routes.ContentPage.loneBookmark("forum-etiquette")
               )(
                 "Forum etiquette"
               ).some

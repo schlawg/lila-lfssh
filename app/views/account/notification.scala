@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import controllers.routes
@@ -10,7 +9,7 @@ object notification {
   import bits.*
   import trans.preferences.*
 
-  def apply(form: play.api.data.Form[?])(using WebContext) =
+  def apply(form: play.api.data.Form[?])(using PageContext) =
     account.layout(
       title = s"${trans.preferences.notifications.txt()} - ${preferences.txt()}",
       active = "notification"

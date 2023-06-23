@@ -4,7 +4,6 @@ import scala.collection.mutable
 import scala.util.Random.shuffle
 
 import controllers.routes
-import lila.api.context.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.ask.Ask
@@ -13,7 +12,7 @@ import lila.security.{ Granter, Permission }
 
 object ask:
 
-  def renderMany(frag: Frag, asks: Iterable[Option[Ask]])(using WebContext): Frag =
+  def renderMany(frag: Frag, asks: Iterable[Option[Ask]])(using PageContext): Frag =
     if asks.isEmpty then frag
     else
       RawFrag:
@@ -27,22 +26,21 @@ object ask:
         )
 
   def renderOne(ask: Ask, prevView: Option[List[Int]] = None, tallyView: Boolean = false)(using
-      ctx: WebContext
+      ctx: PageContext
   ): Frag =
-    RenderAsk(ask, prevView, tallyView, ctx).render
+    RenderAsk(ask, prevView, tallyView).render
 
-  def renderGraph(ask: Ask)(using ctx: WebContext): Frag =
-    if ask.isRanked then RenderAsk(ask, None, true, ctx).rankGraphBody
-    else RenderAsk(ask, None, true, ctx).pollGraphBody
+  def renderGraph(ask: Ask)(using ctx: PageContext): Frag =
+    if ask.isRanked then RenderAsk(ask, None, true).rankGraphBody
+    else RenderAsk(ask, None, true).pollGraphBody
 
 private case class RenderAsk(
     ask: Ask,
     prevView: Option[List[Int]],
-    tallyView: Boolean,
-    ctx: WebContext
-):
+    tallyView: Boolean
+)(using ctx: PageContext):
   // this.me is what AskApi cares about. It's either Some(user id), Some(anonymous hash), or None
-  val me = ctx.me.fold(ask.toAnon(ctx.ip))(u => ask.toAnon(u.id))
+  val voterId = ctx.meId.fold(ask.toAnon(ctx.ip))(u => ask.toAnon(u))
 
   val view = prevView getOrElse:
     if ask.isRandom then shuffle(ask.choices.indices.toList)
@@ -50,9 +48,9 @@ private case class RenderAsk(
 
   def render =
     fieldset(
-      cls                              := s"ask${ask.isAnon so " anon"}",
-      id                               := ask._id,
-      ask.hasPickFor(me) option (value := "")
+      cls                                   := s"ask${ask.isAnon so " anon"}",
+      id                                    := ask._id,
+      ask.hasPickFor(voterId) option (value := "")
     )(
       header,
       ask.isConcluded option label(s"${ask.feedback.so(_ size) max ask.picks.so(_ size)} responses"),
@@ -85,13 +83,14 @@ private case class RenderAsk(
             formmethod := "GET",
             formaction := routes.Ask.view(ask._id, viewParam.some, !tallyView)
           ),
-          ctx.me.exists(_ is ask.creator) || ctx.me.so(Granter(Permission.Shusher)) option button(
+          ctx.meId
+            .contains(ask.creator) || ctx.me.so(Granter(Permission.Shusher)(using _)) option button(
             cls        := "admin",
             formmethod := "GET",
             formaction := routes.Ask.admin(ask._id),
             title      := trans.edit.txt()(using ctx.lang)
           ),
-          ask.hasPickFor(me) && !ask.isConcluded option button(
+          ask.hasPickFor(voterId) && !ask.isConcluded option button(
             cls        := "unset",
             formaction := routes.Ask.unset(ask._id, viewParam.some, ask.isAnon),
             title      := trans.delete.txt()(using ctx.lang)
@@ -115,13 +114,13 @@ private case class RenderAsk(
   def footer =
     div(cls := "ask__footer")(
       ask.footer map (label(_)),
-      ask.isFeedback && !ask.isConcluded && me.nonEmpty option Seq(
+      ask.isFeedback && !ask.isConcluded && voterId.nonEmpty option Seq(
         input(
           cls         := "feedback-text",
           tpe         := "text",
           maxlength   := 80,
           placeholder := "80 characters max",
-          value       := ~ask.feedbackFor(me)
+          value       := ~ask.feedbackFor(voterId)
         ),
         div(cls := "feedback-submit")(input(cls := "button", tpe := "button", value := "Submit"))
       ),
@@ -135,7 +134,7 @@ private case class RenderAsk(
     )
 
   def pollBody = choiceContainer:
-    val picks = ask.picksFor(me)
+    val picks = ask.picksFor(voterId)
     val sb    = new mutable.StringBuilder("choice ")
     if ask.isCheckbox then sb ++= "cbx " else sb ++= "btn "
     if ask.isMulti then sb ++= "multiple " else sb ++= "exclusive "
@@ -155,7 +154,7 @@ private case class RenderAsk(
       case (choice, index) =>
         val sb = new mutable.StringBuilder("choice btn rank")
         if ask.isStretch then sb ++= " stretch"
-        if ask.hasPickFor(me) then sb ++= " submitted"
+        if ask.hasPickFor(voterId) then sb ++= " submitted"
         label(cls := sb.toString, value := choice, draggable := true)(
           div(s"${index + 1}"),
           label(ask.choices(choice)),
@@ -205,11 +204,11 @@ private case class RenderAsk(
   def tooltip(choice: Int) =
     val sb         = new mutable.StringBuilder(256)
     val choiceText = ask.choices(choice)
-    val hasPick    = ask.hasPickFor(me)
+    val hasPick    = ask.hasPickFor(voterId)
 
     val count     = ask.count(choiceText)
-    val isAuthor  = ctx.me.exists(_.id == ask.creator)
-    val isShusher = ctx.me so Granter(Permission.Shusher)
+    val isAuthor  = ctx.meId.contains(ask.creator)
+    val isShusher = ctx.me.so(Granter(Permission.Shusher)(using _))
 
     if !ask.isRanked then
       if ask.isConcluded || tallyView then
@@ -248,11 +247,11 @@ private case class RenderAsk(
     val initialOrder =
       if ask.isRandom then shuffle((0 until ask.choices.size).toVector)
       else (0 until ask.choices.size).toVector
-    ask.picksFor(me).fold(initialOrder) { r =>
+    ask.picksFor(voterId).fold(initialOrder) { r =>
       if r == Nil || r.distinct.sorted != initialOrder.sorted then
         // it's late to be doing this but i think it beats counting the choices in an
         // aggregation stage in every db update or storing choices.size in a redundant field
-        me so (id => env.ask.api.setPicks(ask._id, id, Some(Nil))) // blow away the bad
+        voterId so (id => env.ask.api.setPicks(ask._id, id, Some(Nil))) // blow away the bad
         initialOrder
       else r
     }

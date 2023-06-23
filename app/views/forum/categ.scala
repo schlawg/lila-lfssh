@@ -1,7 +1,6 @@
 package views.html
 package forum
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -10,7 +9,7 @@ import controllers.routes
 
 object categ:
 
-  def index(categs: List[lila.forum.CategView])(using WebContext) =
+  def index(categs: List[lila.forum.CategView])(using PageContext) =
     views.html.base.layout(
       title = trans.forum.txt(),
       moreCss = cssTag("forum"),
@@ -42,7 +41,7 @@ object categ:
       topics: Paginator[lila.forum.TopicView],
       canWrite: Boolean,
       stickyPosts: List[lila.forum.TopicView]
-  )(using WebContext) =
+  )(using PageContext) =
 
     val newTopicButton = canWrite option
       a(
@@ -115,7 +114,7 @@ object categ:
       )
     }
 
-  private def showCategs(categs: List[lila.forum.CategView])(using WebContext) =
+  private def showCategs(categs: List[lila.forum.CategView])(using PageContext) =
     table(cls := "categs slist slist-pad")(
       thead(
         tr(

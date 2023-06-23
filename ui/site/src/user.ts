@@ -3,7 +3,7 @@ import once from './component/once';
 import { hopscotch } from './component/assets';
 import { makeLinkPopups } from 'common/linkPopup';
 
-export default (window as any).UserProfile = function (opts: { i18n: I18nDict }): void {
+export function initModule(opts: { i18n: I18nDict }): void {
   const trans = lichess.trans(opts.i18n);
 
   makeLinkPopups($('.social_links'), trans);
@@ -58,7 +58,8 @@ export default (window as any).UserProfile = function (opts: { i18n: I18nDict })
           steps: [
             {
               title: 'Recently finished games',
-              content: 'Would you like to display the list of your correspondence games, sorted by completion date?',
+              content:
+                'Would you like to display the list of your correspondence games, sorted by completion date?',
               target: $('#perfStat.correspondence .view_games')[0],
               placement: 'bottom',
             },
@@ -74,7 +75,7 @@ export default (window as any).UserProfile = function (opts: { i18n: I18nDict })
           $content.html(html);
           lichess.contentLoaded($content[0]);
           history.replaceState({}, '', path);
-          window.InfiniteScroll('.infinite-scroll');
+          //window.InfiniteScroll('.infinite-scroll');
         });
     $angles.on('click', 'a', function (this: HTMLAnchorElement) {
       if ($('#games .to-search').hasClass('active')) return true;
@@ -90,4 +91,4 @@ export default (window as any).UserProfile = function (opts: { i18n: I18nDict })
       return false;
     });
   });
-};
+}

@@ -2,7 +2,6 @@ package views.html.game
 
 import cats.syntax.all.*
 
-import lila.api.WebContext
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.game.Crosstable
@@ -11,11 +10,11 @@ import controllers.routes
 
 object crosstable:
 
-  def apply(ct: Crosstable.WithMatchup, currentId: Option[GameId])(using WebContext): Frag =
+  def apply(ct: Crosstable.WithMatchup, currentId: Option[GameId])(using PageContext): Frag =
     apply(ct.crosstable, ct.matchup, currentId)
 
   def apply(ct: Crosstable, trueMatchup: Option[Crosstable.Matchup], currentId: Option[GameId])(using
-      WebContext
+      PageContext
   ): Frag =
     val matchup = trueMatchup.filter(_.users != ct.users)
     val matchupSepAt: Option[Int] = matchup map { m =>
