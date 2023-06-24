@@ -10,62 +10,58 @@ import lila.security.{ Granter, Permission }
 
 final class Ask(env: Env) extends LilaController(env):
 
-  def view(aid: String, view: Option[String], tally: Boolean) = Open: _ ?=>
+  def view(aid: String, view: Option[String], tally: Boolean)(using Context) = Open:
     env.ask.api.get(aid).flatMap {
       case Some(ask) => Ok.page(html.ask.renderOne(ask, paramToList(view), tally))
       case None      => fuccess(NotFound(s"Ask $aid not found"))
     }
 
-  def picks(aid: String, picks: Option[String], view: Option[String], anon: Boolean) = Open { ctx ?=>
-    Ok.page:
+  def picks(aid: String, picks: Option[String], view: Option[String], anon: Boolean)(using Context) =
+    Open {
       effectiveId(aid, anon).flatMap:
         case Some(id) =>
           env.ask.api
             .setPicks(aid, id, paramToList(picks))
             .map:
-              case Some(ask) => html.ask.renderOne(ask, paramToList(view))
+              case Some(ask) => Ok(html.ask.renderOne(ask, paramToList(view)))
               case None      => NotFound(s"Ask $aid not found")
         case None => authenticationFailed
-  }
+    }
 
-  def feedback(aid: String, view: Option[String], anon: Boolean) = OpenBody { _ ?=>
+  def feedback(aid: String, view: Option[String], anon: Boolean)(using Context) = OpenBody:
     effectiveId(aid, anon).flatMap:
       case Some(id) =>
         env.ask.api
           .setFeedback(aid, id, feedbackForm.bindFromRequest().value)
           .map:
-            case Some(ask) => Ok.page(html.ask.renderOne(ask, paramToList(view)))
+            case Some(ask) => Ok(html.ask.renderOne(ask, paramToList(view)))
             case None      => NotFound(s"Ask $aid not found")
       case None => authenticationFailed
-  }
 
-  def unset(aid: String, view: Option[String], anon: Boolean) = Open { _ ?=>
+  def unset(aid: String, view: Option[String], anon: Boolean)(using Context) = Open:
     effectiveId(aid, anon).flatMap:
       case Some(id) =>
         env.ask.api
           .unset(aid, id)
           .map:
-            case Some(ask) => Ok.page(html.ask.renderOne(ask, paramToList(view)))
+            case Some(ask) => Ok(html.ask.renderOne(ask, paramToList(view)))
             case None      => NotFound(s"Ask $aid not found")
       case None => authenticationFailed
-  }
 
-  def admin(aid: String) = Auth { _ ?=> me ?=>
+  def admin(aid: String)(using Context) = Auth { _ ?=> _ ?=>
     env.ask.api
       .get(aid)
       .map:
-        case Some(ask) => Ok.page(html.askAdmin.renderOne(ask))
+        case Some(ask) => Ok(html.askAdmin.renderOne(ask))
         case None      => NotFound(s"Ask $aid not found")
   }
-
-  def byUser(username: UserStr) = Auth { ctx ?=>
+  def byUser(username: UserStr)(using PageContext) = Auth { _ ?=> _ ?=>
     for
       user <- env.user.lightUser(username.id)
       asks <- env.ask.api.byUser(username.id)
       if user.nonEmpty
-    yield Ok(html.askAdmin.show(asks, user.get)(using ctx: PageContext))
+    yield Ok(html.askAdmin.show(asks, user.get))
   }
-
   def json(aid: String) = Auth { _ ?=> me ?=>
     env.ask.api
       .get(aid)
@@ -75,7 +71,7 @@ final class Ask(env: Env) extends LilaController(env):
           else JsonBadRequest(jsonError(s"Not authorized to view ask $aid"))
         case None => JsonBadRequest(jsonError(s"Ask $aid not found"))
   }
-  def delete(aid: String) = Auth { ctx ?=> me ?=>
+  def delete(aid: String)(using Context) = Auth { _ ?=> me ?=>
     env.ask.api
       .get(aid)
       .map:
@@ -88,12 +84,12 @@ final class Ask(env: Env) extends LilaController(env):
 
   }
 
-  def conclude(aid: String) = authorizedAction(aid, env.ask.api.conclude)
+  def conclude(aid: String)(using Context) = authorizedAction(aid, env.ask.api.conclude)
 
-  def reset(aid: String) = authorizedAction(aid, env.ask.api.reset)
+  def reset(aid: String)(using Context) = authorizedAction(aid, env.ask.api.reset)
 
-  private def effectiveId(aid: String, anon: Boolean)(using ctx: PageContext) =
-    ctx.meId match
+  private def effectiveId(aid: String, anon: Boolean)(using ctx: Context) =
+    ctx.myId match
       case Some(u) => fuccess((if anon then anonHash(u.toString, aid) else u.toString).some)
       case None =>
         env.ask.api
@@ -102,7 +98,9 @@ final class Ask(env: Env) extends LilaController(env):
             case true  => anonHash(ctx.ip.toString, aid).some
             case false => None
 
-  private def authorizedAction(aid: String, action: lila.ask.Ask => Fu[Option[lila.ask.Ask]]) =
+  private def authorizedAction(aid: String, action: lila.ask.Ask => Fu[Option[lila.ask.Ask]])(using
+      Context
+  ) =
     AuthBody { ctx ?=> me ?=>
       env.ask.api
         .get(aid)
@@ -111,7 +109,7 @@ final class Ask(env: Env) extends LilaController(env):
           case Some(ask) =>
             if (me is ask.creator) || Granter(Permission.Shusher) then
               action(ask).map:
-                case Some(newAsk) => Ok(html.ask.renderOne(newAsk)(using ctx))
+                case Some(newAsk) => Ok(html.ask.renderOne(newAsk))
                 case None         => NotFound(s"Ask id ${aid} not found")
             else fuccess(Unauthorized)
     }

@@ -9,7 +9,7 @@ import views.html.ask._
 // thrown together, half-baked, prototype code
 object askAdmin {
 
-  def show(asks: List[Ask], user: lila.common.LightUser)(using ctx: PageContext): Frag =
+  def show(asks: List[Ask], user: lila.common.LightUser)(using PageContext): Frag =
     views.html.base.layout(
       title = s"${user.titleName} polls",
       moreJs = jsModule("ask"),
@@ -23,7 +23,7 @@ object askAdmin {
       )
     }
 
-  def showAsks(urlopt: Option[String], asks: List[Ask])(using ctx: PageContext) =
+  def showAsks(urlopt: Option[String], asks: List[Ask])(using Context) =
     div(
       hr,
       h2(
@@ -38,7 +38,7 @@ object askAdmin {
       asks map renderOne
     )
 
-  def renderOne(as: Ask)(using ctx: PageContext) = {
+  def renderOne(as: Ask)(using Context) = {
     div(cls := "ask-admin")(
       a(name := as._id),
       div(cls := "header")(

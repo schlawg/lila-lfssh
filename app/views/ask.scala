@@ -26,11 +26,11 @@ object ask:
         )
 
   def renderOne(ask: Ask, prevView: Option[List[Int]] = None, tallyView: Boolean = false)(using
-      ctx: PageContext
+      Context
   ): Frag =
     RenderAsk(ask, prevView, tallyView).render
 
-  def renderGraph(ask: Ask)(using ctx: PageContext): Frag =
+  def renderGraph(ask: Ask)(using Context): Frag =
     if ask.isRanked then RenderAsk(ask, None, true).rankGraphBody
     else RenderAsk(ask, None, true).pollGraphBody
 
@@ -38,9 +38,8 @@ private case class RenderAsk(
     ask: Ask,
     prevView: Option[List[Int]],
     tallyView: Boolean
-)(using ctx: PageContext):
-  // this.me is what AskApi cares about. It's either Some(user id), Some(anonymous hash), or None
-  val voterId = ctx.meId.fold(ask.toAnon(ctx.ip))(u => ask.toAnon(u))
+)(using ctx: Context):
+  val voterId = ctx.myId.fold(ask.toAnon(ctx.ip))(why => ask.toAnon(why.userId))
 
   val view = prevView getOrElse:
     if ask.isRandom then shuffle(ask.choices.indices.toList)
@@ -83,7 +82,7 @@ private case class RenderAsk(
             formmethod := "GET",
             formaction := routes.Ask.view(ask._id, viewParam.some, !tallyView)
           ),
-          ctx.meId
+          ctx.myId
             .contains(ask.creator) || ctx.me.so(Granter(Permission.Shusher)(using _)) option button(
             cls        := "admin",
             formmethod := "GET",
@@ -207,7 +206,7 @@ private case class RenderAsk(
     val hasPick    = ask.hasPickFor(voterId)
 
     val count     = ask.count(choiceText)
-    val isAuthor  = ctx.meId.contains(ask.creator)
+    val isAuthor  = ctx.myId.contains(ask.creator)
     val isShusher = ctx.me.so(Granter(Permission.Shusher)(using _))
 
     if !ask.isRanked then
