@@ -203,7 +203,8 @@ object Permission:
           DisableTwoFactor,
           ChangePermission,
           StudyAdmin,
-          BroadcastTimeout
+          BroadcastTimeout,
+          ApiChallengeAdmin
         ),
         "Admin"
       )
