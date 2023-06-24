@@ -9,12 +9,12 @@ import views.html.ask._
 // thrown together, half-baked, prototype code
 object askAdmin {
 
-  def show(asks: List[Ask], user: lila.common.LightUser)(using PageContext): Frag =
+  def show(asks: List[Ask], user: lila.common.LightUser): Frag =
     views.html.base.layout(
       title = s"${user.titleName} polls",
       moreJs = jsModule("ask"),
       moreCss = cssTag("ask"),
-      csp = defaultCsp.withInlineIconFont.some
+      csp = basicCsp.withInlineIconFont.some
     ) {
       val askmap = asks.sortBy(_.createdAt).groupBy(_.url)
       main(cls := "page-small box box-pad")(
