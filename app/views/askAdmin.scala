@@ -7,23 +7,22 @@ import lila.ask.Ask
 import views.html.ask._
 
 // thrown together, half-baked, prototype code
-object askAdmin {
+object askAdmin:
 
-  def show(asks: List[Ask], user: lila.common.LightUser): Frag =
+  def show(asks: List[Ask], user: lila.common.LightUser)(using ctx: PageContext) =
     views.html.base.layout(
       title = s"${user.titleName} polls",
       moreJs = jsModule("ask"),
       moreCss = cssTag("ask"),
       csp = basicCsp.withInlineIconFont.some
-    ) {
+    ):
       val askmap = asks.sortBy(_.createdAt).groupBy(_.url)
       main(cls := "page-small box box-pad")(
         h1(s"${user.titleName} polls"),
         askmap.keys.map(url => showAsks(url, askmap.get(url).get)) toSeq
       )
-    }
 
-  def showAsks(urlopt: Option[String], asks: List[Ask])(using Context) =
+  def showAsks(urlopt: Option[String], asks: List[Ask])(using PageContext) =
     div(
       hr,
       h2(
@@ -38,7 +37,7 @@ object askAdmin {
       asks map renderOne
     )
 
-  def renderOne(as: Ask)(using Context) = {
+  def renderOne(as: Ask)(using Context) =
     div(cls := "ask-admin")(
       a(name := as._id),
       div(cls := "header")(
@@ -58,35 +57,33 @@ object askAdmin {
         p,
         renderGraph(as)
       ),
-      as.feedback map { case fbmap =>
-        div(cls := "inset-box")(
-          fbmap.toSeq map {
-            case (uid, fb) if uid.startsWith("anon-") => p(s"anon: $fb");
-            case (uid, fb)                            => p(s"$uid: $fb")
-          }
-        )
-      }
+      frag:
+        as.feedback.map: fbmap =>
+          div(cls := "inset-box")(
+            fbmap.toSeq map:
+              case (uid, fb) if uid.startsWith("anon-") => p(s"anon: $fb")
+              case (uid, fb)                            => p(s"$uid: $fb")
+          )
     )
-  }
+
   def property(name: String, value: String) =
     div(cls := "prop")(div(cls := "name")(name), div(cls := "value")(value))
 
-  def mkString(as: Ask): String = {
+  def mkString(as: Ask): String =
     val sb = new StringBuilder();
     sb ++= s"question:\n  ${as.question}\n"
-    if (as.choices.nonEmpty) sb ++= "choices:\n"
+    if as.choices.nonEmpty then sb ++= "choices:\n"
     as.choices foreach (c => sb ++= s"    * $c\n")
-    if (as.footer.isDefined) sb ++= s"footer:\n    ${~as.footer}\n"
-    as.feedback match {
+    if as.footer.isDefined then sb ++= s"footer:\n    ${~as.footer}\n"
+    as.feedback match
       case Some(fbmap) =>
         sb ++= "feedback:\n"
-        fbmap map { case (uid, fb) =>
-          sb ++= s"    $uid: $fb\n"
-        }
+        fbmap map:
+          case (uid, fb) => sb ++= s"    $uid: $fb\n"
       case None =>
         sb ++= "\n"
-    }
-    as.picks match {
+
+    as.picks match
       case Some(picks) =>
         sb ++= "picks:\n"
         picks map { case (uid, pick) =>
@@ -94,7 +91,5 @@ object askAdmin {
         }
       case None =>
         sb ++= "\n"
-    }
+
     sb.toString
-  }
-}
