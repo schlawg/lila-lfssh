@@ -189,7 +189,7 @@ final class Team(
         .fold(
           _ => funit,
           explain =>
-            api.delete(team, me.user, explain) >>
+            api.delete(team, me.value, explain) >>
               env.mod.logApi.deleteTeam(team.id, explain)
         ) inject Redirect(routes.Team all 1).flashSuccess
   }
@@ -222,7 +222,7 @@ final class Team(
     maxConcurrency = 1
   )
   def create = AuthBody { ctx ?=> me ?=>
-    OneAtATime(me, rateLimitedFu):
+    OneAtATime(me, rateLimited):
       LimitPerWeek:
         JoinLimit(tooManyTeamsHtml):
           forms.create
@@ -263,7 +263,7 @@ final class Team(
 
   def join(id: TeamId) = AuthOrScopedBody(_.Team.Write) { ctx ?=> me ?=>
     Found(api.teamEnabled(id)): team =>
-      OneAtATime(me, rateLimitedFu):
+      OneAtATime(me, rateLimited):
         JoinLimit(negotiate(tooManyTeamsHtml, tooManyTeamsJson)):
           negotiate(
             html = webJoin(team, request = none, password = none),
@@ -271,7 +271,7 @@ final class Team(
               .apiRequest(team)
               .bindFromRequest()
               .fold(
-                newJsonFormError,
+                jsonFormError,
                 setup =>
                   api.join(team, setup.message, setup.password) flatMap {
                     case Requesting.Joined       => jsonOkResult
@@ -304,7 +304,7 @@ final class Team(
 
   def requestCreate(id: TeamId) = AuthBody { ctx ?=> me ?=>
     Found(api.requestable(id)): team =>
-      OneAtATime(me, rateLimitedFu):
+      OneAtATime(me, rateLimited):
         JoinLimit(tooManyTeamsHtml):
           forms
             .request(team)
@@ -349,21 +349,19 @@ final class Team(
   }
 
   def quit(id: TeamId) = AuthOrScoped(_.Team.Write) { ctx ?=> me ?=>
-    api team id flatMap {
-      _.fold(notFound): team =>
-        if team isOnlyLeader me then
-          val msg = lila.i18n.I18nKeys.team.onlyLeaderLeavesTeam.txt()
+    Found(api team id): team =>
+      if team isOnlyLeader me then
+        val msg = lila.i18n.I18nKeys.team.onlyLeaderLeavesTeam.txt()
+        negotiate(
+          html = Redirect(routes.Team.edit(team.id)).flashFailure(msg),
+          json = JsonBadRequest(msg)
+        )
+      else
+        api.cancelRequestOrQuit(team) >>
           negotiate(
-            html = Redirect(routes.Team.edit(team.id)).flashFailure(msg),
-            json = JsonBadRequest(msg)
+            html = Redirect(routes.Team.mine).flashSuccess,
+            json = jsonOkResult
           )
-        else
-          api.cancelRequestOrQuit(team) >>
-            negotiate(
-              html = Redirect(routes.Team.mine).flashSuccess,
-              json = jsonOkResult
-            )
-    }
   }
 
   def autocomplete = Anon:

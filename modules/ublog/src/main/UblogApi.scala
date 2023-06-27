@@ -25,21 +25,20 @@ final class UblogApi(
 
   def create(data: UblogForm.UblogPostData)(using me: Me): Fu[UblogPost] =
     val frozen = askApi.freeze(data.markdown.value, me)
-    val post   = data.create(me, Markdown(frozen.text))
+    val post   = data.create(me.value, Markdown(frozen.text))
     askApi.commit(frozen, s"/ublog/${post.id}/redirect".some) >>
       colls.post.insert.one(
-        bsonWriteObjTry[UblogPost](post).get ++ $doc("likers" -> List[UserId](me))
+        bsonWriteObjTry[UblogPost](post).get ++ $doc("likers" -> List[UserId](me.userId))
       ) inject post
 
   def update(data: UblogForm.UblogPostData, prev: UblogPost)(using me: Me): Fu[UblogPost] =
     askApi
       .freezeAsync(data.markdown.value, me) flatMap { frozen =>
       getUserBlog(me, insertMissing = true) flatMap { blog =>
-        val post = data.update(me, prev, Markdown(frozen.text))
-        colls.post.update.one($id(prev.id), $set(bsonWriteObjTry[UblogPost](post).get)) >>
-          (post.live && prev.lived.isEmpty).so(onFirstPublish(me, blog, post)) inject post.copy(markdown =
-            Markdown(askApi.unfreeze(frozen.text, frozen.asks map some))
-          )
+        val post = data.update(me.value, prev, Markdown(frozen.text))
+        colls.post.update.one($id(prev.id), $set(bsonWriteObjTry[UblogPost](post).get)) >> {
+          (post.live && prev.lived.isEmpty).so(onFirstPublish(me.value, blog, post))
+        } inject post.copy(markdown = Markdown(askApi.unfreeze(frozen.text, frozen.asks map some)))
       }
     }
 

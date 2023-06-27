@@ -74,8 +74,8 @@ final class PlayApi(env: Env, apiC: => Api)(using akka.stream.Materializer) exte
           as(GameAnyId(id)): pov =>
             env.bot.form.chat
               .bindFromRequest()
-              .fold(
-                jsonFormError,
+              .fold[Fu[Result]](
+                doubleJsonFormError,
                 res => env.bot.player.chat(pov.gameId, res) inject jsonOkResult
               ) pipe catchClientError
         case Array("game", id, "abort") =>

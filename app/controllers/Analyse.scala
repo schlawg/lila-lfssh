@@ -98,15 +98,13 @@ final class Analyse(
     InEmbedContext:
       env.api.textLpvExpand.getPgn(gameId) map {
         case Some(pgn) =>
-          render {
+          render:
             case AcceptsPgn() => Ok(pgn)
             case _            => Ok(html.analyse.embed.lpv(pgn, chess.Color.fromName(color)))
-          }.enableSharedArrayBuffer
         case _ =>
-          render {
+          render:
             case AcceptsPgn() => NotFound("*")
             case _            => NotFound(html.analyse.embed.notFound)
-          }
       }
 
   private def RedirectAtFen(pov: Pov, initialFen: Option[Fen.Epd])(or: => Fu[Result])(using
@@ -147,11 +145,8 @@ final class Analyse(
   }
 
   def externalEngineShow(id: String) = ScopedBody(_.Engine.Read) { _ ?=> me ?=>
-    env.analyse.externalEngine.find(me, id) map {
-      _.fold(notFoundJsonSync()) { engine =>
-        JsonOk(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
-      }
-    }
+    Found(env.analyse.externalEngine.find(me, id)): engine =>
+      JsonOk(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
   }
 
   def externalEngineCreate = ScopedBody(_.Engine.Write) { ctx ?=> me ?=>
@@ -160,7 +155,7 @@ final class Analyse(
       lila.analyse.ExternalEngine.form
         .bindFromRequest()
         .fold(
-          err => newJsonFormError(err),
+          jsonFormError,
           data =>
             env.analyse.externalEngine.create(me, data, tokenId.value) map { engine =>
               Created(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
@@ -170,23 +165,18 @@ final class Analyse(
   }
 
   def externalEngineUpdate(id: String) = ScopedBody(_.Engine.Write) { ctx ?=> me ?=>
-    env.analyse.externalEngine.find(me, id) flatMap {
-      _.fold(notFoundJson()) { engine =>
-        lila.analyse.ExternalEngine.form
-          .bindFromRequest()
-          .fold(
-            err => newJsonFormError(err),
-            data =>
-              env.analyse.externalEngine.update(engine, data) map { engine =>
-                JsonOk(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
-              }
-          )
-      }
-    }
+    Found(env.analyse.externalEngine.find(me, id)): engine =>
+      lila.analyse.ExternalEngine.form
+        .bindFromRequest()
+        .fold(
+          jsonFormError,
+          data =>
+            env.analyse.externalEngine.update(engine, data) map { engine =>
+              JsonOk(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
+            }
+        )
   }
 
   def externalEngineDelete(id: String) = ScopedBody(_.Engine.Write) { _ ?=> me ?=>
-    env.analyse.externalEngine.delete(me, id) map {
-      if _ then jsonOkResult else notFoundJsonSync()
-    }
+    env.analyse.externalEngine.delete(me, id) elseNotFound jsonOkResult
   }

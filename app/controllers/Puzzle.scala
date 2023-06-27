@@ -57,15 +57,12 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
         ).dmap(_.noCache)
 
   def apiDaily = Anon:
-    env.puzzle.daily.get.flatMap:
-      _.fold(notFoundJson()): daily =>
-        JsonOk(env.puzzle.jsonView(daily.puzzle, none, none))
+    Found(env.puzzle.daily.get): daily =>
+      JsonOk(env.puzzle.jsonView(daily.puzzle, none, none))
 
   def apiShow(id: PuzzleId) = Anon:
-    env.puzzle.api.puzzle find id flatMap {
-      _.fold(notFoundJson()): puzzle =>
-        JsonOk(env.puzzle.jsonView(puzzle, none, none))
-    }
+    Found(env.puzzle.api.puzzle find id): puzzle =>
+      JsonOk(env.puzzle.jsonView(puzzle, none, none))
 
   def home = Open(serveHome)
 
@@ -109,18 +106,18 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
   def ofPlayer(name: Option[UserStr], page: Int) = Open:
     val userId = name flatMap lila.user.User.validateId
     for
-      user    <- userId.so(env.user.repo.enabledById) orElse fuccess(ctx.me.map(_.user))
+      user    <- userId.so(env.user.repo.enabledById) orElse fuccess(ctx.me.map(_.value))
       puzzles <- user.so { env.puzzle.api.puzzle.of(_, page) dmap some }
       page    <- renderPage(views.html.puzzle.ofPlayer(name.so(_.value), user, puzzles))
     yield Ok(page)
 
   private def onComplete[A](form: Form[RoundData])(id: PuzzleId, angle: PuzzleAngle, mobileBc: Boolean)(using
       ctx: BodyContext[A]
-  ) =
+  ): Fu[Result] =
     form
       .bindFromRequest()
       .fold(
-        jsonFormError,
+        doubleJsonFormError,
         data =>
           data.streakPuzzleId.match {
             case Some(streakNextId) =>
@@ -234,7 +231,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       env.puzzle.forms.vote
         .bindFromRequest()
         .fold(
-          jsonFormError,
+          doubleJsonFormError,
           vote => env.puzzle.api.vote.update(id, me, vote) inject jsonOkResult
         )
   }
@@ -247,7 +244,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
           env.puzzle.forms.themeVote
             .bindFromRequest()
             .fold(
-              jsonFormError,
+              doubleJsonFormError,
               vote => env.puzzle.api.theme.vote(me, id, theme.key, vote) inject jsonOkResult
             )
   }
@@ -257,7 +254,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       env.puzzle.forms.difficulty
         .bindFromRequest()
         .fold(
-          jsonFormError,
+          doubleJsonFormError,
           diff =>
             PuzzleDifficulty.find(diff) so { env.puzzle.session.setDifficulty(me, _) } inject
               Redirect(routes.Puzzle.show(theme))
@@ -421,9 +418,8 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
         html = notFound,
         api = v =>
           val angle = PuzzleAngle.mix
-          nextPuzzleForMe(angle, none) flatMap {
-            _.fold(notFoundJson()) { p => JsonOk(renderJson(p, angle, apiVersion = v.some)) }
-          }
+          Found(nextPuzzleForMe(angle, none)): p =>
+            JsonOk(renderJson(p, angle, apiVersion = v.some))
       )
 
   /* Mobile API: select a bunch of puzzles for offline use */
@@ -467,7 +463,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       env.puzzle.forms.bc.vote
         .bindFromRequest()
         .fold(
-          jsonFormError,
+          doubleJsonFormError,
           intVote =>
             Puz.numericalId(nid) so {
               env.puzzle.api.vote.update(_, me, intVote == 1) inject jsonOkResult
@@ -488,6 +484,6 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
             (user.enabled.yes so env.clas.api.clas.isTeacherOf(me, user.id))) map {
             _ option user
           }
-        .dmap(_ | me.user)
+        .dmap(_ | me.value)
         .flatMap(f(_))
     }

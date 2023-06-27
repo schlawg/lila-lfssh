@@ -110,7 +110,7 @@ final class Ublog(env: Env) extends LilaController(env):
                 html.ublog.form.create(me, err, _)
           ,
           data =>
-            CreateLimitPerUser(me, rateLimitedFu, cost = if me.isVerified then 1 else 3):
+            CreateLimitPerUser(me, rateLimited, cost = if me.isVerified then 1 else 3):
               env.ublog.api.create(data) map { post =>
                 lila.mon.ublog.create(me.userId.value).increment()
                 Redirect(editUrlOfPost(post)).flashSuccess
@@ -203,11 +203,8 @@ final class Ublog(env: Env) extends LilaController(env):
   }
 
   def redirect(id: UblogPostId) = Open:
-    env.ublog.api
-      .postPreview(id)
-      .flatMap:
-        _.fold(notFound): post =>
-          Redirect(urlOfPost(post))
+    Found(env.ublog.api.postPreview(id)): post =>
+      Redirect(urlOfPost(post))
 
   def setTier(blogId: String) = SecureBody(_.ModerateBlog) { ctx ?=> me ?=>
     Found(UblogBlog.Id(blogId).so(env.ublog.api.getBlog)): blog =>
@@ -236,7 +233,7 @@ final class Ublog(env: Env) extends LilaController(env):
     Found(env.ublog.api.findByUserBlogOrAdmin(id)): post =>
       ctx.body.body.file("image") match
         case Some(image) =>
-          ImageRateLimitPerIp(ctx.ip, rateLimitedFu):
+          ImageRateLimitPerIp(ctx.ip, rateLimited):
             env.ublog.api.uploadImage(me, post, image) map { newPost =>
               Ok(html.ublog.form.formImage(newPost))
             } recover { case e: Exception =>

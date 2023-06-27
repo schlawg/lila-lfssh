@@ -27,6 +27,9 @@ case class SwissPlayer(
       score = Swiss.makeScore(points, tieBreak, performance | Swiss.Performance(rating.value.toFloat))
     )
 
+  def show              = s"P($userId ${points.value} $tieBreak $byes)"
+  override def toString = show
+
 object SwissPlayer:
 
   opaque type Id = String
@@ -45,7 +48,7 @@ object SwissPlayer:
       userId = user.id,
       rating = user.perfs(perf).intRating,
       provisional = user.perfs(perf).provisional,
-      points = SwissPoints fromDouble 0,
+      points = SwissPoints fromDoubled 0,
       tieBreak = Swiss.TieBreak(0),
       performance = none,
       score = Swiss.Score(0),

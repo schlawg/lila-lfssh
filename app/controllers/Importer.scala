@@ -31,10 +31,10 @@ final class Importer(env: Env) extends LilaController(env):
         err =>
           negotiate(
             BadRequest.page(html.game.importGame(err)),
-            BadRequest(apiFormError(err))
+            jsonFormError(err)
           ),
         data =>
-          ImportRateLimitPerIP(ctx.ip, rateLimitedFu, cost = 1):
+          ImportRateLimitPerIP(ctx.ip, rateLimited, cost = 1):
             env.importer.importer(data) flatMap { game =>
               ctx.me.so(env.game.cached.clearNbImportedByCache(_)) inject Right(game)
             } recover { case _: Exception =>

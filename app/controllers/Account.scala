@@ -82,7 +82,7 @@ final class Account(
   val apiMe =
     val rateLimit = lila.memo.RateLimit[UserId](30, 5.minutes, "api.account.user")
     Scoped() { ctx ?=> me ?=>
-      def limited = rateLimitedFu:
+      def limited = rateLimited:
         "Please don't poll this endpoint. Stream https://lichess.org/api#tag/Board/operation/apiStreamEvent instead."
       rateLimit(me, limited):
         env.api.userApi.extended(
@@ -159,7 +159,7 @@ final class Account(
       env.security.forms.preloadEmailDns() >> emailForm.flatMap { form =>
         FormFuResult(form)(err => renderPage(html.account.email(err))): data =>
           val newUserEmail = lila.security.EmailConfirm.UserEmail(me.username, data.email)
-          auth.EmailConfirmRateLimit(newUserEmail, ctx.req, rateLimitedFu):
+          auth.EmailConfirmRateLimit(newUserEmail, ctx.req, rateLimited):
             env.security.emailChange.send(me, newUserEmail.email) inject
               Redirect(routes.Account.email).flashSuccess:
                 lila.i18n.I18nKeys.checkYourEmail.txt()
@@ -199,11 +199,11 @@ final class Account(
   def twoFactor = Auth { _ ?=> me ?=>
     if me.totpSecret.isDefined
     then
-      env.security.forms.disableTwoFactor(me).flatMap { f =>
+      env.security.forms.disableTwoFactor.flatMap { f =>
         Ok.page(html.account.twoFactor.disable(f))
       }
     else
-      env.security.forms.setupTwoFactor(me) flatMap { f =>
+      env.security.forms.setupTwoFactor flatMap { f =>
         Ok.page(html.account.twoFactor.setup(f))
       }
 
@@ -211,20 +211,18 @@ final class Account(
 
   def setupTwoFactor = AuthBody { ctx ?=> me ?=>
     auth.HasherRateLimit:
-      env.security.forms.setupTwoFactor(me) flatMap { form =>
+      env.security.forms.setupTwoFactor.flatMap: form =>
         FormFuResult(form)(err => renderPage(html.account.twoFactor.setup(err))): data =>
           env.user.repo.setupTwoFactor(me, TotpSecret(data.secret)) >>
             refreshSessionId(Redirect(routes.Account.twoFactor).flashSuccess)
-      }
   }
 
   def disableTwoFactor = AuthBody { ctx ?=> me ?=>
     auth.HasherRateLimit:
-      env.security.forms.disableTwoFactor(me) flatMap { form =>
+      env.security.forms.disableTwoFactor.flatMap: form =>
         FormFuResult(form)(err => renderPage(html.account.twoFactor.disable(err))): _ =>
           env.user.repo.disableTwoFactor(me) inject
             Redirect(routes.Account.twoFactor).flashSuccess
-      }
   }
 
   def close = Auth { _ ?=> me ?=>
@@ -240,7 +238,7 @@ final class Account(
         env.security.forms.closeAccount.flatMap: form =>
           FormFuResult(form)(err => renderPage(html.account.close(err, managed = false))): _ =>
             env.api.accountClosure
-              .close(me.user)
+              .close(me.value)
               .inject:
                 Redirect(routes.User show me.username) withCookies env.lilaCookie.newSession
   }
@@ -330,7 +328,7 @@ final class Account(
                     lila.mon.user.auth.reopenRequest(code).increment()
                     renderReopen(none, msg.some) map { BadRequest(_) }
                   case Right(user) =>
-                    auth.MagicLinkRateLimit(user, data.email, ctx.req, rateLimitedFu):
+                    auth.MagicLinkRateLimit(user, data.email, ctx.req, rateLimited):
                       lila.mon.user.auth.reopenRequest("success").increment()
                       env.security.reopen.send(user, data.email) inject Redirect:
                         routes.Account.reopenSent

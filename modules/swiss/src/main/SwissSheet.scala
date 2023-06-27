@@ -10,11 +10,16 @@ import lila.db.dsl.{ *, given }
 private case class SwissSheet(outcomes: List[SwissSheet.Outcome]):
   import SwissSheet.*
 
-  def points = SwissPoints fromDouble {
-    outcomes.foldLeft(0) { case (acc, out) => acc + pointsFor(out).doubled }
-  }
+  def points = SwissSheet.pointsFor(outcomes)
+
+  def pointsAfterRound(round: SwissRoundNumber) = SwissSheet.pointsFor(outcomes.take(round.value))
 
 private object SwissSheet:
+
+  case class OfPlayer private (player: SwissPlayer, sheet: SwissSheet)
+  object OfPlayer:
+    def withSheetPoints(player: SwissPlayer, sheet: SwissSheet): OfPlayer =
+      OfPlayer(player.copy(points = sheet.points), sheet)
 
   enum Outcome:
     case Bye
@@ -29,29 +34,44 @@ private object SwissSheet:
 
   import Outcome.*
 
-  def pointsFor(outcome: Outcome) = SwissPoints fromDouble {
+  def pointsFor(outcomes: List[Outcome]): SwissPoints = SwissPoints.fromDoubled:
+    outcomes.foldLeft(0): (acc, out) =>
+      acc + pointsFor(out).doubled
+
+  def pointsFor(outcome: Outcome): SwissPoints = SwissPoints.fromDoubled:
     outcome match
       case Win | Bye | ForfeitWin => 2
       case Late | Draw            => 1
       case _                      => 0
-  }
 
   def many(
       swiss: Swiss,
       players: List[SwissPlayer],
       pairingMap: SwissPairing.PairingMap
   ): List[SwissSheet] =
-    players.map { player =>
-      one(swiss, ~pairingMap.get(player.userId), player)
-    }
+    many(swiss.allRounds, players, pairingMap)
+
+  def many(
+      rounds: List[SwissRoundNumber],
+      players: List[SwissPlayer],
+      pairingMap: SwissPairing.PairingMap
+  ): List[SwissSheet] =
+    players.map: player =>
+      one(rounds, ~pairingMap.get(player.userId), player)
 
   def one(
       swiss: Swiss,
       pairingMap: Map[SwissRoundNumber, SwissPairing],
       player: SwissPlayer
+  ): SwissSheet = one(swiss.allRounds, pairingMap, player)
+
+  def one(
+      rounds: List[SwissRoundNumber],
+      pairingMap: Map[SwissRoundNumber, SwissPairing],
+      player: SwissPlayer
   ): SwissSheet =
-    SwissSheet {
-      swiss.allRounds.map { round =>
+    SwissSheet:
+      rounds.map: round =>
         pairingMap get round match
           case Some(pairing) =>
             pairing.status match
@@ -63,8 +83,6 @@ private object SwissSheet:
           case None if player.byes(round) => Bye
           case None if round.value == 1   => Late
           case None                       => Absent
-      }
-    }
 
 final private class SwissSheetApi(mongo: SwissMongo)(using
     Executor,
@@ -76,24 +94,22 @@ final private class SwissSheetApi(mongo: SwissMongo)(using
       sort: Bdoc
   ): Source[(SwissPlayer, Map[SwissRoundNumber, SwissPairing], SwissSheet), ?] =
     val readPreference =
-      if (swiss.finishedAt.exists(_ isBefore nowInstant.minusSeconds(10)))
-        temporarilyPrimary
+      if swiss.finishedAt.exists(_ isBefore nowInstant.minusSeconds(10))
+      then temporarilyPrimary
       else ReadPreference.primary
     SwissPlayer
-      .fields { f =>
+      .fields: f =>
         mongo.player.find($doc(f.swissId -> swiss.id)).sort(sort)
-      }
       .cursor[SwissPlayer](readPreference)
       .documentSource()
-      .mapAsync(4) { player =>
-        SwissPairing.fields { f =>
-          mongo.pairing.list[SwissPairing](
-            $doc(f.swissId -> swiss.id, f.players -> player.userId),
-            readPreference
-          ) dmap { player -> _ }
-        }
-      }
-      .map { (player, pairings) =>
+      .mapAsync(4): player =>
+        SwissPairing.fields: f =>
+          mongo.pairing
+            .list[SwissPairing](
+              $doc(f.swissId -> swiss.id, f.players -> player.userId),
+              readPreference
+            )
+            .dmap(player -> _)
+      .map: (player, pairings) =>
         val pairingMap = pairings.mapBy(_.round)
         (player, pairingMap, SwissSheet.one(swiss, pairingMap, player))
-      }

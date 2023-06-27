@@ -148,7 +148,7 @@ final class User(
         case Some(u) =>
           negotiate(
             env.user.repo isErased u flatMap { erased =>
-              if erased.value then notFound
+              if erased.yes then notFound
               else NotFound.page(html.user.show.page.disabled(u))
             },
             NotFound(jsonError("No such user, or account closed"))
@@ -360,7 +360,7 @@ final class User(
           val student = env.clas.api.student.findManaged(user).map2(view.student).dmap(~_)
 
           val reportLog = isGranted(_.SeeReport) so env.report.api
-            .byAndAbout(user, 20, me)
+            .byAndAbout(user, 20)
             .flatMap: rs =>
               lightUserApi.preloadMany(rs.userIds) inject rs
             .map(view.reportLog(user))
@@ -388,9 +388,8 @@ final class User(
             data       <- loginsTableData(user, userLogins, nbOthers)
           yield html.user.mod.otherUsers(me, user, data, appeals)
 
-          val identification = userLoginsFu map { logins =>
-            Granter.is(_.ViewPrintNoIP)(me) so html.user.mod.identification(logins)
-          }
+          val identification = userLoginsFu.map: logins =>
+            Granter(_.ViewPrintNoIP) so html.user.mod.identification(logins)
 
           val kaladin = isGranted(_.MarkEngine) so env.irwin.kaladinApi.get(user).map {
             _.flatMap(_.response) so html.kaladin.report
@@ -405,6 +404,8 @@ final class User(
 
           val boardTokens = env.oAuth.tokenApi.usedBoardApi(user).map(html.user.mod.boardTokens)
 
+          val teacher = env.clas.api.clas.countOf(user).map(html.user.mod.teacher(user))
+
           given EventSource.EventDataExtractor[Frag] = EventSource.EventDataExtractor[Frag](_.render)
           Ok.chunked:
             Source.single(html.user.mod.menu) merge
@@ -412,6 +413,7 @@ final class User(
               modZoneSegment(modLog, "modLog", user) merge
               modZoneSegment(plan, "plan", user) merge
               modZoneSegment(student, "student", user) merge
+              modZoneSegment(teacher, "teacher", user) merge
               modZoneSegment(reportLog, "reportLog", user) merge
               modZoneSegment(prefs, "prefs", user) merge
               modZoneSegment(rageSit, "rageSit", user) merge
@@ -469,7 +471,7 @@ final class User(
   def apiWriteNote(username: UserStr) = ScopedBody() { ctx ?=> me ?=>
     lila.user.UserForm.apiNote
       .bindFromRequest()
-      .fold(jsonFormError, data => doWriteNote(username, data)(_ => jsonOkResult))
+      .fold(doubleJsonFormError, data => doWriteNote(username, data)(_ => jsonOkResult))
   }
 
   private def doWriteNote(
@@ -498,7 +500,7 @@ final class User(
     getUserStr("u")
       .ifTrue(isGranted(_.BoostHunter))
       .so(env.user.repo.byId)
-      .map(_ | me.user)
+      .map(_ | me.value)
       .flatMap: user =>
         for
           ops         <- env.game.favoriteOpponents(user.id)
@@ -572,16 +574,14 @@ final class User(
         } map JsonOk
 
   def ratingDistribution(perfKey: lila.rating.Perf.Key, username: Option[UserStr] = None) = Open:
-    lila.rating.PerfType(perfKey).filter(lila.rating.PerfType.leaderboardable.has) match
-      case Some(perfType) =>
-        env.user.rankingApi.weeklyRatingDistribution(perfType) flatMap { data =>
-          username match
-            case Some(name) =>
-              EnabledUser(name): u =>
-                Ok.page(html.stat.ratingDistribution(perfType, data, Some(u)))
-            case _ => Ok.page(html.stat.ratingDistribution(perfType, data, None))
-        }
-      case _ => notFound
+    Found(lila.rating.PerfType(perfKey).filter(lila.rating.PerfType.leaderboardable.has)): perfType =>
+      env.user.rankingApi.weeklyRatingDistribution(perfType) flatMap { data =>
+        username match
+          case Some(name) =>
+            EnabledUser(name): u =>
+              Ok.page(html.stat.ratingDistribution(perfType, data, Some(u)))
+          case _ => Ok.page(html.stat.ratingDistribution(perfType, data, None))
+      }
 
   def myself = Auth { _ ?=> me ?=>
     Redirect(routes.User.show(me.username))

@@ -7,10 +7,10 @@ import play.api.mvc.*
 import scala.util.chaining.*
 
 import lila.api.GameApiV2
-
 import lila.app.{ given, * }
 import lila.common.config.{ MaxPerPage, MaxPerSecond }
 import lila.common.{ HTTPRequest, IpAddress, LightUser }
+import lila.gathering.Condition.GetMyTeamIds
 
 final class Api(
     env: Env,
@@ -37,7 +37,7 @@ final class Api(
 
   private val userRateLimit = env.security.ipTrust.rateLimit(3_000, 1.day, "user.show.api.ip")
   def user(name: UserStr) = OpenOrScoped(): ctx ?=>
-    userRateLimit(ctx.ip, rateLimitedFu):
+    userRateLimit(ctx.ip, rateLimited):
       userApi.extended(
         name,
         ctx.me,
@@ -59,7 +59,7 @@ final class Api(
   def usersByIds = AnonBodyOf(parse.tolerantText): body =>
     val usernames = body.replace("\n", "").split(',').take(300).flatMap(UserStr.read).toList
     val cost      = usernames.size / 4
-    UsersRateLimitPerIP(req.ipAddress, rateLimitedFu, cost = cost):
+    UsersRateLimitPerIP(req.ipAddress, rateLimited, cost = cost):
       lila.mon.api.users.increment(cost.toLong)
       env.user.repo byIds usernames map {
         _.map { env.user.jsonView.full(_, none, withRating = true, withProfile = true) }
@@ -167,17 +167,17 @@ final class Api(
 
   def tournament(id: TourId) = ApiRequest:
     env.tournament.tournamentRepo byId id flatMapz { tour =>
-      val page = (getInt("page") | 1) atLeast 1 atMost 200
+      val page           = (getInt("page") | 1) atLeast 1 atMost 200
+      given GetMyTeamIds = _ => fuccess(Nil)
       env.tournament.jsonView(
         tour = tour,
         page = page.some,
-        me = none,
         getTeamName = env.team.getTeamName.apply,
         playerInfoExt = none,
         socketVersion = none,
         partial = false,
         withScores = true
-      )(using _ => fuccess(Nil)) map some
+      ) map some
     } map toApiResult
 
   def tournamentGames(id: TourId) =
@@ -313,8 +313,8 @@ final class Api(
   val cloudEval =
     val rateLimit = lila.memo.RateLimit[IpAddress](3_000, 1.day, "cloud-eval.api.ip")
     Anon:
-      rateLimit(req.ipAddress, rateLimitedFu):
-        get("fen").fold(notFoundJson("Missing FEN")): fen =>
+      rateLimit(req.ipAddress, rateLimited):
+        get("fen").fold[Fu[Result]](notFoundJson("Missing FEN")): fen =>
           import chess.variant.Variant
           JsonOptionOk:
             env.evalCache.api.getEvalJson(
@@ -326,7 +326,7 @@ final class Api(
   val eventStream =
     val rateLimit = lila.memo.RateLimit[UserId](30, 10.minutes, "api.stream.event.user")
     Scoped(_.Bot.Play, _.Board.Play, _.Challenge.Read) { _ ?=> me ?=>
-      def limited = rateLimitedFu:
+      def limited = rateLimited:
         "Please don't poll this endpoint, it is intended to be streamed. See https://lichess.org/api#tag/Board/operation/apiStreamEvent."
       rateLimit(me, limited):
         env.round.proxyRepo.urgentGames(me) flatMap { povs =>
@@ -389,7 +389,7 @@ final class Api(
     result match
       case ApiResult.Limited          => rateLimitedJson
       case ApiResult.ClientError(msg) => BadRequest(jsonError(msg))
-      case ApiResult.NoData           => notFoundJsonSync()
+      case ApiResult.NoData           => notFoundJson()
       case ApiResult.Custom(result)   => result
       case ApiResult.Done             => jsonOkResult
       case ApiResult.Data(json)       => JsonOk(json)
