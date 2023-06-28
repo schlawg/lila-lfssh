@@ -244,7 +244,7 @@ final class Mod(
               } flatMap { case ((((((chats, convos), publicLines), notes), history), inquiry), logins) =>
                 if priv && !inquiry.so(_.isRecentCommOf(Suspect(user))) then
                   env.irc.api.commlog(user = user, inquiry.map(_.oldestAtom.by.userId))
-                  if isGranted(_.MonitoredMod) then
+                  if isGranted(_.MonitoredCommMod) then
                     env.irc.api.monitorMod(
                       "eyes",
                       s"spontaneously checked out @${user.username}'s private comms",
@@ -375,10 +375,7 @@ final class Mod(
 
   def printBan(v: Boolean, fh: String) = Secure(_.PrintBan) { _ ?=> me ?=>
     val hash = FingerHash(fh)
-    env.security.printBan.toggle(hash, v) >>
-      env.security.api.recentUserIdsByFingerHash(hash) flatMap { userIds =>
-        env.irc.api.printBan(fh, v, userIds)
-      } inject Redirect(routes.Mod.print(fh))
+    env.security.printBan.toggle(hash, v) inject Redirect(routes.Mod.print(fh))
   }
 
   def singleIp(ip: String) = SecureBody(_.ViewPrintNoIP) { ctx ?=> me ?=>
@@ -400,14 +397,9 @@ final class Mod(
       if v then env.security.firewall.blockIps
       else env.security.firewall.unblockIps
     val ipAddr = IpAddress from ip
-    op(ipAddr) >> (ipAddr so {
-      env.security.api.recentUserIdsByIp(_) flatMap { userIds =>
-        env.irc.api.ipBan(ip, v, userIds)
-      }
-    }) inject {
+    op(ipAddr).inject:
       if HTTPRequest.isXhr(ctx.req) then jsonOkResult
       else Redirect(routes.Mod.singleIp(ip))
-    }
   }
 
   def chatUser(username: UserStr) = Secure(_.ChatTimeout) { _ ?=> _ ?=>

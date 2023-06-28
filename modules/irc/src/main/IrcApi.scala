@@ -62,12 +62,6 @@ final class IrcApi(
     zulip(_.mod.cafeteria, "reports"):
       s"**${markdown.userLinkNoNotes(user.username)}** usertable check (requested by ${markdown.modLink(mod.username)})"
 
-  def userModNote(modName: UserName, username: UserName, note: String): Funit =
-    (!User.isLichess(modName)).so:
-      zulip(_.mod.adminLog, "notes"):
-        s"${markdown.modLink(modName)} :note: **${markdown.userLink(username)}** (${markdown.userNotesLink(username)}):\n" +
-          markdown.linkifyUsers(note take 2000)
-
   def selfReport(typ: String, path: String, user: User, ip: IpAddress): Funit =
     zulip(_.mod.adminLog, "self report"):
       s"[**$typ**] ${markdown.userLink(user)}@$ip ${markdown.gameLink(path)}"
@@ -87,32 +81,10 @@ final class IrcApi(
       zulip(_.mod.adminMonitor(tpe), mod.name.value):
         s"${markdown.userLink(mod.name)} :$icon: ${markdown.linkifyPostsAndUsers(text)}"
 
-  def logMod(icon: String, text: String)(using modId: Me.Id): Funit =
-    lightUser(modId).flatMapz: mod =>
-      zulip(_.mod.log, "actions"):
-        s"${markdown.modLink(mod.name)} :$icon: ${markdown.linkifyPostsAndUsers(text)}"
-
-  def printBan(print: String, v: Boolean, userIds: List[UserId])(using Me.Id): Funit =
-    logMod(
-      "paw_prints",
-      s"${if (v) "Banned" else "Unbanned"} print ${markdown
-          .printLink(print)} of ${userIds.length} user(s): ${markdown userIdLinks userIds}"
-    )
-
-  def ipBan(ip: String, v: Boolean, userIds: List[UserId])(using Me): Funit =
-    logMod(
-      "1234",
-      s"${if (v) "Banned" else "Unbanned"} IP ${markdown
-          .ipLink(ip)} of ${userIds.length} user(s): ${markdown userIdLinks userIds}"
-    )
-
   def chatPanic(mod: Me, v: Boolean): Funit =
     val msg =
       s":stop: ${markdown.modLink(mod.username)} ${if (v) "enabled" else "disabled"} ${markdown.lichessLink("/mod/chat-panic", " Chat Panic")}"
     zulip(_.mod.log, "chat panic")(msg) >> zulip(_.mod.commsPublic, "main")(msg)
-
-  def garbageCollector(msg: String): Funit =
-    zulip(_.mod.adminLog, "garbage collector")(markdown linkifyUsers msg)
 
   def broadcastError(id: RelayRoundId, name: String, error: String): Funit =
     zulip(_.broadcast, "lila error log")(s"${markdown.broadcastLink(id, name)} $error")
@@ -151,10 +123,6 @@ final class IrcApi(
     case Event.Warning(msg) => publishWarning(msg)
     case Event.Info(msg)    => publishInfo(msg)
     case Event.Victory(msg) => publishVictory(msg)
-
-  def signupAfterTryingDisposableEmail(user: User, email: EmailAddress, previous: Set[EmailAddress]) =
-    zulip(_.mod.adminLog, "disposable email"):
-      s"${markdown userLink user} signed up with ${email.value} after trying: ${previous mkString ", "}"
 
   private def publishError(msg: String): Funit =
     zulip(_.general, "lila")(s":lightning: ${markdown linkifyUsers msg}")
