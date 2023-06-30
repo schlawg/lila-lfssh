@@ -18,10 +18,7 @@ function renderPlayer(ctrl: RoundController, position: Position) {
   return ctrl.nvui
     ? undefined
     : player.ai
-    ? h('div.user-link.online.ruser.ruser-' + position, [
-        h('i.line'),
-        h('name', renderUser.aiName(ctrl, player.ai)),
-      ])
+    ? h('div.user-link.online.ruser.ruser-' + position, [h('i.line'), h('name', renderUser.aiName(ctrl, player.ai))])
     : renderUser.userHtml(ctrl, player, position);
 }
 
@@ -36,9 +33,7 @@ const renderTableWith = (ctrl: RoundController, buttons: MaybeVNodes) => [
 
 export const renderTableEnd = (ctrl: RoundController) =>
   renderTableWith(ctrl, [
-    isLoading(ctrl)
-      ? loader()
-      : button.backToTournament(ctrl) || button.backToSwiss(ctrl) || button.followUp(ctrl),
+    isLoading(ctrl) ? loader() : button.backToTournament(ctrl) || button.backToSwiss(ctrl) || button.followUp(ctrl),
   ]);
 
 export const renderTableWatch = (ctrl: RoundController) =>
@@ -49,9 +44,9 @@ export const renderTableWatch = (ctrl: RoundController) =>
 export const renderTablePlay = (ctrl: RoundController) => {
   const d = ctrl.data,
     loading = isLoading(ctrl),
-    submit = button.submitMove(ctrl),
+    //submit = button.submitMove(ctrl),
     icons =
-      loading || submit
+      loading || ctrl.moveToSubmit || ctrl.dropToSubmit
         ? []
         : [
             game.abortable(d)
@@ -100,15 +95,11 @@ export const renderTablePlay = (ctrl: RoundController) => {
           ],
     buttons: MaybeVNodes = loading
       ? [loader()]
-      : submit
-      ? [submit]
       : [
+          ...ctrl.negotiations.map(n => button.negotiation(ctrl, n)),
           button.opponentGone(ctrl),
           button.threefoldSuggestion(ctrl),
           button.cancelDrawOffer(ctrl),
-          button.answerOpponentDrawOffer(ctrl),
-          button.cancelTakebackProposition(ctrl),
-          button.answerOpponentTakebackProposition(ctrl),
         ];
   return [
     replay.render(ctrl),

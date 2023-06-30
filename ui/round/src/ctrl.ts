@@ -68,7 +68,6 @@ export default class RoundController {
   voiceMove?: VoiceMove;
   moveOn: MoveOn;
   promotion: PromotionCtrl;
-
   ply: number;
   firstSeconds = true;
   flip = false;
@@ -208,8 +207,7 @@ export default class RoundController {
       this.keyboardMove?.justSelected()
     );
 
-  private onPremove = (orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata) =>
-    this.startPromotion(orig, dest, meta);
+  private onPremove = (orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata) => this.startPromotion(orig, dest, meta);
 
   private onCancelPremove = () => this.promotion.cancelPrePromotion();
 
@@ -283,8 +281,9 @@ export default class RoundController {
       if (/[+#]/.test(s.san)) sound.check();
     }
     this.autoScroll();
-    this.voiceMove?.update(s.fen);
-    this.keyboardMove?.update(s);
+    const canMove = ply === this.lastPly() && this.data.player.color === config.turnColor;
+    this.voiceMove?.update(s.fen, canMove);
+    this.keyboardMove?.update(s), canMove;
     lichess.pubsub.emit('ply', ply);
     return true;
   };
@@ -360,7 +359,6 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !meta.premove) {
       this.moveToSubmit = move;
-      this.voiceMove?.confirm('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('move', move, {
@@ -376,7 +374,6 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !isPredrop) {
       this.dropToSubmit = drop;
-      this.voiceMove?.confirm('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('drop', drop, {
@@ -504,7 +501,7 @@ export default class RoundController {
     this.autoScroll();
     this.onChange();
     this.keyboardMove?.update(step, playedColor != d.player.color);
-    this.voiceMove?.update(step.fen /*, playedColor != d.player.color*/);
+    this.voiceMove?.update(step.fen, playedColor != d.player.color);
     if (this.music) this.music.jump(o);
     lichess.sound.saySan(step.san);
     return true; // prevents default socket pubsub
@@ -541,7 +538,7 @@ export default class RoundController {
     this.onChange();
     this.setLoading(false);
     this.keyboardMove?.update(d.steps[d.steps.length - 1]);
-    this.voiceMove?.update(d.steps[d.steps.length - 1].fen);
+    this.voiceMove?.update(d.steps[d.steps.length - 1].fen, true);
   };
 
   endWithData = (o: ApiEnd): void => {
@@ -634,15 +631,40 @@ export default class RoundController {
     const is = this.isPlaying();
     if (was !== is) {
       lichess.quietMode = is;
-      $('body').toggleClass(
-        'no-select',
-        is && this.clock && this.clock.millisOf(this.data.player.color) <= 3e5
-      );
+      $('body').toggleClass('no-select', is && this.clock && this.clock.millisOf(this.data.player.color) <= 3e5);
     }
   };
 
+  get negotiations(): PromptOpts[] {
+    if (this.moveToSubmit || this.dropToSubmit) {
+      this.voiceMove?.voiceConfirm('confirmMove', this.submitMove);
+      return [
+        {
+          prompt: this.noarg('confirmMove'),
+          yes: () => this.submitMove(true),
+          no: () => this.submitMove(false),
+          noKey: 'cancel',
+        },
+      ];
+    }
+    const negotiations = this.voiceMove?.displayConfirm() || [];
+    if (this.data.opponent.proposingTakeback)
+      negotiations.push({
+        prompt: this.noarg('yourOpponentProposesATakeback'),
+        yes: () => this.socket.send('takeback-yes'),
+        no: () => this.socket.send('takeback-no'),
+      });
+    if (this.data.opponent.offeringDraw)
+      negotiations.push({
+        prompt: this.noarg('yourOpponentOffersADraw'),
+        yes: () => this.socket.send('draw-yes'),
+        no: () => this.socket.send('draw-no'),
+      });
+    return negotiations;
+  }
+
   opponentRequest(req: string, i18nKey: string) {
-    this.voiceMove?.confirm(req, (v: boolean) => this.socket.sendLoading(`${req}-${v ? 'yes' : 'no'}`));
+    this.voiceMove?.voiceConfirm(req, (v: boolean) => this.socket.sendLoading(`${req}-${v ? 'yes' : 'no'}`));
     notify(this.noarg(i18nKey));
   }
 

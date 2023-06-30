@@ -103,6 +103,14 @@ interface UserCompleteOpts {
   swiss?: string;
 }
 
+interface PromptOpts {
+  prompt: string;
+  yes: () => void;
+  no: () => void;
+  yesKey?: I18nKey;
+  noKey?: I18nKey;
+}
+
 interface SoundI {
   loadOggOrMp3(name: string, path: string, noSoundSet?: boolean): void;
   loadStandard(name: string, soundSet?: string): void;
@@ -525,19 +533,7 @@ interface Cash {
 }
 
 declare namespace PowerTip {
-  type Placement =
-    | 'n'
-    | 'e'
-    | 's'
-    | 'w'
-    | 'nw'
-    | 'ne'
-    | 'sw'
-    | 'se'
-    | 'nw-alt'
-    | 'ne-alt'
-    | 'sw-alt'
-    | 'se-alt';
+  type Placement = 'n' | 'e' | 's' | 'w' | 'nw' | 'ne' | 'sw' | 'se' | 'nw-alt' | 'ne-alt' | 'sw-alt' | 'se-alt';
 
   interface Options {
     preRender?: (el: HTMLElement) => void;

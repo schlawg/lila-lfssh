@@ -143,9 +143,7 @@ export function opponentGone(ctrl: RoundController) {
         ),
       ])
     : gone
-    ? h('div.suggestion', [
-        h('p', ctrl.trans.vdomPlural('opponentLeftCounter', gone, h('strong', '' + gone))),
-      ])
+    ? h('div.suggestion', [h('p', ctrl.trans.vdomPlural('opponentLeftCounter', gone, h('strong', '' + gone)))])
     : null;
 }
 
@@ -212,7 +210,7 @@ export function threefoldSuggestion(ctrl: RoundController) {
 export function cancelDrawOffer(ctrl: RoundController) {
   return ctrl.data.player.offeringDraw ? h('div.pending', [h('p', ctrl.noarg('drawOfferSent'))]) : null;
 }
-
+/*
 export function answerOpponentDrawOffer(ctrl: RoundController) {
   return ctrl.data.opponent.offeringDraw
     ? h('div.negotiation.draw', [
@@ -222,7 +220,7 @@ export function answerOpponentDrawOffer(ctrl: RoundController) {
       ])
     : null;
 }
-
+*/
 export function cancelTakebackProposition(ctrl: RoundController) {
   return ctrl.data.player.proposingTakeback
     ? h('div.pending', [
@@ -238,11 +236,24 @@ export function cancelTakebackProposition(ctrl: RoundController) {
     : null;
 }
 
-function acceptButton(ctrl: RoundController, klass: string, action: () => void, i18nKey: I18nKey = 'accept') {
+export function negotiation(ctrl: RoundController, opts: PromptOpts) {
+  return h('div.negotiation', [
+    mkBtn('decline', !ctrl.nvui ? licon.X : false, opts.noKey || 'decline', opts.no),
+    h('p', opts.prompt),
+    mkBtn('accept', !ctrl.nvui ? licon.Checkmark : false, opts.yesKey || 'accept', opts.yes),
+  ]);
+  function mkBtn(tpe: 'accept' | 'decline', icon: string | false, i18nKey: I18nKey, action: () => void) {
+    return icon
+      ? h(`a.${tpe}`, { attrs: { 'data-icon': icon }, hook: util.bind('click', action) })
+      : h('button', { hook: util.bind('click', action) }, ctrl.noarg(i18nKey));
+  }
+}
+
+/*function acceptButton(ctrl: RoundController, klass: string, action: () => void, i18nKey: I18nKey = 'accept') {
   const text = ctrl.noarg(i18nKey);
   return ctrl.nvui
     ? h(
-        'button.' + klass,
+        'button',
         {
           hook: util.bind('click', action),
         },
@@ -294,7 +305,7 @@ export function submitMove(ctrl: RoundController): VNode | undefined {
       ])
     : undefined;
 }
-
+*/
 export function backToTournament(ctrl: RoundController): VNode | undefined {
   const d = ctrl.data;
   return d.tournament?.running
@@ -349,9 +360,7 @@ export function moretime(ctrl: RoundController) {
   return game.moretimeable(ctrl.data)
     ? h('a.moretime', {
         attrs: {
-          title: ctrl.data.clock
-            ? ctrl.trans('giveNbSeconds', ctrl.data.clock.moretime)
-            : ctrl.noarg('giveMoreTime'),
+          title: ctrl.data.clock ? ctrl.trans('giveNbSeconds', ctrl.data.clock.moretime) : ctrl.noarg('giveMoreTime'),
           'data-icon': licon.PlusButton,
         },
         hook: util.bind('click', ctrl.socket.moreTime),
@@ -363,14 +372,12 @@ export function followUp(ctrl: RoundController): VNode {
   const d = ctrl.data,
     rematchable =
       !d.game.rematch &&
-      (status.finished(d) ||
-        (status.aborted(d) && (!d.game.rated || !['lobby', 'pool'].includes(d.game.source)))) &&
+      (status.finished(d) || (status.aborted(d) && (!d.game.rated || !['lobby', 'pool'].includes(d.game.source)))) &&
       !d.tournament &&
       !d.simul &&
       !d.swiss &&
       !d.game.boosted,
-    newable =
-      (status.finished(d) || status.aborted(d)) && (d.game.source === 'lobby' || d.game.source === 'pool'),
+    newable = (status.finished(d) || status.aborted(d)) && (d.game.source === 'lobby' || d.game.source === 'pool'),
     rematchZone = rematchable || d.game.rematch ? rematchButtons(ctrl) : [];
   return h('div.follow-up', [
     ...rematchZone,
@@ -397,8 +404,7 @@ export function followUp(ctrl: RoundController): VNode {
           'a.fbt',
           {
             attrs: {
-              href:
-                d.game.source === 'pool' ? poolUrl(d.clock!, d.opponent.user) : '/?hook_like=' + d.game.id,
+              href: d.game.source === 'pool' ? poolUrl(d.clock!, d.opponent.user) : '/?hook_like=' + d.game.id,
             },
           },
           ctrl.noarg('newOpponent')

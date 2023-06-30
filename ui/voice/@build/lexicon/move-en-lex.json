@@ -70,10 +70,12 @@
 
     { "in": "yes", "val": "yes", "tags": [ "choice" ] },
     { "in": "confirm", "val": "yes", "tags": [ "choice" ] },
+    { "in": "accept", "val": "yes", "tags": [ "choice" ] },
     { "in": "no", "val": "no", "tags": [ "choice" ] },
     { "in": "clear", "val": "no", "tags": [ "choice" ] },
     { "in": "close", "val": "no", "tags": [ "choice" ] },
     { "in": "cancel", "val": "no", "tags": [ "choice" ] },
+    { "in": "decline", "val": "no", "tags": [ "choice" ] },
     { "in": "abort", "val": "no", "tags": [ "choice" ] },
 
     { "in": "blue", "val": "blue", "tags": [ "color", "choice" ] },
