@@ -75,7 +75,7 @@ export const renderTablePlay = (ctrl: RoundController) => {
                     enabled: ctrl.canOfferDraw(),
                     overrideHint: game.drawableSwiss(d) ? undefined : 'noDrawBeforeSwissLimit',
                   }),
-                  '2',
+                  licon.OneHalf,
                   'offerDraw',
                   'draw-yes',
                   () => ctrl.offerDraw(true)

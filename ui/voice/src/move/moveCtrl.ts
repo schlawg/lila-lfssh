@@ -1,6 +1,7 @@
 import { Api as CgApi } from 'chessground/api';
 import * as xhr from 'common/xhr';
 import * as prop from 'common/storage';
+import * as licon from 'common/licon';
 import * as cs from 'chess';
 import { src as src, dest as dest } from 'chess';
 import { PromotionCtrl, promote } from 'chess/promotion';
@@ -73,9 +74,9 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     'mic-off': () => lichess.mic.stop(),
     flip: () => root.flipNow(),
     rematch: () => root.rematch?.(true),
-    draw: () => voiceConfirm('offerDraw', v => v && root.offerDraw?.(true, true), true),
+    draw: () => voiceConfirm('draw', v => v && root.offerDraw?.(true, true), true),
     resign: () => voiceConfirm('resign', v => v && root.resign?.(true, true), true),
-    takeback: () => voiceConfirm('requestTakeback', v => v && root.takebackYes?.(), true),
+    takeback: () => voiceConfirm('takeback', v => v && root.takebackYes?.(), true),
     next: () => root.next?.(),
     upvote: () => root.vote?.(true),
     downvote: () => root.vote?.(false),
@@ -349,31 +350,29 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
   }
 
   function displayConfirm(): PromptOpts[] {
-    const mkOpts = (request: string, prompt: string) => [
+    const mkOpts = (request: string, prompt: string, yesIcon: string) => [
       {
         prompt: prompt,
         yes: () => confirmations.get(request)?.(true),
         no: () => confirmations.get(request)?.(false),
         yesKey: 'yes',
         noKey: 'no',
+        yesIcon,
       },
     ];
     return confirmations.has('resign')
-      ? mkOpts('resign', 'Confirm resignation')
-      : confirmations.has('offerDraw')
-      ? mkOpts('offerDraw', 'Confirm draw offer')
-      : confirmations.has('requestTakeback')
-      ? mkOpts('requestTakeback', 'Confirm takeback request')
+      ? mkOpts('resign', 'Confirm resignation', licon.FlagOutline)
+      : confirmations.has('draw')
+      ? mkOpts('draw', 'Confirm draw offer', licon.OneHalf)
+      : confirmations.has('takeback')
+      ? mkOpts('takeback', 'Confirm takeback request', licon.Back)
       : [];
   }
 
   function voiceConfirm(request: string, callback?: (granted: boolean) => void, redraw = false) {
     if (callback) confirmations.set(request, callback);
     else confirmations.delete(request);
-    console.warn(request, callback, confirmations);
-    redraw;
-    //if (redraw) root.redraw();
-    //console.log(request, callback, confirmations);
+    if (redraw) root.redraw();
   }
 
   function submit(uci: Uci) {

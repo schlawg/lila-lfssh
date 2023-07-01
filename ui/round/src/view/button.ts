@@ -117,7 +117,7 @@ export function standard(
         if (enabled()) onclick ? onclick() : ctrl.socket.sendLoading(socketMsg);
       }),
     },
-    [h('span', hint == 'offerDraw' ? ['½'] : ctrl.nvui ? [ctrl.noarg(hintFn())] : util.justIcon(icon))]
+    [h('span', ctrl.nvui ? [ctrl.noarg(hintFn())] : util.justIcon(icon))]
   );
 }
 
@@ -164,14 +164,10 @@ export const resignConfirm = (ctrl: RoundController): VNode =>
 
 export const drawConfirm = (ctrl: RoundController): VNode =>
   h('div.act-confirm', [
-    h(
-      'button.fbt.yes.draw-yes',
-      {
-        attrs: { title: ctrl.noarg('offerDraw') },
-        hook: util.bind('click', () => ctrl.offerDraw(true)),
-      },
-      h('span', '½')
-    ),
+    h('button.fbt.yes.draw-yes', {
+      attrs: { title: ctrl.noarg('offerDraw'), 'data-icon': licon.OneHalf },
+      hook: util.bind('click', () => ctrl.offerDraw(true)),
+    }),
     fbtCancel(ctrl, ctrl.offerDraw),
   ]);
 
@@ -238,9 +234,9 @@ export function cancelTakebackProposition(ctrl: RoundController) {
 
 export function negotiation(ctrl: RoundController, opts: PromptOpts) {
   return h('div.negotiation', [
-    mkBtn('decline', !ctrl.nvui ? licon.X : false, opts.noKey || 'decline', opts.no),
+    mkBtn('decline', !ctrl.nvui ? opts.noIcon || licon.X : false, opts.noKey || 'decline', opts.no),
     h('p', opts.prompt),
-    mkBtn('accept', !ctrl.nvui ? licon.Checkmark : false, opts.yesKey || 'accept', opts.yes),
+    mkBtn('accept', !ctrl.nvui ? opts.yesIcon || licon.Checkmark : false, opts.yesKey || 'accept', opts.yes),
   ]);
   function mkBtn(tpe: 'accept' | 'decline', icon: string | false, i18nKey: I18nKey, action: () => void) {
     return icon
