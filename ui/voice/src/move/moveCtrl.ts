@@ -28,18 +28,18 @@ export function load(ctrl: RootCtrl, initialFen: string): VoiceMove {
   lichess.loadEsm<VoiceMove>('voice.move', { init: { root: ctrl, ui, initialFen } }).then(x => (move = x));
   return {
     ui,
-    initGrammar: () => move.initGrammar(),
-    update: (fen, canMove) => move.update(fen, canMove),
-    voiceConfirm: (request, callback) => move.voiceConfirm(request, callback),
-    displayConfirm: () => move?.displayConfirm(),
+    initGrammar: () => move?.initGrammar(),
+    update: (fen, canMove) => move?.update(fen, canMove),
+    listenForResponse: (key, action) => move?.listenForResponse(key, action),
+    getPrompt: () => move?.getPrompt(),
     get promotionHook() {
-      return move.promotionHook;
+      return move?.promotionHook;
     },
     get allPhrases() {
-      return move.allPhrases;
+      return move?.allPhrases;
     },
     get prefNodes() {
-      return move.prefNodes;
+      return move?.prefNodes;
     },
   };
 }
@@ -60,7 +60,9 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
   const moves: SparseMap<Uci> = new Map(); // map values to all full legal moves
   const squares: SparseMap<Uci> = new Map(); // map values to selectable or reachable squares
   const sans: SparseMap<Uci> = new Map(); // map values to ucis of valid sans
-  const confirmations: Map<string, (v: boolean) => void> = new Map(); // boolean confirmation callbacks
+  type Confirm = { key: string; action: (_: boolean) => void };
+  let request: Confirm | undefined; // move confirm & accept/decline opponent requests
+  let command: Confirm | undefined; // confirm non-move player commands (before send)
   let choices: Map<string, Uci> | undefined; // map choice arrows (yes, blue, red, 1, 2, etc) to moves
   let choiceTimeout: number | undefined; // timeout for ambiguity choices
   const clarityPref = prop.storedIntProp('voice.clarity', 0);
@@ -74,9 +76,9 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     'mic-off': () => lichess.mic.stop(),
     flip: () => root.flipNow(),
     rematch: () => root.rematch?.(true),
-    draw: () => voiceConfirm('draw', v => v && root.offerDraw?.(true, true), true),
-    resign: () => voiceConfirm('resign', v => v && root.resign?.(true, true), true),
-    takeback: () => voiceConfirm('takeback', v => v && root.takebackYes?.(), true),
+    draw: () => confirmCommand('draw', v => v && root.offerDraw?.(true, true)),
+    resign: () => confirmCommand('resign', v => v && root.resign?.(true, true)),
+    takeback: () => confirmCommand('takeback', v => v && root.takebackYes?.()),
     next: () => root.next?.(),
     upvote: () => root.vote?.(true),
     downvote: () => root.vote?.(false),
@@ -96,8 +98,8 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     allPhrases,
     update,
     promotionHook,
-    voiceConfirm,
-    displayConfirm,
+    listenForResponse,
+    getPrompt,
   };
 
   function prefNodes() {
@@ -152,8 +154,9 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
         if (DEBUG.collapse) console.groupCollapsed(`listen '${text}'`);
         else console.info(`listen '${text}'`);
         if (handleCommand(text) || handleAmbiguity(text) || handleMove(text)) {
-          confirmations.forEach((cb, _) => cb(false));
-          confirmations.clear();
+          request?.action(false);
+          command?.action(false);
+          request = command = undefined;
         }
       } finally {
         if (DEBUG.collapse) console.groupEnd();
@@ -186,18 +189,15 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
   function handleCommand(msgText: string): boolean {
     const c = matchOneTags(msgText, ['command', 'choice'])?.[0];
     if (!c) return false;
-
-    for (const [action, callback] of confirmations) {
-      if (c === 'yes' || c === 'no' || c === action) {
-        confirmations.delete(action);
-        callback(c !== 'no');
-        return true;
-      }
+    const answer = request ?? command;
+    if (answer && (c === 'yes' || c === 'no' || c === answer.key)) {
+      answer.action(c !== 'no');
+      //playerRequest = oppoRequest = undefined;
+      return true;
     }
 
-    if (!(c in commands)) return false;
-    commands[c]();
-    return !['draw', 'resign', 'takeback'].includes(c);
+    if (c in commands) commands[c]();
+    return c in commands;
   }
 
   function handleAmbiguity(phrase: string): boolean {
@@ -349,29 +349,32 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     return true;
   }
 
-  function displayConfirm(): PromptOpts | undefined {
-    return undefined;
-    const mkOpts = (request: string, prompt: string, yesIcon: string) => ({
+  function confirmCommand(key: string, action: (v: boolean) => void) {
+    command = { key, action };
+    root.redraw();
+  }
+
+  function listenForResponse(key: string, action: (v: boolean) => void) {
+    request = { key, action };
+  }
+
+  function getPrompt(): PromptOpts | undefined {
+    if (!command) return undefined;
+    const mkOpts = (prompt: string, yesIcon: string) => ({
       prompt: prompt,
-      yes: () => confirmations.get(request)?.(true),
-      no: () => confirmations.get(request)?.(false),
+      yes: () => command?.action?.(true),
+      no: () => command?.action?.(false),
       yesKey: 'yes',
       noKey: 'no',
       yesIcon,
     });
-    return confirmations.has('resign')
-      ? mkOpts('resign', 'Confirm resignation', licon.FlagOutline)
-      : confirmations.has('draw')
-      ? mkOpts('draw', 'Confirm draw offer', licon.OneHalf)
-      : confirmations.has('takeback')
-      ? mkOpts('takeback', 'Confirm takeback request', licon.Back)
+    return command.key === 'resign'
+      ? mkOpts('Confirm resignation', licon.FlagOutline)
+      : command.key === 'draw'
+      ? mkOpts('Confirm draw offer', licon.OneHalf)
+      : command.key === 'takeback'
+      ? mkOpts('Confirm takeback request', licon.Back)
       : undefined;
-  }
-
-  function voiceConfirm(request: string, callback?: (granted: boolean) => void, redraw = false) {
-    if (callback) confirmations.set(request, callback);
-    else confirmations.delete(request);
-    if (redraw) root.redraw();
   }
 
   function submit(uci: Uci) {

@@ -235,16 +235,16 @@ export function cancelTakebackProposition(ctrl: RoundController) {
 export function prompt(ctrl: RoundController) {
   const o = ctrl.prompt;
   if (!o) return null;
-  const noBtn = mkBtn('decline', !ctrl.nvui ? o.noIcon || licon.X : false, o.noKey || 'decline', o.no);
-  const yesBtn = mkBtn('accept', !ctrl.nvui ? o.yesIcon || licon.Checkmark : false, o.yesKey || 'accept', o.yes);
+
+  const btn = (tpe: 'accept' | 'decline', icon: string, i18nKey: I18nKey, action: () => void) =>
+    ctrl.nvui
+      ? h('button', { hook: util.bind('click', action) }, ctrl.noarg(i18nKey))
+      : h(`a.${tpe}`, { attrs: { 'data-icon': icon }, hook: util.bind('click', action) });
+
+  const noBtn = o.no && btn('decline', o.noIcon || licon.X, o.noKey || 'decline', o.no!);
+  const yesBtn = o.yes && btn('accept', o.yesIcon || licon.Checkmark, o.yesKey || 'accept', o.yes!);
+
   return h('div.negotiation', [yesBtn ? noBtn : null, h('p', o.prompt), yesBtn ? yesBtn : noBtn]);
-  function mkBtn(tpe: 'accept' | 'decline', icon: string | false, i18nKey: I18nKey, action?: () => void) {
-    return !action
-      ? null
-      : icon
-      ? h(`a.${tpe}`, { attrs: { 'data-icon': icon }, hook: util.bind('click', action) })
-      : h('button', { hook: util.bind('click', action) }, ctrl.noarg(i18nKey));
-  }
 }
 
 /*function acceptButton(ctrl: RoundController, klass: string, action: () => void, i18nKey: I18nKey = 'accept') {

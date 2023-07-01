@@ -359,7 +359,7 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !meta.premove) {
       this.moveToSubmit = move;
-      this.voiceMove?.voiceConfirm('submitMove', this.submitMove);
+      this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('move', move, {
@@ -375,7 +375,7 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !isPredrop) {
       this.dropToSubmit = drop;
-      this.voiceMove?.voiceConfirm('submitMove', this.submitMove);
+      this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('drop', drop, {
@@ -680,11 +680,11 @@ export default class RoundController {
         yesIcon: licon.OneHalf,
         no: withRedraw(() => this.socket.send('draw-no')),
       };
-    return this.voiceMove?.displayConfirm();
+    return this.voiceMove?.getPrompt();
   }
 
   opponentRequest(req: string, i18nKey: string) {
-    this.voiceMove?.voiceConfirm(req, (v: boolean) => this.socket.sendLoading(`${req}-${v ? 'yes' : 'no'}`));
+    this.voiceMove?.listenForResponse(req, (v: boolean) => this.socket.sendLoading(`${req}-${v ? 'yes' : 'no'}`));
     notify(this.noarg(i18nKey));
   }
 
