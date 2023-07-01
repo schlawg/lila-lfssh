@@ -21,7 +21,7 @@ export interface VoiceMove extends VoiceModule {
   update: (fen: string, canMove: boolean) => void;
   promotionHook: () => (ctrl: PromotionCtrl, roles: cg.Role[] | false) => void;
   voiceConfirm: (request: string, callback: (v: boolean) => void) => void;
-  displayConfirm: () => PromptOpts[];
+  displayConfirm: () => PromptOpts | undefined;
 }
 
 export interface VoiceMoveOpts {}

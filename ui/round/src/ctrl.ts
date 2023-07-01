@@ -359,6 +359,7 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !meta.premove) {
       this.moveToSubmit = move;
+      this.voiceMove?.voiceConfirm('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('move', move, {
@@ -374,6 +375,7 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !isPredrop) {
       this.dropToSubmit = drop;
+      this.voiceMove?.voiceConfirm('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('drop', drop, {
@@ -635,32 +637,50 @@ export default class RoundController {
     }
   };
 
-  get negotiations(): PromptOpts[] {
+  get prompt(): PromptOpts | undefined {
+    const withRedraw = (f: () => void) =>
+      function (this: RoundController) {
+        console.log('oh wow');
+        f();
+        this.redraw();
+      }.bind(this);
+
     if (this.moveToSubmit || this.dropToSubmit) {
-      this.voiceMove?.voiceConfirm('confirmMove', this.submitMove);
-      return [
-        {
-          prompt: this.noarg('confirmMove'),
-          yes: () => this.submitMove(true),
-          no: () => this.submitMove(false),
-          noKey: 'cancel',
-        },
-      ];
+      //this.voiceMove?.voiceConfirm('confirmMove', this.submitMove);
+      return {
+        prompt: this.noarg('confirmMove'),
+        yes: () => this.submitMove(true),
+        no: () => this.submitMove(false),
+        noKey: 'cancel',
+      };
     }
-    const negotiations = this.voiceMove?.displayConfirm() || [];
+    if (this.data.player.proposingTakeback)
+      return {
+        prompt: this.noarg('takebackPropositionSent'),
+        no: withRedraw(() => this.socket.sendLoading('takeback-no')),
+        noKey: 'cancel',
+      };
+    if (this.data.player.offeringDraw)
+      return {
+        prompt: this.noarg('drawOfferSent'),
+        no: withRedraw(() => this.socket.sendLoading('draw-no')),
+        noKey: 'cancel',
+      };
     if (this.data.opponent.proposingTakeback)
-      negotiations.push({
+      return {
         prompt: this.noarg('yourOpponentProposesATakeback'),
-        yes: () => this.socket.send('takeback-yes'),
-        no: () => this.socket.send('takeback-no'),
-      });
+        yes: withRedraw(() => this.socket.send('takeback-yes')),
+        yesIcon: licon.Back,
+        no: withRedraw(() => this.socket.send('takeback-no')),
+      };
     if (this.data.opponent.offeringDraw)
-      negotiations.push({
+      return {
         prompt: this.noarg('yourOpponentOffersADraw'),
-        yes: () => this.socket.send('draw-yes'),
-        no: () => this.socket.send('draw-no'),
-      });
-    return negotiations;
+        yes: withRedraw(() => this.socket.send('draw-yes')),
+        yesIcon: licon.OneHalf,
+        no: withRedraw(() => this.socket.send('draw-no')),
+      };
+    return this.voiceMove?.displayConfirm();
   }
 
   opponentRequest(req: string, i18nKey: string) {

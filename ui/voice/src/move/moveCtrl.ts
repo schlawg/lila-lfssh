@@ -31,7 +31,7 @@ export function load(ctrl: RootCtrl, initialFen: string): VoiceMove {
     initGrammar: () => move.initGrammar(),
     update: (fen, canMove) => move.update(fen, canMove),
     voiceConfirm: (request, callback) => move.voiceConfirm(request, callback),
-    displayConfirm: () => move?.displayConfirm() || [],
+    displayConfirm: () => move?.displayConfirm(),
     get promotionHook() {
       return move.promotionHook;
     },
@@ -349,24 +349,23 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     return true;
   }
 
-  function displayConfirm(): PromptOpts[] {
-    const mkOpts = (request: string, prompt: string, yesIcon: string) => [
-      {
-        prompt: prompt,
-        yes: () => confirmations.get(request)?.(true),
-        no: () => confirmations.get(request)?.(false),
-        yesKey: 'yes',
-        noKey: 'no',
-        yesIcon,
-      },
-    ];
+  function displayConfirm(): PromptOpts | undefined {
+    return undefined;
+    const mkOpts = (request: string, prompt: string, yesIcon: string) => ({
+      prompt: prompt,
+      yes: () => confirmations.get(request)?.(true),
+      no: () => confirmations.get(request)?.(false),
+      yesKey: 'yes',
+      noKey: 'no',
+      yesIcon,
+    });
     return confirmations.has('resign')
       ? mkOpts('resign', 'Confirm resignation', licon.FlagOutline)
       : confirmations.has('draw')
       ? mkOpts('draw', 'Confirm draw offer', licon.OneHalf)
       : confirmations.has('takeback')
       ? mkOpts('takeback', 'Confirm takeback request', licon.Back)
-      : [];
+      : undefined;
   }
 
   function voiceConfirm(request: string, callback?: (granted: boolean) => void, redraw = false) {

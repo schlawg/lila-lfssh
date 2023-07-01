@@ -104,8 +104,8 @@ interface UserCompleteOpts {
 }
 
 interface PromptOpts {
-  yes(): void;
-  no(): void;
+  yes?: () => void;
+  no?: () => void;
   prompt: string; // TODO i18nkey, or just always pretranslate
   yesKey?: I18nKey; // 'yes'
   noKey?: I18nKey; // 'no'

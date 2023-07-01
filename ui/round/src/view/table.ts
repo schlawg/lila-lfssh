@@ -46,7 +46,7 @@ export const renderTablePlay = (ctrl: RoundController) => {
     loading = isLoading(ctrl),
     //submit = button.submitMove(ctrl),
     icons =
-      loading || ctrl.moveToSubmit || ctrl.dropToSubmit
+      loading || ctrl.prompt
         ? []
         : [
             game.abortable(d)
@@ -96,7 +96,7 @@ export const renderTablePlay = (ctrl: RoundController) => {
     buttons: MaybeVNodes = loading
       ? [loader()]
       : [
-          ...ctrl.negotiations.map(n => button.negotiation(ctrl, n)),
+          button.prompt(ctrl),
           button.opponentGone(ctrl),
           button.threefoldSuggestion(ctrl),
           button.cancelDrawOffer(ctrl),
