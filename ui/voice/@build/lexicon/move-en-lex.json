@@ -45,8 +45,9 @@
     { "in": "promotes", "val": "=", "tags": [ "move" ] },
     { "in": "promotion", "val": "=", "tags": [ "move" ] },
 
-    { "in": "undo", "val": "takeback", "tags": [ "command" ] },
-    { "in": "oops", "val": "takeback", "tags": [ "command" ] },
+    { "in": "takeback", "val": "takeback", "tags": [ "command", "round" ] },
+    { "in": "undo", "val": "takeback", "tags": [ "command", "round" ] },
+    { "in": "oops", "val": "takeback", "tags": [ "command", "round" ] },
     { "in": "draw", "val": "draw", "tags": [ "command", "round" ] },
     { "in": "offer draw", "val": "draw", "tags": [ "command", "round" ] },
     { "in": "accept draw", "val": "draw", "tags": [ "command", "round" ] },

@@ -17,7 +17,7 @@
 
   .suggestion,
   .pending,
-  .negotiation {
+  .question {
     padding: 0.5em 3%;
     background: $c-bg-zebra;
     border: $border;
@@ -63,7 +63,7 @@
     }
   }
 
-  .negotiation {
+  .question {
     @extend %flex-center-nowrap;
     animation: flash-once 1s ease-in;
     border: none;
@@ -80,11 +80,11 @@
       background: $c-bg-box;
     }
 
-    .accept {
+    .yes {
       color: $c-good;
     }
 
-    .decline {
+    .no {
       color: $c-bad;
     }
 
@@ -93,7 +93,7 @@
       background: $c-good;
     }
 
-    a.decline:hover {
+    a.no:hover {
       background: $c-bad;
     }
 

@@ -17,6 +17,7 @@ import {
   remove,
   pushMap,
   movesTo,
+  as,
   findTransforms,
 } from '../util';
 
@@ -31,7 +32,7 @@ export function load(ctrl: RootCtrl, initialFen: string): VoiceMove {
     initGrammar: () => move?.initGrammar(),
     update: (fen, canMove) => move?.update(fen, canMove),
     listenForResponse: (key, action) => move?.listenForResponse(key, action),
-    getPrompt: () => move?.getPrompt(),
+    getQuestion: () => move?.getQuestion(),
     get promotionHook() {
       return move?.promotionHook;
     },
@@ -48,7 +49,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
   const root = opts.root;
   const ui = opts.ui;
   const initialFen = opts.initialFen;
-  const DEBUG = { emptyMatches: false, buildMoves: true, buildSquares: true, collapse: true };
+  const DEBUG = { emptyMatches: false, buildMoves: false, buildSquares: false, collapse: true };
   const cg: CgApi = root.chessground;
   let entries: Entry[] = [];
   let partials = { commands: [], colors: [], numbers: [] };
@@ -62,27 +63,27 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
   const sans: SparseMap<Uci> = new Map(); // map values to ucis of valid sans
   type Confirm = { key: string; action: (_: boolean) => void };
   let request: Confirm | undefined; // move confirm & accept/decline opponent requests
-  let command: Confirm | undefined; // confirm non-move player commands (before send)
+  let command: Confirm | undefined; // confirm player commands (before sending request)
   let choices: Map<string, Uci> | undefined; // map choice arrows (yes, blue, red, 1, 2, etc) to moves
   let choiceTimeout: number | undefined; // timeout for ambiguity choices
   const clarityPref = prop.storedIntProp('voice.clarity', 0);
   const colorsPref = prop.storedBooleanPropWithEffect('voice.useColors', true, _ => initTimerRec());
   const timerPref = prop.storedIntPropWithEffect('voice.timer', 3, _ => initTimerRec());
 
-  const commands: { [_: string]: () => void } = {
-    no: () => (ui.showHelp() ? ui.showHelp(false) : clearMoveProgress()),
-    help: () => ui.showHelp(true),
-    list: () => ui.showHelp('list'),
-    'mic-off': () => lichess.mic.stop(),
-    flip: () => root.flipNow(),
-    rematch: () => root.rematch?.(true),
-    draw: () => confirmCommand('draw', v => v && root.offerDraw?.(true, true)),
-    resign: () => confirmCommand('resign', v => v && root.resign?.(true, true)),
-    takeback: () => confirmCommand('takeback', v => v && root.takebackYes?.()),
-    next: () => root.next?.(),
-    upvote: () => root.vote?.(true),
-    downvote: () => root.vote?.(false),
-    solve: () => root.solve?.(),
+  const commands: { [_: string]: () => boolean } = {
+    no: as(true, () => (ui.showHelp() ? ui.showHelp(false) : clearMoveProgress())),
+    help: as(false, () => ui.showHelp(true)),
+    list: as(false, () => ui.showHelp('list')),
+    'mic-off': as(false, () => lichess.mic.stop()),
+    flip: as(false, () => root.flipNow()),
+    draw: as(false, () => confirmCommand('draw', v => v && root.offerDraw?.(true, true))),
+    resign: as(false, () => confirmCommand('resign', v => v && root.resign?.(true, true))),
+    takeback: as(false, () => confirmCommand('takeback', v => v && root.takebackYes?.())),
+    rematch: as(true, () => root.rematch?.(true)),
+    next: as(true, () => root.next?.()),
+    upvote: as(true, () => root.vote?.(true)),
+    downvote: as(true, () => root.vote?.(false)),
+    solve: as(true, () => root.solve?.()),
   };
 
   for (const [color, brush] of brushes) cg.state.drawable.brushes[`v-${color}`] = brush;
@@ -99,7 +100,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     update,
     promotionHook,
     listenForResponse,
-    getPrompt,
+    getQuestion,
   };
 
   function prefNodes() {
@@ -131,12 +132,10 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
 
   function initTimerRec() {
     if (timer() === 0) return;
-    const words = [...partials.commands, ...(colorsPref() ? partials.colors : partials.numbers)].map(w => valWord(w));
+    const words = [...partials.commands, ...(colorsPref() ? partials.colors : partials.numbers)].map(w =>
+      valWord(w)
+    );
     lichess.mic.initRecognizer(words, { recId: 'timer', partial: true, listener: listenTimer });
-  }
-
-  function maxArrows() {
-    return Math.min(8, colorsPref() ? partials.colors.length : partials.numbers.length);
   }
 
   function update(fen: string, canMove: boolean) {
@@ -147,22 +146,21 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     buildSquares();
   }
 
-  function listen(text: string, msgType: Voice.MsgType) {
+  function listen(heard: string, msgType: Voice.MsgType) {
     if (msgType === 'stop' && !ui.pushTalk()) clearMoveProgress();
-    else if (msgType === 'full') {
-      try {
-        if (DEBUG.collapse) console.groupCollapsed(`listen '${text}'`);
-        else console.info(`listen '${text}'`);
-        if (handleCommand(text) || handleAmbiguity(text) || handleMove(text)) {
-          request?.action(false);
-          command?.action(false);
-          request = command = undefined;
-        }
-      } finally {
-        if (DEBUG.collapse) console.groupEnd();
+    else if (msgType !== 'full') return;
+    try {
+      (DEBUG.collapse ? console.groupCollapsed : console.info)(`listen '${heard}'`);
+
+      const xval = matchOneTags(heard, ['command', 'choice']);
+
+      if (handleConfirm(xval) || handleCommand(xval) || handleAmbiguity(heard) || handleMove(heard)) {
+        clearConfirm();
+        root.redraw();
       }
+    } finally {
+      if (DEBUG.collapse) console.groupEnd();
     }
-    root.redraw();
   }
 
   function listenTimer(word: string) {
@@ -176,44 +174,42 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     cg.redrawAll();
   }
 
-  function makeArrows() {
-    if (!choices) return;
-    const arrowTime = choiceTimeout ? timer() : undefined;
-    cg.setShapes(
-      colorsPref()
-        ? coloredArrows([...choices], arrowTime)
-        : numberedArrows([...choices], arrowTime, cg.state.orientation === 'white')
-    );
+  function clearConfirm() {
+    request?.action(false);
+    command?.action(false);
+    request = command = undefined;
   }
 
-  function handleCommand(msgText: string): boolean {
-    const c = matchOneTags(msgText, ['command', 'choice'])?.[0];
-    if (!c) return false;
-    const answer = request ?? command;
-    if (answer && (c === 'yes' || c === 'no' || c === answer.key)) {
-      answer.action(c !== 'no');
-      //playerRequest = oppoRequest = undefined;
+  function handleConfirm(answer: string | false): boolean {
+    const confirm = request ?? command;
+    if (!confirm || !answer) return false;
+    if (['yes', 'no', confirm.key].includes(answer)) {
+      confirm.action(answer !== 'no');
+      request = command = undefined;
       return true;
     }
-
-    if (c in commands) commands[c]();
-    return c in commands;
+    return false;
   }
 
-  function handleAmbiguity(phrase: string): boolean {
-    if (!choices || phrase.includes(' ')) return false;
+  function handleCommand(cmd: string | false): boolean {
+    if (cmd && cmd in commands) return commands[cmd]();
+    else return false;
+  }
+
+  function handleAmbiguity(heard: string): boolean {
+    if (!choices || heard.includes(' ')) return false;
 
     const chosen = matchOne(
-      phrase,
+      heard,
       [...choices].map(([w, uci]) => [wordVal(w), [uci]])
     );
     if (!chosen) {
       clearMoveProgress();
-      console.info('handleAmbiguity', `no match for '${phrase}' among`, choices);
+      console.info('handleAmbiguity', `no match for '${heard}' among`, choices);
       return false;
     }
-    console.info('handleAmbiguity', `matched '${phrase}' to '${chosen[0]}' at cost=${chosen[1]} among`, choices);
-    submit(chosen[0]);
+    console.info('handleAmbiguity', `matched '${heard}' to '${chosen}' among`, choices);
+    submit(chosen);
     return true;
   }
 
@@ -250,11 +246,11 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     return sorted;
   }
 
-  function matchOne(heard: string, xvalsOut: [string, string[]][]): [string, Match] | undefined {
-    return matchMany(heard, xvalsOut, true)[0];
+  function matchOne(heard: string, xvalsOut: [string, string[]][]): string | false {
+    return matchMany(heard, xvalsOut, true)[0]?.[0] ?? false;
   }
 
-  function matchOneTags(heard: string, tags: string[], vals: string[] = []): [string, Match] | undefined {
+  function matchOneTags(heard: string, tags: string[], vals: string[] = []): string | false {
     return matchOne(heard, [...vals.map(v => [v, [v]]), ...byTags(tags).map(e => [e.val!, [e.val!]])] as [
       string,
       string[]
@@ -277,7 +273,8 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
       // mappings within a tag partition are not allowed when partite is true
       const to = byTok.get(transform.to);
       // should be optimized, maybe consolidate tags when parsing the lexicon
-      if (from?.tags?.every(x => to?.tags?.includes(x)) && from.tags.length === to!.tags.length) return Infinity;
+      if (from?.tags?.every(x => to?.tags?.includes(x)) && from.tags.length === to!.tags.length)
+        return Infinity;
     }
     return sub?.cost ?? Infinity;
   }
@@ -306,7 +303,8 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     // dedup by uci squares & keep first to preserve cost order
     options = options
       .filter(
-        ([uci, _], keepIfFirst) => options.findIndex(first => first[0].slice(0, 4) === uci.slice(0, 4)) === keepIfFirst
+        ([uci, _], keepIfFirst) =>
+          options.findIndex(first => first[0].slice(0, 4) === uci.slice(0, 4)) === keepIfFirst
       )
       .slice(0, maxArrows());
 
@@ -349,6 +347,20 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     return true;
   }
 
+  function maxArrows() {
+    return Math.min(8, colorsPref() ? partials.colors.length : partials.numbers.length);
+  }
+
+  function makeArrows() {
+    if (!choices) return;
+    const arrowTime = choiceTimeout ? timer() : undefined;
+    cg.setShapes(
+      colorsPref()
+        ? coloredArrows([...choices], arrowTime)
+        : numberedArrows([...choices], arrowTime, cg.state.orientation === 'white')
+    );
+  }
+
   function confirmCommand(key: string, action: (v: boolean) => void) {
     command = { key, action };
     root.redraw();
@@ -358,7 +370,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     request = { key, action };
   }
 
-  function getPrompt(): PromptOpts | undefined {
+  function getQuestion(): QuestionOpts | undefined {
     if (!command) return undefined;
     const mkOpts = (prompt: string, yesIcon: string) => ({
       prompt: prompt,
@@ -399,7 +411,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
       roles
         ? lichess.mic.addListener(
             (text: string) => {
-              const val = matchOneTags(text, ['role'], ['no'])?.[0];
+              const val = matchOneTags(text, ['role'], ['no']);
               lichess.mic.stopPropagation();
               if (val && roles.includes(cs.charRole(val))) ctrl.finish(cs.charRole(val));
               else if (val === 'no') ctrl.cancel();

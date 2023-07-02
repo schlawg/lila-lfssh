@@ -82,6 +82,7 @@ export default class RoundController {
   goneBerserk: GoneBerserk = {};
   resignConfirm?: Timeout = undefined;
   drawConfirm?: Timeout = undefined;
+  preventDrawOffer?: Timeout = undefined;
   // will be replaced by view layer
   autoScroll: () => void = () => {};
   justDropped?: cg.Role;
@@ -207,7 +208,8 @@ export default class RoundController {
       this.keyboardMove?.justSelected()
     );
 
-  private onPremove = (orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata) => this.startPromotion(orig, dest, meta);
+  private onPremove = (orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata) =>
+    this.startPromotion(orig, dest, meta);
 
   private onCancelPremove = () => this.promotion.cancelPrePromotion();
 
@@ -359,7 +361,6 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !meta.premove) {
       this.moveToSubmit = move;
-      this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('move', move, {
@@ -375,7 +376,6 @@ export default class RoundController {
     this.resign(false);
     if (this.data.pref.submitMove && this.confirmMoveEnabled() && !isPredrop) {
       this.dropToSubmit = drop;
-      this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       this.redraw();
     } else {
       this.actualSendMove('drop', drop, {
@@ -633,58 +633,57 @@ export default class RoundController {
     const is = this.isPlaying();
     if (was !== is) {
       lichess.quietMode = is;
-      $('body').toggleClass('no-select', is && this.clock && this.clock.millisOf(this.data.player.color) <= 3e5);
+      $('body').toggleClass(
+        'no-select',
+        is && this.clock && this.clock.millisOf(this.data.player.color) <= 3e5
+      );
     }
   };
 
-  get prompt(): PromptOpts | undefined {
-    const withRedraw = (f: () => void) =>
-      function (this: RoundController) {
-        console.log('oh wow');
-        f();
-        this.redraw();
-      }.bind(this);
-
+  askQuestion(): QuestionOpts | undefined {
     if (this.moveToSubmit || this.dropToSubmit) {
-      //this.voiceMove?.voiceConfirm('confirmMove', this.submitMove);
+      this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       return {
         prompt: this.noarg('confirmMove'),
         yes: () => this.submitMove(true),
         no: () => this.submitMove(false),
         noKey: 'cancel',
       };
-    }
-    if (this.data.player.proposingTakeback)
+    } else if (this.data.player.proposingTakeback) {
+      this.voiceMove?.listenForResponse('cancelTakeback', this.cancelTakebackPreventDraws.bind(this));
       return {
         prompt: this.noarg('takebackPropositionSent'),
-        no: withRedraw(() => this.socket.sendLoading('takeback-no')),
+        no: this.cancelTakebackPreventDraws.bind(this),
         noKey: 'cancel',
       };
-    if (this.data.player.offeringDraw)
+    } else if (this.data.player.offeringDraw) {
+      this.voiceMove?.listenForResponse('cancelDraw', v => !v && this.socket.sendLoading('draw-no'));
       return {
         prompt: this.noarg('drawOfferSent'),
-        no: withRedraw(() => this.socket.sendLoading('draw-no')),
+        no: () => this.socket.sendLoading('draw-no'),
         noKey: 'cancel',
       };
-    if (this.data.opponent.proposingTakeback)
+    } else if (this.data.opponent.proposingTakeback)
       return {
         prompt: this.noarg('yourOpponentProposesATakeback'),
-        yes: withRedraw(() => this.socket.send('takeback-yes')),
+        yes: () => this.socket.send('takeback-yes'),
         yesIcon: licon.Back,
-        no: withRedraw(() => this.socket.send('takeback-no')),
+        no: () => this.socket.send('takeback-no'),
       };
-    if (this.data.opponent.offeringDraw)
+    else if (this.data.opponent.offeringDraw)
       return {
         prompt: this.noarg('yourOpponentOffersADraw'),
-        yes: withRedraw(() => this.socket.send('draw-yes')),
+        yes: () => this.socket.send('draw-yes'),
         yesIcon: licon.OneHalf,
-        no: withRedraw(() => this.socket.send('draw-no')),
+        no: () => this.socket.send('draw-no'),
       };
-    return this.voiceMove?.getPrompt();
+    else return this.voiceMove?.getQuestion();
   }
 
   opponentRequest(req: string, i18nKey: string) {
-    this.voiceMove?.listenForResponse(req, (v: boolean) => this.socket.sendLoading(`${req}-${v ? 'yes' : 'no'}`));
+    this.voiceMove?.listenForResponse(req, (v: boolean) =>
+      this.socket.sendLoading(`${req}-${v ? 'yes' : 'no'}`)
+    );
     notify(this.noarg(i18nKey));
   }
 
@@ -801,7 +800,20 @@ export default class RoundController {
     return true;
   }
 
-  canOfferDraw = (): boolean => game.drawable(this.data) && (this.lastDrawOfferAtPly || -99) < this.ply - 20;
+  canOfferDraw = (): boolean => {
+    return (
+      !this.preventDrawOffer && game.drawable(this.data) && (this.lastDrawOfferAtPly || -99) < this.ply - 20
+    );
+  };
+
+  cancelTakebackPreventDraws() {
+    this.socket.sendLoading('takeback-no');
+    clearTimeout(this.preventDrawOffer);
+    this.preventDrawOffer = setTimeout(() => {
+      this.preventDrawOffer = undefined;
+      this.redraw();
+    }, 4000);
+  }
 
   offerDraw = (v: boolean, immediately?: boolean): void => {
     if (this.canOfferDraw()) {
