@@ -55,10 +55,8 @@ final class Analyse(
               case ((((((analysis, analysisInProgress), simul), chat), crosstable), bookmarked), pgn) =>
                 env.api.roundApi.review(
                   pov,
-                  lila.api.Mobile.Api.currentVersion,
-                  tv = userTv.map { u =>
-                    lila.round.OnTv.User(u.id)
-                  },
+                  tv = userTv.map: u =>
+                    lila.round.OnTv.User(u.id),
                   analysis,
                   initialFen = initialFen,
                   withFlags = WithFlags(
@@ -67,6 +65,7 @@ final class Analyse(
                     division = true,
                     opening = true,
                     rating = ctx.pref.showRatings,
+                    lichobileCompat = HTTPRequest.isLichobile(ctx.req),
                     puzzles = true
                   )
                 ) flatMap { data =>

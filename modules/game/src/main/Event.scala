@@ -66,9 +66,8 @@ object Event:
         .add("wDraw" -> state.whiteOffersDraw)
         .add("bDraw" -> state.blackOffersDraw)
         .add("crazyhouse" -> crazyData)
-        .add("drops" -> possibleDrops.map { squares =>
-          JsString(squares.map(_.key).mkString)
-        })
+        .add("drops" -> possibleDrops.map: squares =>
+          JsString(squares.map(_.key).mkString))
 
   case class Move(
       orig: Square,
@@ -174,30 +173,23 @@ object Event:
       )
 
   object PossibleMoves:
-
-    def json(moves: Map[Square, List[Square]], apiVersion: ApiVersion) =
-      if (apiVersion.value >= 4) newJson(moves)
-      else oldJson(moves)
-
-    def newJson(moves: Map[Square, List[Square]]) =
-      if (moves.isEmpty) JsNull
+    def json(moves: Map[Square, List[Square]]): JsValue =
+      if moves.isEmpty then JsNull
       else
         val sb    = new java.lang.StringBuilder(128)
         var first = true
-        moves foreach { case (orig, dests) =>
-          if (first) first = false
+        moves.foreach: (orig, dests) =>
+          if first then first = false
           else sb append " "
           sb append orig.key
           dests foreach { sb append _.key }
-        }
         JsString(sb.toString)
 
-    def oldJson(moves: Map[Square, List[Square]]) =
-      if (moves.isEmpty) JsNull
+    def oldJson(moves: Map[Square, List[Square]]): JsValue =
+      if moves.isEmpty then JsNull
       else
-        moves.foldLeft(JsObject(Nil)) { case (res, (o, d)) =>
-          res + (o.key -> JsString(d.map(_.key) mkString))
-        }
+        moves.foldLeft(JsObject(Nil)):
+          case (res, (o, d)) => res + (o.key -> JsString(d.map(_.key) mkString))
 
   case class Enpassant(pos: Square, color: Color) extends Event:
     def typ = "enpassant"
