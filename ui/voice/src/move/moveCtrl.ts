@@ -32,16 +32,10 @@ export function load(ctrl: RootCtrl, initialFen: string): VoiceMove {
     initGrammar: () => move?.initGrammar(),
     update: (fen, canMove) => move?.update(fen, canMove),
     listenForResponse: (key, action) => move?.listenForResponse(key, action),
-    getQuestion: () => move?.getQuestion(),
-    get promotionHook() {
-      return move?.promotionHook;
-    },
-    get allPhrases() {
-      return move?.allPhrases;
-    },
-    get prefNodes() {
-      return move?.prefNodes;
-    },
+    question: () => move?.question(),
+    promotionHook: () => move?.promotionHook(),
+    allPhrases: () => move?.allPhrases(),
+    prefNodes: () => move?.prefNodes(),
   };
 }
 
@@ -71,6 +65,8 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
   const timerPref = prop.storedIntPropWithEffect('voice.timer', 3, _ => initTimerRec());
 
   const commands: { [_: string]: () => boolean } = {
+    // return true if command was handled (clearing any pending confirmations)
+    // "as" just assigns return values to void functions, hopefully making things easier to read
     no: as(true, () => (ui.showHelp() ? ui.showHelp(false) : clearMoveProgress())),
     help: as(false, () => ui.showHelp(true)),
     list: as(false, () => ui.showHelp('list')),
@@ -100,7 +96,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     update,
     promotionHook,
     listenForResponse,
-    getQuestion,
+    question,
   };
 
   function prefNodes() {
@@ -370,8 +366,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     request = { key, action };
   }
 
-  function getQuestion(): QuestionOpts | undefined {
-    if (!command) return undefined;
+  function question(): QuestionOpts | false {
     const mkOpts = (prompt: string, yesIcon: string) => ({
       prompt: prompt,
       yes: () => command?.action?.(true),
@@ -380,13 +375,13 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
       noKey: 'no',
       yesIcon,
     });
-    return command.key === 'resign'
+    return command?.key === 'resign'
       ? mkOpts('Confirm resignation', licon.FlagOutline)
-      : command.key === 'draw'
+      : command?.key === 'draw'
       ? mkOpts('Confirm draw offer', licon.OneHalf)
-      : command.key === 'takeback'
+      : command?.key === 'takeback'
       ? mkOpts('Confirm takeback request', licon.Back)
-      : undefined;
+      : false;
   }
 
   function submit(uci: Uci) {

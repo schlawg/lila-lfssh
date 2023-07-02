@@ -104,13 +104,13 @@ interface UserCompleteOpts {
 }
 
 interface QuestionOpts {
-  yes?: () => void;
-  no?: () => void;
   prompt: string; // TODO i18nkey, or just always pretranslate
-  yesKey?: I18nKey; // 'yes'
-  noKey?: I18nKey; // 'no'
-  yesIcon?: string; // licon.Checkmark
-  noIcon?: string; // licon.X
+  yes?: () => void;
+  yesIcon?: string;
+  yesKey?: I18nKey;
+  no?: () => void;
+  noIcon?: string;
+  noKey?: I18nKey;
 }
 
 interface SoundI {
@@ -226,7 +226,7 @@ declare namespace Voice {
         recId?: string; // = 'default' if not provided
         partial?: boolean; // = false
         listener?: Listener; // = undefined
-        listenerId?: string; // = recId (specify if multiple listeners on same recId)
+        listenerId?: string; // = recId (specify for multiple listeners on same recId)
       }
     ): void;
     setRecognizer(recId: string): void;

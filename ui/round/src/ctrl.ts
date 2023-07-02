@@ -640,7 +640,7 @@ export default class RoundController {
     }
   };
 
-  askQuestion(): QuestionOpts | undefined {
+  question(): QuestionOpts | false {
     if (this.moveToSubmit || this.dropToSubmit) {
       this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       return {
@@ -677,7 +677,8 @@ export default class RoundController {
         yesIcon: licon.OneHalf,
         no: () => this.socket.send('draw-no'),
       };
-    else return this.voiceMove?.getQuestion();
+    else if (this.voiceMove) return this.voiceMove.question();
+    else return false;
   }
 
   opponentRequest(req: string, i18nKey: string) {

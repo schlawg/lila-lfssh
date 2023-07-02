@@ -206,7 +206,7 @@ export function threefoldSuggestion(ctrl: RoundController) {
 }
 
 export function askQuestion(ctrl: RoundController) {
-  const o = ctrl.askQuestion();
+  const o = ctrl.question();
   if (!o) return null;
 
   const btn = (tpe: 'yes' | 'no', icon: string, i18nKey: I18nKey, action: () => void) =>
