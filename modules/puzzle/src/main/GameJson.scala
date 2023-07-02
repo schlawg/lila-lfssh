@@ -1,7 +1,8 @@
 package lila.puzzle
 
-import chess.format.{ Fen, UciCharPair }
+import cats.syntax.all.*
 import chess.Ply
+import chess.format.{ Fen, UciCharPair }
 import play.api.libs.json.*
 
 import lila.game.{ Game, GameRepo, PerfPicker }
@@ -69,7 +70,7 @@ final private class GameJson(
       "name" -> perfType.trans(using defaultLang)
     )
 
-  private def playersJson(game: Game) = JsArray(game.players.map { p =>
+  private def playersJson(game: Game) = JsArray(game.players.mapList { p =>
     val user = p.userId.fold(lila.common.LightUser.ghost)(lightUserApi.syncFallback)
     Json
       .obj(
