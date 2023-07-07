@@ -103,20 +103,22 @@ interface UserCompleteOpts {
   swiss?: string;
 }
 
+interface QuestionChoice {
+  action: () => void;
+  icon?: string;
+  key?: I18nKey;
+}
+
 interface QuestionOpts {
   prompt: string; // TODO i18nkey, or just always pretranslate
-  yes?: () => void;
-  yesIcon?: string;
-  yesKey?: I18nKey;
-  no?: () => void;
-  noIcon?: string;
-  noKey?: I18nKey;
+  yes?: QuestionChoice;
+  no?: QuestionChoice;
 }
 
 interface SoundI {
   loadOggOrMp3(name: string, path: string, noSoundSet?: boolean): void;
   loadStandard(name: string, soundSet?: string): void;
-  play(name: string, volume?: number): void;
+  play(name: string, volume?: number): Promise<void>;
   playOnce(name: string): void;
   getVolume(): number;
   setVolume(v: number): void;

@@ -72,7 +72,7 @@ object post:
                 ).some
               else
                 frag(
-                  if (canModCateg || topic.isUblogAuthor(me))
+                  if canModCateg || topic.isUblogAuthor(me) then
                     a(
                       cls      := "mod delete button button-empty",
                       href     := routes.ForumPost.delete(categ.slug, post.id),
@@ -104,9 +104,9 @@ object post:
           ),
           a(cls := "anchor", href := url)(s"#${post.number}")
         ),
-        p(cls := "forum-post__message expand-text")(
-          if post.erased then p("<Comment deleted by user>") else views.html.ask.renderMany(body, asks)
-        ),
+        p(cls := "forum-post__message expand-text"):
+          if post.erased then "<Comment deleted by user>" else views.html.ask.renderMany(body, asks)
+        ,
         !post.erased option reactions(post, canReact),
         ctx.me.soUse(post.shouldShowEditForm) option
           postForm(cls := "edit-post-form", action := routes.ForumPost.edit(post.id))(
@@ -145,7 +145,7 @@ object post:
           title := {
             if size > 0 then
               val who =
-                if (size > 10) s"${users take 8 mkString ", "} and ${size - 8} others"
+                if size > 10 then s"${users take 8 mkString ", "} and ${size - 8} others"
                 else users mkString ", "
               s"$who reacted with $r"
             else r.key

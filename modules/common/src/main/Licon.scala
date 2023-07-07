@@ -136,3 +136,4 @@ object licon:
   val Mask: Icon            = "" // e074
   val Move: Icon            = "" // e075
   val OneHalf: Icon         = "" // e076
+  val Mute: Icon            = "" // e077

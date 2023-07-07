@@ -22,7 +22,5 @@ final class ForumTextExpand(askApi: lila.ask.AskApi)(using Executor, Scheduler):
   def manyPosts(posts: Seq[ForumPost])(using config.NetDomain): Fu[Seq[ForumPost.WithFrag]] =
     many(posts.map(_.text)).flatMap: p =>
       (p zip posts).map { case (body, post) =>
-        askApi.asksIn(post.text) map { asks =>
-          ForumPost.WithFrag(post, body, asks)
-        }
+        askApi.asksIn(post.text).map(ForumPost.WithFrag(post, body, _))
       }.parallel

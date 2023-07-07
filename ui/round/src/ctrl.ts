@@ -89,7 +89,6 @@ export default class RoundController {
   justCaptured?: cg.Piece;
   shouldSendMoveTime = false;
   preDrop?: cg.Role;
-  lastDrawOfferAtPly?: Ply;
   sign: string = Math.random().toString(36);
   keyboardHelp: boolean = location.hash === '#keyboard';
   private music?: any;
@@ -640,46 +639,41 @@ export default class RoundController {
     }
   };
 
-  question(): QuestionOpts | false {
+  question = (): QuestionOpts | false => {
     if (this.moveToSubmit || this.dropToSubmit) {
       this.voiceMove?.listenForResponse('submitMove', this.submitMove);
       return {
         prompt: this.noarg('confirmMove'),
-        yes: () => this.submitMove(true),
-        no: () => this.submitMove(false),
-        noKey: 'cancel',
+        yes: { action: () => this.submitMove(true) },
+        no: { action: () => this.submitMove(false), key: 'cancel' },
       };
     } else if (this.data.player.proposingTakeback) {
-      this.voiceMove?.listenForResponse('cancelTakeback', this.cancelTakebackPreventDraws.bind(this));
+      this.voiceMove?.listenForResponse('cancelTakeback', this.cancelTakebackPreventDraws);
       return {
         prompt: this.noarg('takebackPropositionSent'),
-        no: this.cancelTakebackPreventDraws.bind(this),
-        noKey: 'cancel',
+        no: { action: this.cancelTakebackPreventDraws, key: 'cancel' },
       };
     } else if (this.data.player.offeringDraw) {
       this.voiceMove?.listenForResponse('cancelDraw', v => !v && this.socket.sendLoading('draw-no'));
       return {
         prompt: this.noarg('drawOfferSent'),
-        no: () => this.socket.sendLoading('draw-no'),
-        noKey: 'cancel',
+        no: { action: () => this.socket.sendLoading('draw-no'), key: 'cancel' },
       };
     } else if (this.data.opponent.proposingTakeback)
       return {
         prompt: this.noarg('yourOpponentProposesATakeback'),
-        yes: () => this.socket.send('takeback-yes'),
-        yesIcon: licon.Back,
-        no: () => this.socket.send('takeback-no'),
+        yes: { action: () => this.socket.send('takeback-yes'), icon: licon.Back },
+        no: { action: () => this.socket.send('takeback-no') },
       };
     else if (this.data.opponent.offeringDraw)
       return {
         prompt: this.noarg('yourOpponentOffersADraw'),
-        yes: () => this.socket.send('draw-yes'),
-        yesIcon: licon.OneHalf,
-        no: () => this.socket.send('draw-no'),
+        yes: { action: () => this.socket.send('draw-yes'), icon: licon.OneHalf },
+        no: { action: () => this.socket.send('draw-no') },
       };
     else if (this.voiceMove) return this.voiceMove.question();
     else return false;
-  }
+  };
 
   opponentRequest(req: string, i18nKey: string) {
     this.voiceMove?.listenForResponse(req, (v: boolean) =>
@@ -782,7 +776,13 @@ export default class RoundController {
 
   opponentGone = (): number | boolean => {
     const d = this.data;
-    return d.opponent.gone !== false && !game.isPlayerTurn(d) && game.resignable(d) && d.opponent.gone;
+    return (
+      !!d.clock &&
+      d.opponent.isGone !== false &&
+      !game.isPlayerTurn(d) &&
+      game.resignable(d) &&
+      d.opponent.isGone
+    );
   };
 
   rematch(accept?: boolean): boolean {
@@ -801,20 +801,19 @@ export default class RoundController {
     return true;
   }
 
-  canOfferDraw = (): boolean => {
-    return (
-      !this.preventDrawOffer && game.drawable(this.data) && (this.lastDrawOfferAtPly || -99) < this.ply - 20
-    );
-  };
+  canOfferDraw = (): boolean =>
+    !this.preventDrawOffer &&
+    game.drawable(this.data) &&
+    (this.data.player.lastDrawOfferAtPly || -99) < this.ply - 20;
 
-  cancelTakebackPreventDraws() {
+  cancelTakebackPreventDraws = () => {
     this.socket.sendLoading('takeback-no');
     clearTimeout(this.preventDrawOffer);
     this.preventDrawOffer = setTimeout(() => {
       this.preventDrawOffer = undefined;
       this.redraw();
     }, 4000);
-  }
+  };
 
   offerDraw = (v: boolean, immediately?: boolean): void => {
     if (this.canOfferDraw()) {
@@ -834,7 +833,7 @@ export default class RoundController {
   };
 
   private doOfferDraw = () => {
-    this.lastDrawOfferAtPly = this.ply;
+    this.data.player.lastDrawOfferAtPly = this.ply;
     this.socket.sendLoading('draw-yes', null);
   };
 
