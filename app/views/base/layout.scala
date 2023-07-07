@@ -178,8 +178,7 @@ object layout:
       chessground option chessgroundTag,
       ctx.needsFp option fingerprintTag,
       ctx.nonce map inlineJs.apply,
-      if netConfig.minifiedAssets then jsModule("lichess")
-      else frag(depsTag, jsModule("site")),
+      frag(cashTag, jsModule("lichess")),
       moreJs,
       ctx.data.inquiry.isDefined option jsModule("mod.inquiry"),
       ctx.pref.bg == lila.pref.Pref.Bg.SYSTEM option embedJsUnsafe(systemThemePolyfillJs)

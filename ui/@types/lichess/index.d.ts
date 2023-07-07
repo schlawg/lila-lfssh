@@ -118,7 +118,7 @@ interface QuestionOpts {
 interface SoundI {
   loadOggOrMp3(name: string, path: string, noSoundSet?: boolean): void;
   loadStandard(name: string, soundSet?: string): void;
-  play(name: string, volume?: number): void;
+  play(name: string, volume?: number): Promise<void>;
   playOnce(name: string): void;
   getVolume(): number;
   setVolume(v: number): void;
