@@ -96,7 +96,7 @@ final class Env(
       onStart(gameId)
     },
     "selfReport" -> { case RoundSocket.Protocol.In.SelfReport(fullId, ip, userId, name) =>
-      selfReport(userId, ip, fullId, name).unit
+      selfReport(userId, ip, fullId, name)
     },
     "adjustCheater" -> { case lila.hub.actorApi.mod.MarkCheater(userId, true) =>
       resignAllGamesOf(userId)
@@ -109,7 +109,7 @@ final class Env(
   lazy val onStart: OnStart = OnStart: gameId =>
     proxyRepo game gameId foreach {
       _.foreach: game =>
-        lightUserApi.preloadMany(game.userIds) >>- {
+        lightUserApi.preloadMany(game.userIds) andDo {
           val sg = lila.game.actorApi.StartGame(game)
           Bus.publish(sg, "startGame")
           game.userIds.foreach: userId =>

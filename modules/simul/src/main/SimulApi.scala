@@ -2,6 +2,7 @@ package lila.simul
 
 import akka.actor.*
 import chess.variant.Variant
+import chess.ByColor
 import play.api.libs.json.Json
 
 import lila.common.{ Bus, Debouncer }
@@ -79,7 +80,7 @@ final class SimulApi(
       featurable = some(~setup.featured && me.canBeFeatured),
       conditions = setup.conditions
     )
-    repo.update(simul) >>- publish() inject simul
+    repo.update(simul) andDo publish() inject simul
 
   def getVerdicts(simul: Simul)(using
       me: Option[Me]
@@ -105,7 +106,7 @@ final class SimulApi(
                     _.accepted.so:
                       val player   = SimulPlayer.make(user, variant)
                       val newSimul = simul addApplicant SimulApplicant(player, accepted = false)
-                      repo.update(newSimul) >>- {
+                      repo.update(newSimul) andDo {
                         timeline ! Propagate(SimulJoin(me.userId, simul.id, simul.fullName))
                           .toFollowersOf(user.id)
                         socket.reload(newSimul.id)
@@ -133,7 +134,7 @@ final class SimulApi(
             }
           } flatMap { s =>
             Bus.publish(Simul.OnStart(s), "startSimul")
-            update(s) >>- currentHostIdsCache.invalidateUnit()
+            update(s) andDo currentHostIdsCache.invalidateUnit()
           }
       }
 
@@ -145,13 +146,13 @@ final class SimulApi(
   def abort(simulId: SimulId): Funit =
     workQueue(simulId):
       repo.findCreated(simulId) flatMapz { simul =>
-        (repo remove simul) >>- socket.aborted(simul.id) >>- publish()
+        (repo remove simul) andDo socket.aborted(simul.id) andDo publish()
       }
 
   def setText(simulId: SimulId, text: String): Funit =
     workQueue(simulId):
       repo.find(simulId) flatMapz { simul =>
-        repo.setText(simul, text) >>- socket.reload(simulId)
+        repo.setText(simul, text) andDo socket.reload(simulId)
       }
 
   def finishGame(game: Game): Funit =
@@ -162,9 +163,8 @@ final class SimulApi(
             game.id,
             _.finish(game.status, game.winnerUserId)
           )
-          update(simul2) >>- {
+          update(simul2).andDo:
             if simul2.isFinished then onComplete(simul2)
-          }
         }
 
   private def onComplete(simul: Simul): Unit =
@@ -229,8 +229,8 @@ final class SimulApi(
   ): Fu[(Game, chess.Color)] = for
     user <- userApi withPerfs pairing.player.user orFail s"No user with id ${pairing.player.user}"
     hostColor = simul.hostColor | chess.Color.fromWhite(number % 2 == 0)
-    whiteUser = hostColor.fold(host, user)
-    blackUser = hostColor.fold(user, host)
+    us        = ByColor(host, user)
+    users     = hostColor.fold(us, us.swap)
     clock     = simul.clock.chessClockOf(hostColor)
     perfType  = PerfType(pairing.player.variant, chess.Speed(clock.config))
     game1 = Game.make(
@@ -244,8 +244,7 @@ final class SimulApi(
           fen = simul.position
         )
         .copy(clock = clock.start.some),
-      whitePlayer = lila.game.Player.make(chess.White, whiteUser.only(perfType).some),
-      blackPlayer = lila.game.Player.make(chess.Black, blackUser.only(perfType).some),
+      players = users.mapWithColor((c, u) => lila.game.Player.make(c, u.only(perfType).some)),
       mode = chess.Mode.Casual,
       source = lila.game.Source.Simul,
       pgnImport = None
@@ -261,7 +260,7 @@ final class SimulApi(
     game2 -> hostColor
 
   private def update(simul: Simul): Funit =
-    repo.update(simul) >>- socket.reload(simul.id) >>- publish()
+    repo.update(simul) andDo socket.reload(simul.id) andDo publish()
 
   private def WithSimul(
       finding: SimulId => Fu[Option[Simul]],
@@ -274,4 +273,4 @@ final class SimulApi(
   private object publish:
     private val siteMessage = SendToFlag("simul", Json.obj("t" -> "reload"))
     private val debouncer   = Debouncer[Unit](5 seconds, 1)(_ => Bus.publish(siteMessage, "sendToFlag"))
-    def apply()             = debouncer.push(()).unit
+    def apply()             = debouncer.push(())

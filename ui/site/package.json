@@ -23,7 +23,7 @@
     "flatpickr": "^4.6.13",
     "highcharts": "=4.2.5",
     "hopscotch": "^0.3.1",
-    "lichess-pgn-viewer": "^1.6.0",
+    "lichess-pgn-viewer": "^1.6.1",
     "prop-types": "^15.8.1",
     "stockfish-mv.wasm": "^0.6.1",
     "stockfish-nnue.wasm": "1.0.0-1946a675.smolnet",
@@ -39,7 +39,7 @@
   },
   "lichess": {
     "modules": {
-      "iife": {},
+      "iife": { },
       "esm": {
         "src/site.ts": "lichess",
         "src/tvEmbed.ts": "tvEmbed",
@@ -73,7 +73,8 @@
         "src/ublog.ts": "ublog",
         "src/ublogForm.ts": "ublogForm",
         "src/streamer.ts": "streamer",
-        "src/ask.ts": "ask"
+        "src/ask.ts": "ask",
+        "src/soundMove.ts": "soundMove"
       }
     },
     "copy": [

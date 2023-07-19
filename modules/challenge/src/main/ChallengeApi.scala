@@ -49,14 +49,14 @@ final class ChallengeApi(
       rules = config.rules,
       expiresAt = config.expiresAt
     )
-    doCreate(c) >>- me.foreach(me => openCreatedBy.put(c.id, me)) inject c
+    doCreate(c) andDo me.foreach(me => openCreatedBy.put(c.id, me)) inject c
 
   private val openCreatedBy =
     cacheApi.notLoadingSync[Id, UserId](512, "challenge.open.by"):
       _.expireAfterWrite(1 hour).build()
 
   private def doCreate(c: Challenge) =
-    repo.insertIfMissing(c) >>- {
+    repo.insertIfMissing(c) andDo {
       uncacheAndNotify(c)
       Bus.publish(Event.Create(c), "challenge")
     }
@@ -88,12 +88,12 @@ final class ChallengeApi(
   }
 
   def cancel(c: Challenge) =
-    repo.cancel(c) >>- {
+    repo.cancel(c) andDo {
       uncacheAndNotify(c)
       Bus.publish(Event.Cancel(c.cancel), "challenge")
     }
 
-  private def offline(c: Challenge) = repo.offline(c) >>- uncacheAndNotify(c)
+  private def offline(c: Challenge) = repo.offline(c) andDo uncacheAndNotify(c)
 
   private[challenge] def ping(id: Id): Funit =
     repo statusById id flatMap {
@@ -103,7 +103,7 @@ final class ChallengeApi(
     }
 
   def decline(c: Challenge, reason: Challenge.DeclineReason) =
-    repo.decline(c, reason) >>- {
+    repo.decline(c, reason) andDo {
       uncacheAndNotify(c)
       Bus.publish(Event.Decline(c declineWith reason), "challenge")
     }
@@ -117,7 +117,7 @@ final class ChallengeApi(
       requestedColor: Option[chess.Color] = None
   )(using me: Option[Me]): Fu[Validated[String, Option[Pov]]] =
     acceptQueue:
-      def withPerfs = me.map(_.value).soFu(perfsRepo.withPerfs)
+      def withPerf = me.map(_.value).soFu(perfsRepo.withPerf(_, c.perfType))
       if c.canceled
       then fuccess(Invalid("The challenge has been canceled."))
       else if c.declined
@@ -135,17 +135,17 @@ final class ChallengeApi(
         val color = openFixedColor orElse requestedColor
         if c.challengerIsOpen
         then
-          withPerfs.flatMap: me =>
+          withPerf.flatMap: me =>
             repo.setChallenger(c.setChallenger(me, sid), color) inject Valid(none)
         else if color.map(Challenge.ColorChoice.apply).has(c.colorChoice)
         then fuccess(Invalid("This color has already been chosen"))
         else
           for
-            me   <- withPerfs
+            me   <- withPerf
             join <- joiner(c, me)
             result <- join match
               case Valid(pov) =>
-                repo.accept(c) >>- {
+                repo.accept(c) andDo {
                   uncacheAndNotify(c)
                   Bus.publish(Event.Accept(c, me.map(_.id)), "challenge")
                 } inject Valid(pov.some)
@@ -160,7 +160,7 @@ final class ChallengeApi(
     }
 
   def setDestUser(c: Challenge, u: User): Funit = for
-    user <- perfsRepo.withPerfs(u)
+    user <- perfsRepo.withPerf(u, c.perfType)
     challenge = c setDestUser user
     _ <- repo.update(challenge)
   yield
@@ -186,7 +186,7 @@ final class ChallengeApi(
       repo.expired(50).flatMap(_.traverse_(remove))
 
   private def remove(c: Challenge) =
-    repo.remove(c.id) >>- uncacheAndNotify(c)
+    repo.remove(c.id) andDo uncacheAndNotify(c)
 
   private def uncacheAndNotify(c: Challenge): Unit =
     c.destUserId so countInFor.invalidate

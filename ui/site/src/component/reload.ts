@@ -5,7 +5,13 @@ interface Opts {
   cookie: Cookie;
 }
 
-export const redirect = (opts: string | Opts) => {
+export const redirect = async (opts: string | Opts, notify?: 'countdown' | 'beep') => {
+  try {
+    if (notify === 'countdown') await lichess.sound.countdown(3);
+    else if (notify === 'beep') await lichess.sound.play('genericNotify');
+  } catch (e) {
+    console.warn(e);
+  }
   let url: string;
   if (typeof opts == 'string') url = opts;
   else {

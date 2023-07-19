@@ -8,7 +8,7 @@ import views.html
 import lila.app.{ given, * }
 import lila.challenge.{ Challenge as ChallengeModel }
 import lila.challenge.Challenge.{ Id as ChallengeId }
-import lila.common.{ Bearer, IpAddress, Template }
+import lila.common.{ Bearer, IpAddress, Template, Preload }
 import lila.game.{ AnonCookie, Pov }
 import lila.oauth.{ OAuthScope, EndpointScopes }
 import lila.setup.ApiConfig
@@ -92,7 +92,7 @@ final class Challenge(
           case Validated.Valid(Some(pov)) =>
             negotiateApi(
               html = Redirect(routes.Round.watcher(pov.gameId, cc.fold("white")(_.name))),
-              api = _ => env.api.roundApi.player(pov, none) map { Ok(_) }
+              api = _ => env.api.roundApi.player(pov, Preload.none, none) map { Ok(_) }
             ) flatMap withChallengeAnonCookie(ctx.isAnon, c, owner = false)
           case invalid =>
             negotiate(
@@ -196,7 +196,7 @@ final class Challenge(
                   case Some(bearer) =>
                     val required = OAuthScope.select(_.Challenge.Write) into EndpointScopes
                     env.oAuth.server.auth(bearer, required, ctx.req.some) map {
-                      case Right(OAuthScope.Scoped(op, _)) if pov.opponent.isUser(op) =>
+                      case Right(access) if pov.opponent.isUser(access.user) =>
                         lila.common.Bus.publish(Tell(id.value, AbortForce), "roundSocket")
                         jsonOkResult
                       case Right(_)  => BadRequest(jsonError("Not the opponent token"))
@@ -317,7 +317,7 @@ final class Challenge(
     import lila.challenge.Challenge.*
     val timeControl = TimeControl.make(config.clock, config.days)
     env.user.perfsRepo
-      .withPerfs(orig -> dest, _.sec)
+      .withPerf(orig -> dest, config.perfType, _.sec)
       .map: (orig, dest) =>
         lila.challenge.Challenge.make(
           variant = config.variant,
@@ -325,7 +325,7 @@ final class Challenge(
           timeControl = timeControl,
           mode = config.mode,
           color = config.color.name,
-          challenger = ChallengeModel.toRegistered(config.variant, timeControl)(orig),
+          challenger = ChallengeModel.toRegistered(orig),
           destUser = dest.some,
           rematchOf = none,
           rules = config.rules
@@ -353,7 +353,7 @@ final class Challenge(
   def offerRematchForGame(gameId: GameId) = Auth { _ ?=> me ?=>
     NoBot:
       Found(env.game.gameRepo game gameId): g =>
-        Pov.opponentOf(g, me).flatMap(_.userId) so env.user.repo.byId orNotFound { opponent =>
+        g.opponentOf(me).flatMap(_.userId) so env.user.repo.byId orNotFound { opponent =>
           env.challenge.granter.isDenied(opponent, g.perfType) flatMap {
             case Some(d) => BadRequest(jsonError(lila.challenge.ChallengeDenied translated d))
             case _ =>

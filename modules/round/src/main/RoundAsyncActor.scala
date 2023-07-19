@@ -52,7 +52,9 @@ final private[round] class RoundAsyncActor(
     def isOnline = offlineSince.isEmpty || botConnected
 
     def setOnline(on: Boolean): Unit =
-      isLongGone.foreach(_ so notifyGone(color, gone = !on))
+      isLongGone.flatMapz:
+        proxy.withGame: g =>
+          g.forceResignableNow so notifyGone(color, gone = !on)
       offlineSince = if on then None else offlineSince orElse nowMillis.some
       bye = bye && !on
     def setBye(): Unit =
@@ -232,7 +234,7 @@ final private[round] class RoundAsyncActor(
         val berserked = pov.game.goBerserk(color)
         berserked.so { progress =>
           proxy.save(progress) >> gameRepo.goBerserk(pov) inject progress.events
-        } >>- promise.success(berserked.isDefined)
+        } andDo promise.success(berserked.isDefined)
 
     case ResignForce(playerId) =>
       handle(playerId): pov =>
@@ -367,7 +369,7 @@ final private[round] class RoundAsyncActor(
 
     case Tick =>
       proxy.withGameOptionSync { g =>
-        (g.forceResignable && g.bothPlayersHaveMoved) so fuccess:
+        g.forceResignableNow so fuccess:
           Color.all.foreach: c =>
             if !getPlayer(c).isOnline && getPlayer(!c).isOnline then
               getPlayer(c).showMillisToGone foreach {
@@ -377,7 +379,7 @@ final private[round] class RoundAsyncActor(
               }
       } | funit
 
-    case Stop => proxy.terminate() >>- socketSend(RP.Out.stop(roomId))
+    case Stop => proxy.terminate() andDo socketSend(RP.Out.stop(roomId))
 
   private def getPlayer(color: Color): Player = color.fold(whitePlayer, blackPlayer)
 
@@ -456,13 +458,13 @@ final private[round] class RoundAsyncActor(
   private def errorHandler(name: String): PartialFunction[Throwable, Unit] =
     case e: FishnetError =>
       logger.info(s"Round fishnet error $name: ${e.getMessage}")
-      lila.mon.round.error.fishnet.increment().unit
+      lila.mon.round.error.fishnet.increment()
     case e: BenignError =>
       logger.info(s"Round client error $name: ${e.getMessage}")
-      lila.mon.round.error.client.increment().unit
+      lila.mon.round.error.client.increment()
     case e: Exception =>
       logger.warn(s"$name: ${e.getMessage}")
-      lila.mon.round.error.other.increment().unit
+      lila.mon.round.error.other.increment()
 
   def roomId = gameId into RoomId
 

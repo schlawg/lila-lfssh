@@ -46,7 +46,7 @@ import {
   Position,
   NvuiPlugin,
 } from './interfaces';
-import { Toggle, toggle } from 'common';
+import { defined, Toggle, toggle } from 'common';
 import { Redraw } from 'common/snabbdom';
 
 interface GoneBerserk {
@@ -91,7 +91,6 @@ export default class RoundController {
   preDrop?: cg.Role;
   sign: string = Math.random().toString(36);
   keyboardHelp: boolean = location.hash === '#keyboard';
-  private music?: any;
 
   constructor(readonly opts: RoundOpts, readonly redraw: Redraw, readonly nvui?: NvuiPlugin) {
     round.massage(opts.data);
@@ -152,14 +151,6 @@ export default class RoundController {
       this.redraw();
     });
 
-    lichess.pubsub.on('sound_set', (set: string) => {
-      if (!this.music && set === 'music')
-        lichess.loadIife('javascripts/music/play.js').then(() => {
-          this.music = lichess.playMusic();
-        });
-      if (this.music && set !== 'music') this.music = undefined;
-    });
-
     lichess.pubsub.on('zen', () => {
       const zen = $('body').toggleClass('zen').hasClass('zen');
       window.dispatchEvent(new Event('resize'));
@@ -167,6 +158,8 @@ export default class RoundController {
     });
 
     if (!this.opts.noab && this.isPlaying()) ab.init(this);
+
+    lichess.sound.move();
   }
 
   private showExpiration = () => {
@@ -503,7 +496,7 @@ export default class RoundController {
     this.onChange();
     this.keyboardMove?.update(step, playedColor != d.player.color);
     this.voiceMove?.update(step.fen, playedColor != d.player.color);
-    if (this.music) this.music.jump(o);
+    lichess.sound.move(o);
     lichess.sound.saySan(step.san);
     return true; // prevents default socket pubsub
   };
@@ -777,11 +770,7 @@ export default class RoundController {
   opponentGone = (): number | boolean => {
     const d = this.data;
     return (
-      !!d.clock &&
-      d.opponent.isGone !== false &&
-      !game.isPlayerTurn(d) &&
-      game.resignable(d) &&
-      d.opponent.isGone
+      defined(d.opponent.isGone) && d.opponent.isGone !== false && !game.isPlayerTurn(d) && game.resignable(d)
     );
   };
 
@@ -847,10 +836,6 @@ export default class RoundController {
   stepAt = (ply: Ply) => round.plyStep(this.data, ply);
 
   private delayedInit = () => {
-    const d = this.data;
-    if (this.isPlaying() && game.nbMoves(d, d.player.color) === 0 && !this.isSimulHost()) {
-      lichess.sound.play('genericNotify');
-    }
     lichess.requestIdleCallback(() => {
       const d = this.data;
       if (this.isPlaying()) {

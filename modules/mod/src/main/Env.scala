@@ -32,10 +32,7 @@ final class Env(
     cacheApi: lila.memo.CacheApi,
     ircApi: lila.irc.IrcApi,
     msgApi: lila.msg.MsgApi
-)(using
-    ec: Executor,
-    scheduler: Scheduler
-):
+)(using Executor, Scheduler):
   private lazy val logRepo        = ModlogRepo(db(CollName("modlog")))
   private lazy val assessmentRepo = AssessmentRepo(db(CollName("player_assessment")))
   private lazy val historyRepo    = HistoryRepo(db(CollName("mod_gaming_history")))
@@ -75,12 +72,12 @@ final class Env(
 
   lila.common.Bus.subscribeFuns(
     "finishGame" -> {
-      case lila.game.actorApi.FinishGame(game, whiteUserOption, blackUserOption) if !game.aborted =>
-        def userPerf = (u: Option[User.WithPerfs]) => u.filter(_.enabled.yes).map(_.only(game.perfType))
-        (userPerf(whiteUserOption), userPerf(blackUserOption)) mapN { (whiteUser, blackUser) =>
-          sandbagWatch(game)
-          assessApi.onGameReady(game, whiteUser, blackUser)
-        }
+      case lila.game.actorApi.FinishGame(game, users) if !game.aborted =>
+        users
+          .map(_.filter(_.enabled.yes).map(_.only(game.perfType)))
+          .mapN: (whiteUser, blackUser) =>
+            sandbagWatch(game)
+            assessApi.onGameReady(game, whiteUser, blackUser)
         if game.status == chess.Status.Cheat then
           game.loserUserId.foreach: userId =>
             logApi.cheatDetectedAndCount(userId, game.id) flatMap { count =>
@@ -95,21 +92,19 @@ final class Env(
             }
     },
     "analysisReady" -> { case lila.analyse.actorApi.AnalysisReady(game, analysis) =>
-      assessApi.onAnalysisReady(game, analysis).unit
+      assessApi.onAnalysisReady(game, analysis)
     },
     "deletePublicChats" -> { case lila.hub.actorApi.security.DeletePublicChats(userId) =>
-      publicChat.deleteAll(userId).unit
+      publicChat.deleteAll(userId)
     },
     "autoWarning" -> { case lila.hub.actorApi.mod.AutoWarning(userId, subject) =>
-      logApi.modMessage(userId, subject)(using User.lichessIdAsMe).unit
+      logApi.modMessage(userId, subject)(using User.lichessIdAsMe)
     },
     "selfReportMark" -> { case lila.hub.actorApi.mod.SelfReportMark(suspectId, name) =>
-      api
-        .autoMark(SuspectId(suspectId), s"Self report: ${name}")(using User.lichessIdAsMe)
-        .unit
+      api.autoMark(SuspectId(suspectId), s"Self report: ${name}")(using User.lichessIdAsMe)
     },
     "chatTimeout" -> { case lila.hub.actorApi.mod.ChatTimeout(mod, user, reason, text) =>
-      logApi.chatTimeout(user, reason, text)(using mod.into(Me.Id)).unit
+      logApi.chatTimeout(user, reason, text)(using mod.into(Me.Id))
     },
     "loginWithWeakPassword"    -> { case u: User => logApi.loginWithWeakPassword(u.id) },
     "loginWithBlankedPassword" -> { case u: User => logApi.loginWithBlankedPassword(u.id) }

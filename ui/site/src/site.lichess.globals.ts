@@ -28,13 +28,9 @@ import * as miniBoard from 'common/mini-board';
 import * as miniGame from './component/mini-game';
 import { format as timeago, formatter as dateFormat } from './component/timeago';
 import watchers from './component/watchers';
-import Howler from './component/howler';
-import Powertip from './component/cash-powertip';
 
 export default () => {
-  Howler(); // TODO: howler.js -> howler.ts, or remove most of it and dump the remainder in sound.ts
-  Powertip(); // TODO: migrate used parts of cash-powertip.js into powertip.ts
-
+  window.un$ = <T>(cash: Cash) => cash[0] as T;
   const l = window.lichess;
   l.StrongSocket = StrongSocket;
   l.mousetrap = new Mousetrap(document);

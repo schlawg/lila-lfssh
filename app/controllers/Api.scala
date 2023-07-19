@@ -11,10 +11,12 @@ import lila.app.{ given, * }
 import lila.common.config.{ MaxPerPage, MaxPerSecond }
 import lila.common.{ HTTPRequest, IpAddress, LightUser }
 import lila.gathering.Condition.GetMyTeamIds
+import lila.security.Mobile
 
 final class Api(
     env: Env,
-    gameC: => Game
+    gameC: => Game,
+    userC: => User
 ) extends LilaController(env):
 
   import Api.*
@@ -22,22 +24,21 @@ final class Api(
 
   private lazy val apiStatusJson = Json.obj(
     "api" -> Json.obj(
-      "current" -> lila.api.Mobile.Api.currentVersion.value,
+      "current" -> Mobile.Api.currentVersion.value,
       "olds"    -> Json.arr()
     )
   )
 
   val status = Anon:
     val appVersion  = get("v")
-    val mustUpgrade = appVersion exists lila.api.Mobile.AppVersion.mustUpgrade
+    val mustUpgrade = appVersion exists Mobile.AppVersion.mustUpgrade
     JsonOk(apiStatusJson.add("mustUpgrade", mustUpgrade))
 
   def index = Anon:
     Ok(views.html.site.bits.api)
 
-  private val userRateLimit = env.security.ipTrust.rateLimit(3_000, 1.day, "user.show.api.ip")
   def user(name: UserStr) = OpenOrScoped(): ctx ?=>
-    userRateLimit(ctx.ip, rateLimited):
+    userC.userShowRateLimit(ctx.ip, rateLimited, cost = if env.socket.isOnline(name.id) then 1 else 2):
       userApi.extended(
         name,
         withFollows = userWithFollows,
@@ -76,11 +77,14 @@ final class Api(
           .add("streaming" -> streamingIds(u.id))
       if getBool("withGameIds")
       then
-        users.map { u =>
-          (env.round.playing(u.id) so env.game.cached.lastPlayedPlayingId(u.id)) map { gameId =>
-            toJson(u).add("playingId", gameId)
-          }
-        }.parallel map toApiResult
+        users
+          .traverse: u =>
+            env.round
+              .playing(u.id)
+              .so(env.game.cached.lastPlayedPlayingId(u.id))
+              .map: gameId =>
+                toJson(u).add("playingId", gameId)
+          .map(toApiResult)
       else fuccess(toApiResult(users map toJson))
     }
 
@@ -376,7 +380,7 @@ final class Api(
     js map toHttp
 
   def MobileApiRequest(js: RequestHeader ?=> Fu[ApiResult]) = Anon:
-    if lila.api.Mobile.Api.requested(req)
+    if lila.security.Mobile.Api.requested(req)
     then js map toHttp
     else NotFound
 

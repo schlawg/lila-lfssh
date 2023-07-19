@@ -20,10 +20,9 @@ import lila.socket.UserLagCache
 import lila.user.{ User as UserModel }
 import lila.security.{ Granter, UserLogins }
 import lila.mod.UserWithModlog
-import play.api.i18n.Lang
 
 final class User(
-    env: Env,
+    override val env: Env,
     roundC: => Round,
     gameC: => Game,
     modC: => Mod
@@ -54,6 +53,8 @@ final class User(
       Ok(res ++ Json.obj("filter" -> GameFilter.All.name))
     }
 
+  private[controllers] val userShowRateLimit = env.security.ipTrust.rateLimit(5_000, 1.day, "user.show.ip")
+
   def show(username: UserStr) = OpenBody:
     EnabledUser(username): u =>
       negotiate(
@@ -61,21 +62,20 @@ final class User(
         apiGames(u, GameFilter.All.name, 1)
       )
 
-  private def renderShow(u: UserModel, status: Results.Status = Results.Ok)(using
-      ctx: Context
-  ): Fu[Result] =
+  private def renderShow(u: UserModel, status: Results.Status = Results.Ok)(using Context): Fu[Result] =
     if HTTPRequest isSynchronousHttp ctx.req
     then
-      for
-        as     <- env.activity.read.recentAndPreload(u)
-        nbs    <- env.userNbGames(u, ctx, withCrosstable = false)
-        info   <- env.userInfo(u, nbs)
-        _      <- env.userInfo.preloadTeams(info)
-        social <- env.socialInfo(u)
-        page <- renderPage:
-          lila.mon.chronoSync(_.user segment "renderSync"):
-            html.user.show.page.activity(as, info, social)
-      yield status(page).withCanonical(routes.User.show(u.username))
+      userShowRateLimit(req.ipAddress, rateLimited, cost = if env.socket.isOnline(u.id) then 1 else 2):
+        for
+          as     <- env.activity.read.recentAndPreload(u)
+          nbs    <- env.userNbGames(u, withCrosstable = false)
+          info   <- env.userInfo(u, nbs)
+          _      <- env.userInfo.preloadTeams(info)
+          social <- env.socialInfo(u)
+          page <- renderPage:
+            lila.mon.chronoSync(_.user segment "renderSync"):
+              html.user.show.page.activity(as, info, social)
+        yield status(page).withCanonical(routes.User.show(u.username))
     else
       for
         withPerfs <- env.user.perfsRepo.withPerfs(u)
@@ -102,7 +102,7 @@ final class User(
         else
           negotiate(
             html = for
-              nbs <- env.userNbGames(u, ctx, withCrosstable = true)
+              nbs <- env.userNbGames(u, withCrosstable = true)
               filters = GameFilterMenu(u, nbs, filter, ctx.isAuth)
               pag <- env.gamePaginator(
                 user = u,
@@ -284,10 +284,10 @@ final class User(
     else Found(topNbUsers(nb, perfKey)) { users => topNbJson(users._1) }
 
   private def topNbUsers(nb: Int, perfKey: Perf.Key) =
-    PerfType(perfKey).so: perfType =>
+    PerfType(perfKey).soFu: perfType =>
       env.user.cached.top200Perf get perfType.id dmap {
         _.take(nb atLeast 1 atMost 200) -> perfType
-      } dmap some
+      }
 
   private def topNbJson(users: List[UserModel.LightPerf]) =
     given OWrites[UserModel.LightPerf] = OWrites(env.user.jsonView.lightPerfIsOnline)
@@ -337,7 +337,7 @@ final class User(
       ctx: Context,
       me: Me
   ): Fu[Result] =
-    env.user.repo withEmails username orFail s"No such user $username" flatMap {
+    env.user.api withEmails username orFail s"No such user $username" flatMap {
       case UserModel.WithEmails(user, emails) =>
         withPageContext:
           import html.user.{ mod as view }
@@ -428,7 +428,7 @@ final class User(
     }
 
   protected[controllers] def renderModZoneActions(username: UserStr)(using ctx: Context) =
-    env.user.repo withEmails username orFail s"No such user $username" flatMap {
+    env.user.api withEmails username orFail s"No such user $username" flatMap {
       case UserModel.WithEmails(user, emails) =>
         env.user.repo.isErased(user).flatMap { erased =>
           Ok.page:
@@ -530,8 +530,8 @@ final class User(
         ,
         JsonOk:
           getBool("graph")
-            .so:
-              env.history.ratingChartApi.singlePerf(data.user.user, data.stat.perfType) map some
+            .soFu:
+              env.history.ratingChartApi.singlePerf(data.user.user, data.stat.perfType)
             .map: graph =>
               env.perfStat.jsonView(data).add("graph", graph)
       )

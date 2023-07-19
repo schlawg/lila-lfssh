@@ -17,7 +17,7 @@ private[controllers] trait TheftPrevention:
         case (Some(_), None)                    => true
         case (Some(playerUserId), Some(userId)) => playerUserId != userId
         case (None, _) =>
-          !lila.api.Mobile.Api.requested(ctx.req) &&
+          !lila.security.Mobile.Api.requested(ctx.req) &&
           !ctx.req.cookies.get(AnonCookie.name).exists(_.value == pov.playerId.value)
     }
 
@@ -26,7 +26,7 @@ private[controllers] trait TheftPrevention:
   protected def playablePovForReq(game: GameModel)(using Context) =
     (!game.isPgnImport && game.playable).so:
       ctx.userId
-        .flatMap(game.playerByUserId)
+        .flatMap(game.player)
         .orElse:
           ctx.req.cookies
             .get(AnonCookie.name)

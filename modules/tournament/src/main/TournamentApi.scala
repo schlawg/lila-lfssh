@@ -99,9 +99,10 @@ final class TournamentApi(
     val finalized = tour.copy(
       conditions = data.conditions
         .copy(teamMember = old.conditions.teamMember), // can't change that
+      startsAt = if old.isCreated then tour.startsAt else old.startsAt,
       mode = if tour.position.isDefined then chess.Mode.Casual else tour.mode
     )
-    tournamentRepo.update(finalized) >>- cached.tourCache.clear(tour.id) inject finalized
+    tournamentRepo.update(finalized) andDo cached.tourCache.clear(tour.id) inject finalized
 
   def teamBattleUpdate(
       tour: Tournament,
@@ -147,20 +148,22 @@ final class TournamentApi(
                 case pairings =>
                   pairingRepo.insert(pairings.map(_.pairing)) >>
                     pairings
-                      .map { pairing =>
+                      .map: pairing =>
                         autoPairing(tour, pairing, ranking.ranking)
                           .mon(_.tournament.pairing.createAutoPairing)
                           .map { socket.startGame(tour.id, _) }
-                      }
                       .parallel
                       .void
-                      .mon(_.tournament.pairing.createInserts) >>- {
-                      lila.mon.tournament.pairing.batchSize.record(pairings.size).unit
-                      waitingUsers.registerPairedUsers(tour.id, pairings.view.flatMap(_.pairing.users).toSet)
-                      socket.reload(tour.id)
-                      hadPairings put tour.id
-                      featureOneOf(tour, pairings, ranking.ranking).unit // do outside of queue
-                    }
+                      .mon(_.tournament.pairing.createInserts)
+                      .andDo:
+                        lila.mon.tournament.pairing.batchSize.record(pairings.size)
+                        waitingUsers.registerPairedUsers(
+                          tour.id,
+                          pairings.view.flatMap(_.pairing.users).toSet
+                        )
+                        socket.reload(tour.id)
+                        hadPairings put tour.id
+                        featureOneOf(tour, pairings, ranking.ranking) // do outside of queue
               }
           }
           .monSuccess(_.tournament.pairing.create)
@@ -182,13 +185,12 @@ final class TournamentApi(
       }
 
   private[tournament] def start(oldTour: Tournament): Funit =
-    Parallel(oldTour.id, "start")(cached.tourCache.created) { tour =>
-      tournamentRepo.setStatus(tour.id, Status.Started) >>- {
+    Parallel(oldTour.id, "start")(cached.tourCache.created): tour =>
+      tournamentRepo.setStatus(tour.id, Status.Started) andDo {
         cached.tourCache clear tour.id
         socket reload tour.id
         publish()
       }
-    }
 
   private[tournament] def destroy(tour: Tournament): Funit = for
     _ <- tournamentRepo.remove(tour).void
@@ -356,7 +358,7 @@ final class TournamentApi(
   private def withdraw(tourId: TourId, userId: UserId, isPause: Boolean, isStalling: Boolean): Funit =
     Parallel(tourId, "withdraw")(cached.tourCache.enterable) {
       case tour if tour.isCreated =>
-        playerRepo.remove(tour.id, userId) >> updateNbPlayers(tour.id) >>- {
+        playerRepo.remove(tour.id, userId) >> updateNbPlayers(tour.id) andDo {
           socket.reload(tour.id)
           publish()
         }
@@ -406,7 +408,7 @@ final class TournamentApi(
           Parallel(tourId, "finishGame")(cached.tourCache.started): tour =>
             pairingOpt.so { pairing =>
               game.userIds.map(updatePlayerAfterGame(tour, game, pairing)).parallel.void
-            } >>- {
+            } andDo {
               duelStore.remove(game)
               socket.reload(tour.id)
               updateTournamentStanding(tour)
@@ -432,14 +434,13 @@ final class TournamentApi(
               }.toInt
             } | player.performance
           )
-        } >>- game.whitePlayer.userId.foreach { whiteUserId =>
+        } andDo game.whitePlayer.userId.foreach: whiteUserId =>
           colorHistoryApi.inc(player.id, chess.Color.fromWhite(player is whiteUserId))
-        }
       }
     }
 
   private def performanceOf(g: Game, userId: UserId): Option[IntRating] = for
-    opponent       <- g.opponentByUserId(userId)
+    opponent       <- g.opponentOf(userId)
     opponentRating <- opponent.rating
     multiplier = g.winnerUserId.so(winner => if winner == userId then 1 else -1)
   yield opponentRating + 500 * multiplier
@@ -454,21 +455,18 @@ final class TournamentApi(
 
   def pausePlaybanned(userId: UserId) =
     tournamentRepo.withdrawableIds(userId, reason = "pausePlaybanned") flatMap {
-      _.map {
-        playerRepo.withdraw(_, userId)
-      }.parallel.void
+      _.traverse_(playerRepo.withdraw(_, userId))
     }
 
   private[tournament] def kickFromTeam(teamId: TeamId, userId: UserId): Funit =
     tournamentRepo.withdrawableIds(userId, teamId = teamId.some, reason = "kickFromTeam") flatMap {
-      _.map { tourId =>
-        Parallel(tourId, "kickFromTeam")(tournamentRepo.byId) { tour =>
+      _.traverse: tourId =>
+        Parallel(tourId, "kickFromTeam")(tournamentRepo.byId): tour =>
           val fu =
             if tour.isCreated then playerRepo.remove(tour.id, userId)
             else playerRepo.withdraw(tour.id, userId)
-          fu >> updateNbPlayers(tourId) >>- socket.reload(tourId)
-        }
-      }.parallel.void
+          fu >> updateNbPlayers(tourId) andDo socket.reload(tourId)
+      .void
     }
 
   // withdraws the player and forfeits all pairings in ongoing tournaments
@@ -477,19 +475,17 @@ final class TournamentApi(
       if tour.isCreated then playerRepo.remove(tour.id, userId) >> updateNbPlayers(tour.id)
       else
         playerRepo.remove(tourId, userId) >> {
-          tour.isStarted so {
+          tour.isStarted.so:
             pairingRepo.findPlaying(tour.id, userId).map {
-              _ foreach { currentPairing =>
+              _.foreach: currentPairing =>
                 tellRound(currentPairing.gameId, AbortForce)
-              }
             } >> pairingRepo.opponentsOf(tour.id, userId).flatMap { uids =>
               pairingRepo.forfeitByTourAndUserId(tour.id, userId) >>
                 uids.toList.traverse_(recomputePlayerAndSheet(tour))
             }
-          }
         } >>
-          updateNbPlayers(tour.id) >>-
-          socket.reload(tour.id) >>- publish()
+          updateNbPlayers(tour.id) andDo
+          socket.reload(tour.id) andDo publish()
     }
 
   private def recomputePlayerAndSheet(tour: Tournament)(userId: UserId): Funit =
@@ -725,7 +721,7 @@ final class TournamentApi(
           "sendToFlag"
         )
       }
-    def apply() = debouncer.push(()).unit
+    def apply() = debouncer.push(())
 
   private object updateTournamentStanding:
 

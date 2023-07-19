@@ -3,7 +3,7 @@ package lila.setup
 import akka.stream.scaladsl.*
 import chess.variant.{ FromPosition, Variant }
 import chess.format.Fen
-import chess.{ Clock, Mode }
+import chess.{ Clock, Mode, ByColor }
 import play.api.data.*
 import play.api.data.Forms.*
 import play.api.libs.json.Json
@@ -116,7 +116,8 @@ object SetupBulk:
 
   case class BadToken(token: Bearer, error: OAuthServer.AuthError)
 
-  case class ScheduledGame(id: GameId, white: UserId, black: UserId)
+  case class ScheduledGame(id: GameId, white: UserId, black: UserId):
+    def userIds = ByColor(white, black)
 
   case class ScheduledBulk(
       _id: String,
@@ -224,15 +225,14 @@ final class SetupBulkApi(oauthServer: OAuthServer, idGenerator: IdGenerator)(usi
             val nbGames = pairs.size
             val cost    = nbGames * (if me.isVerified || me.isApiHog then 1 else 3)
             rateLimit(me.id, fuccess(Left(ScheduleError.RateLimited)), cost = cost):
-              lila.mon.api.challenge.bulk.scheduleNb(me.id.value).increment(nbGames).unit
+              lila.mon.api.challenge.bulk.scheduleNb(me.id.value).increment(nbGames)
               idGenerator
                 .games(nbGames)
                 .map:
                   _.toList zip pairs
                 .map:
-                  _.map { case (id, (w, b)) =>
-                    ScheduledGame(id, w, b)
-                  }
+                  _.map:
+                    case (id, (w, b)) => ScheduledGame(id, w, b)
                 .dmap:
                   ScheduledBulk(
                     _id = ThreadLocalRandom nextString 8,

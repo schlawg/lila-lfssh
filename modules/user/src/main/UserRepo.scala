@@ -8,26 +8,21 @@ import ornicar.scalalib.ThreadLocalRandom
 import lila.common.{ ApiVersion, EmailAddress, LightUser, NormalizedEmailAddress }
 import lila.db.dsl.{ *, given }
 
-final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
+final class UserRepo(val coll: Coll)(using Executor):
 
   import User.{ BSONFields as F, given }
   import UserMark.given
 
-  export perfsRepo.{ byId as perfs, setPerfs, perfOf }
-
   def withColl[A](f: Coll => A): A = f(coll)
-
-  def withPerfs(u: User): Fu[User.WithPerfs] = perfsRepo.withPerfs(u)
-  def withPerfs[U: UserIdOf](id: U): Fu[Option[User.WithPerfs]] = // TODO aggregation
-    byId(id).flatMap(_ soFu withPerfs)
 
   def topNbGame(nb: Int): Fu[List[User]] =
     coll.find(enabledNoBotSelect ++ notLame).sort($sort desc "count.game").cursor[User]().list(nb)
 
   def byId[U: UserIdOf](u: U): Fu[Option[User]] =
-    User.noGhost(u.id) so coll.byId[User](u).recover {
-      case _: reactivemongo.api.bson.exceptions.BSONValueNotFoundException => none // probably GDPRed user
-    }
+    User.noGhost(u.id) so coll
+      .byId[User](u)
+      .recover:
+        case _: reactivemongo.api.bson.exceptions.BSONValueNotFoundException => none // probably GDPRed user
 
   def byIds[U: UserIdOf](
       us: Iterable[U],
@@ -128,15 +123,14 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
         $doc(s"${F.count}.game" -> true).some
       )
       .cursor[Bdoc]()
-      .listAll() map { docs =>
-      docs
-        .sortBy {
-          _.child(F.count).flatMap(_.int("game"))
-        }
-        .flatMap(_.getAsOpt[UserId]("_id")) match
-        case List(u1, u2) => (u1, u2).some
-        case _            => none
-    }
+      .listAll()
+      .map: docs =>
+        docs
+          .sortBy:
+            _.child(F.count).flatMap(_.int("game"))
+          .flatMap(_.getAsOpt[UserId]("_id")) match
+          case List(u1, u2) => (u1, u2).some
+          case _            => none
 
   def firstGetsWhite(u1: UserId, u2: UserId): Fu[Boolean] =
     coll
@@ -161,7 +155,6 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
         $id(userId) ++ $doc(F.colorIt -> $not(if value < 0 then $lte(-3) else $gte(5))),
         $inc(F.colorIt -> value)
       )
-      .unit
 
   def lichess = byId(User.lichessId)
   def irwin   = byId(User.irwinId)
@@ -173,7 +166,7 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
   def setUsernameCased(id: UserId, name: UserName): Funit =
     if id is name then
       coll.update.one(
-        $id(id) ++ (F.changedCase $exists false),
+        $id(id) ++ F.changedCase.$exists(false),
         $set(F.username -> name, F.changedCase -> true)
       ) flatMap { result =>
         if result.n == 0 then fufail(s"You have already changed your username")
@@ -223,12 +216,12 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
         case 0  => "count.draw".some
         case _  => none
       ),
-      (result match {
+      (result match
         case -1 => "count.lossH".some
         case 1  => "count.winH".some
         case 0  => "count.drawH".some
         case _  => none
-      }) ifFalse ai
+      ) ifFalse ai
     ).flatten.map(k => BSONElement(k, BSONInteger(1))) ::: List(
       totalTime map (v => BSONElement(s"${F.playTime}.total", BSONInteger(v + 2))),
       tvTime map (v => BSONElement(s"${F.playTime}.tv", BSONInteger(v + 2)))
@@ -353,7 +346,7 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
       _.map { _.hashToken }
     }
 
-  def setEmail(id: UserId, email: EmailAddress): Funit = {
+  def setEmail(id: UserId, email: EmailAddress): Funit =
     val normalized = email.normalize
     coll.update
       .one(
@@ -362,10 +355,10 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
           $set(F.email -> normalized) ++ $unset(F.prevEmail, F.verbatimEmail)
         else $set(F.email -> normalized, F.verbatimEmail -> email) ++ $unset(F.prevEmail)
       )
-      .void
-  } >>- lila.common.Bus.publish(lila.hub.actorApi.user.ChangeEmail(id, email), "email")
+      .map: _ =>
+        lila.common.Bus.publish(lila.hub.actorApi.user.ChangeEmail(id, email), "email")
 
-  private def anyEmail(doc: Bdoc): Option[EmailAddress] =
+  private[user] def anyEmail(doc: Bdoc): Option[EmailAddress] =
     doc.getAsOpt[EmailAddress](F.verbatimEmail) orElse doc.getAsOpt[EmailAddress](F.email)
 
   private def anyEmailOrPrevious(doc: Bdoc): Option[EmailAddress] =
@@ -403,26 +396,6 @@ final class UserRepo(val coll: Coll, perfsRepo: UserPerfsRepo)(using Executor):
       .one[Bdoc]
       .mapz: doc =>
         anyEmail(doc) orElse doc.getAsOpt[EmailAddress](F.prevEmail)
-
-  def withEmails[U: UserIdOf](u: U)(using r: BSONHandler[User]): Fu[Option[User.WithEmails]] =
-    withEmails(List(u)).map(_.headOption)
-
-  def withEmails[U: UserIdOf](users: List[U])(using r: BSONHandler[User]): Fu[List[User.WithEmails]] = for
-    perfs <- perfsRepo.idsMap(users, _.sec)
-    users <- coll
-      .list[Bdoc]($inIds(users.map(_.id)), _.priTemp)
-      .map: docs =>
-        for
-          doc  <- docs
-          user <- r readOpt doc
-        yield User.WithEmails(
-          User.WithPerfs(user, perfs.get(user.id)),
-          User.Emails(
-            current = anyEmail(doc),
-            previous = doc.getAsOpt[NormalizedEmailAddress](F.prevEmail)
-          )
-        )
-  yield users
 
   def emailMap(ids: List[UserId]): Fu[Map[UserId, EmailAddress]] =
     coll

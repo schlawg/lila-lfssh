@@ -55,7 +55,7 @@ final class KaladinApi(
   yield KaladinUser.Dashboard(completed ::: queued)
 
   def modRequest(user: Suspect)(using me: Me) =
-    request(user, KaladinUser.Requester.Mod(me)) >>- notification.add(user.id)
+    request(user, KaladinUser.Requester.Mod(me)) andDo notification.add(user.id)
 
   private def request(sus: Suspect, requester: KaladinUser.Requester) = sus.user.noBot.so:
     sequence(sus):
@@ -93,14 +93,14 @@ final class KaladinApi(
   private def readResponse(user: KaladinUser): Funit = user.response.so: res =>
     res.pred match
       case Some(pred) =>
-        markOrReport(user, pred) >>- {
+        markOrReport(user, pred) andDo {
           notification(user)
-          lila.mon.mod.kaladin.activation.record(pred.percent).unit
+          lila.mon.mod.kaladin.activation.record(pred.percent)
         }
       case None =>
         fuccess:
           res.err.foreach: err =>
-            lila.mon.mod.kaladin.error(err).increment().unit
+            lila.mon.mod.kaladin.error(err).increment()
 
   private def markOrReport(user: KaladinUser, pred: KaladinUser.Pred): Funit =
 
@@ -116,14 +116,16 @@ final class KaladinApi(
             text = pred.note
           )
       )
-    yield lila.mon.mod.kaladin.report.increment().unit
+    yield
+      lila.mon.mod.kaladin.report.increment()
+      ()
 
     if pred.percent >= thresholds.get().mark then
       userRepo.hasTitle(user.id) flatMap {
         if _ then sendReport
         else
-          modApi.autoMark(user.suspectId, pred.note)(using User.kaladinId.into(Me.Id)) >>-
-            lila.mon.mod.kaladin.mark.increment().unit
+          modApi.autoMark(user.suspectId, pred.note)(using User.kaladinId.into(Me.Id)) andDo
+            lila.mon.mod.kaladin.mark.increment()
       }
     else if pred.percent >= thresholds.get().report then sendReport
     else funit
@@ -212,5 +214,5 @@ final class KaladinApi(
     userRepo byId suspectId orFail s"suspect $suspectId not found" dmap Suspect.apply
 
   lila.common.Bus.subscribeFun("cheatReport") { case lila.hub.actorApi.report.CheatReportCreated(userId) =>
-    getSuspect(userId) flatMap autoRequest(KaladinUser.Requester.Report) unit
+    getSuspect(userId) flatMap autoRequest(KaladinUser.Requester.Report)
   }

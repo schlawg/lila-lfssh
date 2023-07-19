@@ -4,6 +4,7 @@
 .pnpm-store
 .bloop/
 .metals/
+.pnpm-store/
 project/.bloop/
 conf/application.conf
 conf/version.conf
@@ -42,7 +43,6 @@ ui/voice/@build/crowdv
 ui/*/npm-debug.log
 ui/*/tsconfig.tsbuildinfo
 hs_*.log
-yarn-error.log
 dependency-graph.png
 
 RUNNING_PID

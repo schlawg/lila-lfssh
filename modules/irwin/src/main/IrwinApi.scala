@@ -41,7 +41,7 @@ final class IrwinApi(
       _ <- markOrReport(report)
     yield
       notification(report)
-      lila.mon.mod.irwin.ownerReport(report.owner).increment().unit
+      lila.mon.mod.irwin.ownerReport(report.owner).increment()
 
     def get(user: User): Fu[Option[IrwinReport]] =
       get(user.id)
@@ -66,8 +66,8 @@ final class IrwinApi(
     private def markOrReport(report: IrwinReport): Funit =
       userRepo.getTitle(report.suspectId.value) flatMap { title =>
         if report.activation >= thresholds.get().mark && title.isEmpty then
-          modApi.autoMark(report.suspectId, report.note)(using User.irwinId.into(Me.Id)) >>-
-            lila.mon.mod.irwin.mark.increment().unit
+          modApi.autoMark(report.suspectId, report.note)(using User.irwinId.into(Me.Id)) andDo
+            lila.mon.mod.irwin.mark.increment()
         else if report.activation >= thresholds.get().report then
           for
             suspect <- getSuspect(report.suspectId.value)
@@ -80,7 +80,7 @@ final class IrwinApi(
                 text = s"${report.activation}% over ${report.games.size} games"
               )
             )
-          yield lila.mon.mod.irwin.report.increment().unit
+          yield lila.mon.mod.irwin.report.increment()
         else funit
       }
 
