@@ -20,8 +20,8 @@ export function makeShapesFromUci(
   color: Color,
   uci: Uci,
   brush: string,
-  modifiers?: DrawModifiers
-  //label?: string
+  modifiers?: DrawModifiers,
+  label?: string
 ): DrawShape[] {
   if (uci === 'Current Position') return [];
   const move = parseUci(uci)!;
@@ -34,7 +34,7 @@ export function makeShapesFromUci(
       dest: to,
       brush,
       modifiers,
-      //label,
+      label,
     },
   ];
   if (move.promotion) shapes.push(pieceDrop(to, move.promotion, color));
@@ -87,6 +87,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     if (nEval.best) shapes = shapes.concat(makeShapesFromUci(rcolor, nEval.best, 'paleGreen'));
     if (!hovering && instance.multiPv()) {
       const nextBest = instance.enabled() && nCeval ? nCeval.pvs[0].moves[0] : ctrl.nextNodeBest();
+      if (nextBest) shapes = shapes.concat(makeShapesFromUci(color, nextBest, 'paleBlue', undefined));
       if (
         instance.enabled() &&
         nCeval &&
@@ -96,17 +97,11 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
         nCeval.pvs.forEach(function (pv) {
           if (pv.moves[0] === nextBest) return;
           const shift = winningChances.povDiff(color, nCeval.pvs[0], pv);
-          if (shift >= 0.005 && shift < 0.2) {
+          if (shift >= 0 && shift < 0.2) {
             shapes = shapes.concat(
-              makeShapesFromUci(
-                color,
-                pv.moves[0],
-                'paleGrey',
-                {
-                  lineWidth: Math.round(12 - shift * 50), // 12 to 2
-                }
-                //`+${Math.round(shift * 100)}٪`
-              )
+              makeShapesFromUci(color, pv.moves[0], 'paleGrey', {
+                lineWidth: Math.round(12 - shift * 50), // 12 to 2
+              })
             );
           }
         });
@@ -120,17 +115,11 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
 
     pv1s.forEach(function (pv) {
       const shift = winningChances.povDiff(rcolor, pv, pv0);
-      if (shift >= 0.005 && shift < 0.2) {
+      if (shift >= 0 && shift < 0.2) {
         shapes = shapes.concat(
-          makeShapesFromUci(
-            rcolor,
-            pv.moves[0],
-            'paleRed',
-            {
-              lineWidth: Math.round(11 - shift * 45), // 11 to 2
-            }
-            //`+${Math.round(shift * 100)}٪`
-          )
+          makeShapesFromUci(rcolor, pv.moves[0], 'paleRed', {
+            lineWidth: Math.round(11 - shift * 45), // 11 to 2
+          })
         );
       }
     });
@@ -161,24 +150,26 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   if (ctrl.showAutoShapes() && ctrl.node.children.length > 1) {
     const brushes = ctrl.chessground.state.drawable.brushes;
-    brushes.mainline = { key: 'vwh', color: '#66c', opacity: 0.8, lineWidth: 11 };
+    brushes.mainline = { key: 'vpr', color: '#68217a', opacity: 0.65, lineWidth: 12 };
     brushes.variation = { key: 'vgr', color: '#666', opacity: 0.8, lineWidth: 11 };
-    brushes.computer = { key: 'vgn', color: '#15781B', opacity: 0.8, lineWidth: 15 };
-    //const mainEval = ctrl.node.children[0].ceval ?? ctrl.node.children[0].eval ?? false;
-    shapes = shapes.concat(
-      ctrl.node.children.map((node, i) => {
-        //const variationEval = node.ceval ?? node.eval ?? false;
-        //console.log(i, node.uci, mainEval, node.ceval, node.eval, node.comp);
-        //const shift = variationEval && mainEval ? winningChances.povDiff(rcolor, mainEval, variationEval) : 0;
-        return {
+    ctrl.node.children.forEach((node, i) => {
+      const existing = shapes.find(s => s.orig === node.uci!.slice(0, 2) && s.dest === node.uci!.slice(2, 4));
+      if (existing) {
+        existing.brush = i === 0 ? 'mainline' : existing.brush;
+        if (i === ctrl.fork.selected()) {
+          existing.modifiers ??= {};
+          existing.modifiers.hilite = true;
+        }
+        existing.label = node.glyphs?.[0]?.symbol;
+      } else
+        shapes.push({
           orig: node.uci!.slice(0, 2) as Key,
           dest: node.uci?.slice(2, 4) as Key,
-          brush: i === 0 ? 'mainline' : ctrl.showComputer() && node.comp ? 'computer' : 'variation',
+          brush: i === 0 ? 'mainline' : 'variation',
           modifiers: { hilite: i === ctrl.fork.selected() },
-          //label: shift > 0.005 && shift < 0.2 ? `+${Math.round(shift * 100)}٪` : undefined,
-        };
-      })
-    );
+          label: node.glyphs?.[0]?.symbol,
+        });
+    });
   }
   return shapes;
 }

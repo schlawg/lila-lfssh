@@ -341,9 +341,7 @@ export function initModule(opts: { root: RootCtrl; ui: VoiceCtrl; initialFen: st
     if (!choices) return;
     const arrowTime = choiceTimeout ? timer() : undefined;
     cg.setShapes(
-      colorsPref()
-        ? coloredArrows([...choices], arrowTime)
-        : numberedArrows([...choices], arrowTime, cg.state.orientation === 'white')
+      colorsPref() ? coloredArrows([...choices], arrowTime) : numberedArrows([...choices], arrowTime) //, cg.state.orientation === 'white')
     );
   }
 
