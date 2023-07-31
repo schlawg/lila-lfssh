@@ -398,6 +398,7 @@ export default class AnalyseCtrl {
     this.explorer.setNode();
     this.updateHref();
     this.autoScroll();
+    this.fork.onJump();
     this.promotion.cancel();
     if (pathChanged) {
       if (this.retro) this.retro.onJump();
@@ -406,6 +407,7 @@ export default class AnalyseCtrl {
     }
     lichess.sound.move(this.node);
     lichess.pubsub.emit('ply', this.node.ply, this.tree.lastMainlineNode(this.path).ply === this.node.ply);
+
     this.showGround();
   }
 

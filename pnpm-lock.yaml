@@ -25,7 +25,7 @@ importers:
         version: github.com/lichess-org/ab-stub/94236bf34dbc9c05daf50f4c9842d859b9142be0
       chessground:
         specifier: ^8.3.11
-        version: link:../chessground
+        version: 8.3.13
       eslint:
         specifier: ^8.43.0
         version: 8.43.0
