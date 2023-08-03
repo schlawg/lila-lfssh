@@ -24,11 +24,11 @@ export function numberedArrows(choices: [string, Uci][], timer: number | undefin
       dest: to(uci),
       brush: `v-grey`,
       modifiers: { hilite: uci === preferred },
-      label: choices.length > 1 ? `${i + 1}` : undefined,
+      label: choices.length > 1 ? { text: `${i + 1}` } : undefined,
     });
   });
   if (timer) {
-    shapes[0].modifiers!.svgDecorates = choices.length > 1 ? 'label' : 'orig';
+    shapes[0].modifiers!.overlayCustomSvg = choices.length > 1 ? 'label' : 'orig';
     shapes[0].customSvg = timerShape(timer, choices.length > 1 ? 'grey' : 'white', 0.6);
   }
   return shapes;
@@ -47,7 +47,7 @@ export function coloredArrows(choices: [string, Uci][], timer: number | undefine
     });
   });
   if (timer) {
-    shapes[0].modifiers!.svgDecorates = 'orig';
+    shapes[0].modifiers!.overlayCustomSvg = 'orig';
     shapes[0].customSvg = timerShape(timer, brushes.values().next().value.color);
   }
   return shapes;

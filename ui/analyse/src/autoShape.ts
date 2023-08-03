@@ -34,7 +34,7 @@ export function makeShapesFromUci(
       dest: to,
       brush,
       modifiers,
-      label,
+      label: label ? { text: label } : undefined,
     },
   ];
   if (move.promotion) shapes.push(pieceDrop(to, move.promotion, color));
@@ -154,20 +154,21 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     brushes.variation = { key: 'vgr', color: '#666', opacity: 0.8, lineWidth: 11 };
     ctrl.node.children.forEach((node, i) => {
       const existing = shapes.find(s => s.orig === node.uci!.slice(0, 2) && s.dest === node.uci!.slice(2, 4));
+      const label = node.glyphs?.[0]?.symbol ? { text: node.glyphs[0].symbol } : undefined;
       if (existing) {
         existing.brush = i === 0 ? 'mainline' : existing.brush;
         if (i === ctrl.fork.selected()) {
           existing.modifiers ??= {};
           existing.modifiers.hilite = true;
         }
-        existing.label = node.glyphs?.[0]?.symbol;
+        existing.label = label;
       } else
         shapes.push({
           orig: node.uci!.slice(0, 2) as Key,
           dest: node.uci?.slice(2, 4) as Key,
           brush: i === 0 ? 'mainline' : 'variation',
           modifiers: { hilite: i === ctrl.fork.selected() },
-          label: node.glyphs?.[0]?.symbol,
+          label,
         });
     });
   }
