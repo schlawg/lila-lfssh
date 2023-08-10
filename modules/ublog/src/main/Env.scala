@@ -1,5 +1,6 @@
 package lila.ublog
 
+import util.chaining.scalaUtilChainingOps
 import com.github.blemale.scaffeine.AsyncLoadingCache
 import com.softwaremill.macwire.*
 
@@ -48,11 +49,11 @@ final class Env(
         api
           .latestPosts(lookInto)
           .map:
-            _.mapWithIndex: (post, i) =>
-              (post, ThreadLocalRandom.nextInt(10 * (lookInto - i)))
-            .sortBy(_._2)
+            _.pipe(ThreadLocalRandom.shuffle)
+              .groupBy(_.blog)
+              .map(_._2.head)
+              .toList
               .take(keep)
-              .map(_._1)
 
   lila.common.Bus.subscribeFun("shadowban"):
     case lila.hub.actorApi.mod.Shadowban(userId, v) =>
