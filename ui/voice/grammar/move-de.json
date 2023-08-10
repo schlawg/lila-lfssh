@@ -1,14 +1,38 @@
 {
   "partials": {
-    "commands": ["yes", "no"],
-    "colors": ["green", "blue", "purple", "pink", "yellow", "orange", "red", "brown"],
-    "numbers": ["1", "2", "3", "4", "5", "6", "7", "8"]
+    "commands": [
+      "yes",
+      "no"
+    ],
+    "colors": [
+      "green",
+      "blue",
+      "purple",
+      "pink",
+      "yellow",
+      "orange",
+      "red",
+      "brown"
+    ],
+    "numbers": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+    ]
   },
   "entries": [
     {
       "in": "a",
       "tok": "a",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -19,7 +43,10 @@
     {
       "in": "b",
       "tok": "b",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -30,7 +57,10 @@
     {
       "in": "c",
       "tok": "c",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -41,7 +71,10 @@
     {
       "in": "d",
       "tok": "d",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -52,7 +85,10 @@
     {
       "in": "e",
       "tok": "e",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -63,7 +99,10 @@
     {
       "in": "f",
       "tok": "f",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -74,7 +113,10 @@
     {
       "in": "g",
       "tok": "g",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -85,7 +127,10 @@
     {
       "in": "h",
       "tok": "h",
-      "tags": ["file", "move"],
+      "tags": [
+        "file",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -96,7 +141,11 @@
     {
       "in": "eins",
       "tok": "1",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -107,7 +156,11 @@
     {
       "in": "zwei",
       "tok": "2",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -118,7 +171,11 @@
     {
       "in": "drei",
       "tok": "3",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -129,7 +186,11 @@
     {
       "in": "vier",
       "tok": "4",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -140,7 +201,11 @@
     {
       "in": "fünf",
       "tok": "5",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -151,7 +216,11 @@
     {
       "in": "sechs",
       "tok": "6",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -162,7 +231,11 @@
     {
       "in": "sieben",
       "tok": "7",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -173,7 +246,11 @@
     {
       "in": "acht",
       "tok": "8",
-      "tags": ["rank", "move", "choice"],
+      "tags": [
+        "rank",
+        "move",
+        "choice"
+      ],
       "subs": [
         {
           "to": "",
@@ -184,7 +261,10 @@
     {
       "in": "bauer",
       "tok": "P",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -195,7 +275,10 @@
     {
       "in": "springer",
       "tok": "N",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -206,7 +289,10 @@
     {
       "in": "pferd",
       "tok": "N",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -217,7 +303,10 @@
     {
       "in": "läufer",
       "tok": "B",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -228,7 +317,10 @@
     {
       "in": "turm",
       "tok": "R",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -239,7 +331,10 @@
     {
       "in": "dame",
       "tok": "Q",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -250,7 +345,10 @@
     {
       "in": "könig",
       "tok": "K",
-      "tags": ["role", "move"],
+      "tags": [
+        "role",
+        "move"
+      ],
       "subs": [
         {
           "to": "",
@@ -261,7 +359,9 @@
     {
       "in": "rochade",
       "val": "castle",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "!",
       "subs": [
         {
@@ -273,31 +373,41 @@
     {
       "in": "kurze rochade",
       "val": "O-O",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "r!"
     },
     {
       "in": "rochieren kurz",
       "val": "O-O",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "st"
     },
     {
       "in": "lange rochade",
       "val": "O-O-O",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "u!"
     },
     {
       "in": "rochieren lang",
       "val": "O-O-O",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "sv"
     },
     {
       "in": "schlage",
       "val": "x",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "#",
       "subs": [
         {
@@ -309,7 +419,9 @@
     {
       "in": "schlägt",
       "val": "x",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "$",
       "subs": [
         {
@@ -321,7 +433,9 @@
     {
       "in": "wird",
       "val": "=",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "%",
       "subs": [
         {
@@ -333,7 +447,9 @@
     {
       "in": "umwandlung",
       "val": "=",
-      "tags": ["move"],
+      "tags": [
+        "move"
+      ],
       "tok": "&",
       "subs": [
         {
@@ -345,7 +461,9 @@
     {
       "in": "ups",
       "val": "takeback",
-      "tags": ["command"],
+      "tags": [
+        "command"
+      ],
       "tok": "(",
       "subs": [
         {
@@ -357,7 +475,9 @@
     {
       "in": "zurück",
       "val": "takeback",
-      "tags": ["command"],
+      "tags": [
+        "command"
+      ],
       "tok": ")",
       "subs": [
         {
@@ -369,7 +489,9 @@
     {
       "in": "rückgängig",
       "val": "takeback",
-      "tags": ["command"],
+      "tags": [
+        "command"
+      ],
       "tok": "*",
       "subs": [
         {
@@ -381,7 +503,10 @@
     {
       "in": "remis",
       "val": "draw",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "+",
       "subs": [
         {
@@ -393,25 +518,37 @@
     {
       "in": "biete remis",
       "val": "draw",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "w+"
     },
     {
       "in": "remis anbieten",
       "val": "draw",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "+x"
     },
     {
       "in": "remis annehmen",
       "val": "draw",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "+y"
     },
     {
       "in": "aufgeben",
       "val": "resign",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "-",
       "subs": [
         {
@@ -423,7 +560,10 @@
     {
       "in": "revanche",
       "val": "rematch",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": ".",
       "subs": [
         {
@@ -435,13 +575,18 @@
     {
       "in": "brett drehen",
       "val": "flip",
-      "tags": ["command"],
+      "tags": [
+        "command"
+      ],
       "tok": "z{"
     },
     {
       "in": "uhr",
       "val": "clock",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "/",
       "subs": [
         {
@@ -453,7 +598,10 @@
     {
       "in": "zeit",
       "val": "clock",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "0",
       "subs": [
         {
@@ -465,7 +613,10 @@
     {
       "in": "gegner",
       "val": "who",
-      "tags": ["command", "round"],
+      "tags": [
+        "command",
+        "round"
+      ],
       "tok": "9",
       "subs": [
         {
@@ -477,7 +628,10 @@
     {
       "in": "weiter",
       "val": "next",
-      "tags": ["command", "puzzle"],
+      "tags": [
+        "command",
+        "puzzle"
+      ],
       "tok": ":",
       "subs": [
         {
@@ -489,7 +643,10 @@
     {
       "in": "nächste",
       "val": "next",
-      "tags": ["command", "puzzle"],
+      "tags": [
+        "command",
+        "puzzle"
+      ],
       "tok": ";",
       "subs": [
         {
@@ -501,19 +658,28 @@
     {
       "in": "daumen hoch",
       "val": "upvote",
-      "tags": ["command", "puzzle"],
+      "tags": [
+        "command",
+        "puzzle"
+      ],
       "tok": "|}"
     },
     {
       "in": "daumen runter",
       "val": "downvote",
-      "tags": ["command", "puzzle"],
+      "tags": [
+        "command",
+        "puzzle"
+      ],
       "tok": "|Ā"
     },
     {
       "in": "lösung",
       "val": "solve",
-      "tags": ["command", "puzzle"],
+      "tags": [
+        "command",
+        "puzzle"
+      ],
       "tok": "<",
       "subs": [
         {
@@ -525,7 +691,9 @@
     {
       "in": "hilfe",
       "val": "help",
-      "tags": ["command"],
+      "tags": [
+        "command"
+      ],
       "tok": "=",
       "subs": [
         {
@@ -537,7 +705,9 @@
     {
       "in": "stoppen",
       "val": "stop",
-      "tags": ["command"],
+      "tags": [
+        "command"
+      ],
       "tok": ">",
       "subs": [
         {
@@ -549,7 +719,9 @@
     {
       "in": "ja",
       "val": "yes",
-      "tags": ["choice"],
+      "tags": [
+        "choice"
+      ],
       "tok": "?",
       "subs": [
         {
@@ -561,7 +733,9 @@
     {
       "in": "bestätigen",
       "val": "yes",
-      "tags": ["choice"],
+      "tags": [
+        "choice"
+      ],
       "tok": "@",
       "subs": [
         {
@@ -573,7 +747,9 @@
     {
       "in": "nein",
       "val": "no",
-      "tags": ["choice"],
+      "tags": [
+        "choice"
+      ],
       "tok": "A",
       "subs": [
         {
@@ -585,7 +761,9 @@
     {
       "in": "abbrechen",
       "val": "no",
-      "tags": ["choice"],
+      "tags": [
+        "choice"
+      ],
       "tok": "C",
       "subs": [
         {
@@ -597,7 +775,9 @@
     {
       "in": "abbruch",
       "val": "no",
-      "tags": ["choice"],
+      "tags": [
+        "choice"
+      ],
       "tok": "D",
       "subs": [
         {
@@ -609,7 +789,9 @@
     {
       "in": "schließen",
       "val": "no",
-      "tags": ["choice"],
+      "tags": [
+        "choice"
+      ],
       "tok": "E",
       "subs": [
         {
@@ -621,7 +803,10 @@
     {
       "in": "blau",
       "val": "blue",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "F",
       "subs": [
         {
@@ -633,7 +818,10 @@
     {
       "in": "grün",
       "val": "green",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "G",
       "subs": [
         {
@@ -645,7 +833,10 @@
     {
       "in": "gelb",
       "val": "yellow",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "H",
       "subs": [
         {
@@ -657,7 +848,10 @@
     {
       "in": "rot",
       "val": "red",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "I",
       "subs": [
         {
@@ -669,7 +863,10 @@
     {
       "in": "pink",
       "val": "pink",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "J",
       "subs": [
         {
@@ -681,7 +878,10 @@
     {
       "in": "lila",
       "val": "purple",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "L",
       "subs": [
         {
@@ -693,7 +893,10 @@
     {
       "in": "violett",
       "val": "purple",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "M",
       "subs": [
         {
@@ -705,7 +908,10 @@
     {
       "in": "orange",
       "val": "orange",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "O",
       "subs": [
         {
@@ -717,7 +923,10 @@
     {
       "in": "braun",
       "val": "brown",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "S",
       "subs": [
         {
@@ -729,7 +938,10 @@
     {
       "in": "weiß",
       "val": "white",
-      "tags": ["color", "choice"],
+      "tags": [
+        "color",
+        "choice"
+      ],
       "tok": "T",
       "subs": [
         {
@@ -741,7 +953,11 @@
     {
       "in": "alfa",
       "val": "a",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "U",
       "subs": [
         {
@@ -753,7 +969,11 @@
     {
       "in": "bravo",
       "val": "b",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "V",
       "subs": [
         {
@@ -765,7 +985,11 @@
     {
       "in": "charlie",
       "val": "c",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "W",
       "subs": [
         {
@@ -777,7 +1001,11 @@
     {
       "in": "delta",
       "val": "d",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "X",
       "subs": [
         {
@@ -789,7 +1017,11 @@
     {
       "in": "echo",
       "val": "e",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "Y",
       "subs": [
         {
@@ -801,7 +1033,11 @@
     {
       "in": "foxtrot",
       "val": "f",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "Z",
       "subs": [
         {
@@ -813,7 +1049,11 @@
     {
       "in": "golf",
       "val": "g",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "[",
       "subs": [
         {
@@ -825,7 +1065,11 @@
     {
       "in": "hotel",
       "val": "h",
-      "tags": ["file", "move", "phonetic"],
+      "tags": [
+        "file",
+        "move",
+        "phonetic"
+      ],
       "tok": "\\",
       "subs": [
         {
@@ -837,7 +1081,10 @@
     {
       "in": "matt",
       "val": "",
-      "tags": ["move", "ignore"],
+      "tags": [
+        "move",
+        "ignore"
+      ],
       "tok": "]",
       "subs": [
         {
@@ -849,7 +1096,10 @@
     {
       "in": "schachmatt",
       "val": "",
-      "tags": ["move", "ignore"],
+      "tags": [
+        "move",
+        "ignore"
+      ],
       "tok": "^",
       "subs": [
         {
@@ -861,7 +1111,10 @@
     {
       "in": "schach",
       "val": "",
-      "tags": ["move", "ignore"],
+      "tags": [
+        "move",
+        "ignore"
+      ],
       "tok": "_",
       "subs": [
         {
@@ -873,7 +1126,9 @@
     {
       "in": "aufgabe",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "`",
       "subs": [
         {
@@ -885,7 +1140,9 @@
     {
       "in": "und",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "i",
       "subs": [
         {
@@ -897,7 +1154,9 @@
     {
       "in": "oh",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "j",
       "subs": [
         {
@@ -909,7 +1168,9 @@
     {
       "in": "äh",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "k",
       "subs": [
         {
@@ -921,7 +1182,9 @@
     {
       "in": "ehm",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "l",
       "subs": [
         {
@@ -933,7 +1196,9 @@
     {
       "in": "hmm",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "m",
       "subs": [
         {
@@ -945,7 +1210,9 @@
     {
       "in": "huch",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "n",
       "subs": [
         {
@@ -957,7 +1224,9 @@
     {
       "in": "seinen",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "o",
       "subs": [
         {
@@ -969,7 +1238,9 @@
     {
       "in": "ihren",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "p",
       "subs": [
         {
@@ -981,7 +1252,9 @@
     {
       "in": "den",
       "val": "",
-      "tags": ["ignore"],
+      "tags": [
+        "ignore"
+      ],
       "tok": "q",
       "subs": [
         {
@@ -993,7 +1266,9 @@
     {
       "in": "kurze",
       "tok": "r",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1004,7 +1279,9 @@
     {
       "in": "rochieren",
       "tok": "s",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1015,7 +1292,9 @@
     {
       "in": "kurz",
       "tok": "t",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1026,7 +1305,9 @@
     {
       "in": "lange",
       "tok": "u",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1037,7 +1318,9 @@
     {
       "in": "lang",
       "tok": "v",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1048,7 +1331,9 @@
     {
       "in": "biete",
       "tok": "w",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1059,7 +1344,9 @@
     {
       "in": "anbieten",
       "tok": "x",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1070,7 +1357,9 @@
     {
       "in": "annehmen",
       "tok": "y",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1081,7 +1370,9 @@
     {
       "in": "brett",
       "tok": "z",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1092,7 +1383,9 @@
     {
       "in": "drehen",
       "tok": "{",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1103,7 +1396,9 @@
     {
       "in": "daumen",
       "tok": "|",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1114,7 +1409,9 @@
     {
       "in": "hoch",
       "tok": "}",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
@@ -1125,7 +1422,9 @@
     {
       "in": "runter",
       "tok": "Ā",
-      "tags": ["part"],
+      "tags": [
+        "part"
+      ],
       "subs": [
         {
           "to": "",
