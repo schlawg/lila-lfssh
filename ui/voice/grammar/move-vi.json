@@ -1,38 +1,14 @@
 {
   "partials": {
-    "commands": [
-      "yes",
-      "no"
-    ],
-    "colors": [
-      "green",
-      "purple",
-      "red",
-      "pink",
-      "yellow",
-      "orange",
-      "white",
-      "brown"
-    ],
-    "numbers": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8"
-    ]
+    "commands": ["yes", "no"],
+    "colors": ["green", "purple", "red", "pink", "yellow", "orange", "white", "brown"],
+    "numbers": ["1", "2", "3", "4", "5", "6", "7", "8"]
   },
   "entries": [
     {
       "in": "a",
       "tok": "a",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -43,10 +19,7 @@
     {
       "in": "b",
       "tok": "b",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -57,10 +30,7 @@
     {
       "in": "c",
       "tok": "c",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -71,10 +41,7 @@
     {
       "in": "d",
       "tok": "d",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -85,10 +52,7 @@
     {
       "in": "e",
       "tok": "e",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -99,10 +63,7 @@
     {
       "in": "f",
       "tok": "f",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -113,10 +74,7 @@
     {
       "in": "g",
       "tok": "g",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -127,10 +85,7 @@
     {
       "in": "h",
       "tok": "h",
-      "tags": [
-        "file",
-        "move"
-      ],
+      "tags": ["file", "move"],
       "subs": [
         {
           "to": "",
@@ -141,11 +96,7 @@
     {
       "in": "một",
       "tok": "1",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -156,11 +107,7 @@
     {
       "in": "hai",
       "tok": "2",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -171,11 +118,7 @@
     {
       "in": "ba",
       "tok": "3",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -186,11 +129,7 @@
     {
       "in": "bốn",
       "tok": "4",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -201,11 +140,7 @@
     {
       "in": "năm",
       "tok": "5",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -216,11 +151,7 @@
     {
       "in": "sáu",
       "tok": "6",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -231,11 +162,7 @@
     {
       "in": "bảy",
       "tok": "7",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -246,11 +173,7 @@
     {
       "in": "tám",
       "tok": "8",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -261,10 +184,7 @@
     {
       "in": "tốt",
       "tok": "P",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -275,10 +195,7 @@
     {
       "in": "ngựa",
       "tok": "N",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -289,10 +206,7 @@
     {
       "in": "mã",
       "tok": "N",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -303,10 +217,7 @@
     {
       "in": "tượng",
       "tok": "B",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -317,10 +228,7 @@
     {
       "in": "tịnh",
       "tok": "B",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -331,10 +239,7 @@
     {
       "in": "xe",
       "tok": "R",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -345,10 +250,7 @@
     {
       "in": "hậu",
       "tok": "Q",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -359,10 +261,7 @@
     {
       "in": "vua",
       "tok": "K",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -373,49 +272,37 @@
     {
       "in": "nhập thành",
       "val": "castle",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "OS"
     },
     {
       "in": "nhập thành gần",
       "val": "O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "OST"
     },
     {
       "in": "nhập thành cánh vua",
       "val": "O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "OSUK"
     },
     {
       "in": "nhập thành xa",
       "val": "O-O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "OSV"
     },
     {
       "in": "nhập thành cánh hậu",
       "val": "O-O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "OSUQ"
     },
     {
       "in": "ăn",
       "val": "x",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "!",
       "subs": [
         {
@@ -427,9 +314,7 @@
     {
       "in": "phong",
       "val": "=",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "#",
       "subs": [
         {
@@ -441,9 +326,7 @@
     {
       "in": "hoãn",
       "val": "takeback",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "$",
       "subs": [
         {
@@ -455,9 +338,7 @@
     {
       "in": "khoan",
       "val": "takeback",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "%",
       "subs": [
         {
@@ -469,10 +350,7 @@
     {
       "in": "hoà",
       "val": "draw",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "&",
       "subs": [
         {
@@ -484,28 +362,19 @@
     {
       "in": "xin hoà",
       "val": "draw",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "W&"
     },
     {
       "in": "chấp nhận",
       "val": "draw",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "XY"
     },
     {
       "in": "thua",
       "val": "resign",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "(",
       "subs": [
         {
@@ -517,36 +386,25 @@
     {
       "in": "xin thua",
       "val": "resign",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "W("
     },
     {
       "in": "chơi lại",
       "val": "rematch",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "Z["
     },
     {
       "in": "ván nữa",
       "val": "rematch",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "\\]"
     },
     {
       "in": "xoay",
       "val": "flip",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": ")",
       "subs": [
         {
@@ -558,37 +416,25 @@
     {
       "in": "đồng hồ",
       "val": "clock",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "^_"
     },
     {
       "in": "đối thủ",
       "val": "who",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "`i"
     },
     {
       "in": "tiếp theo",
       "val": "next",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "*j"
     },
     {
       "in": "tiếp",
       "val": "next",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "*",
       "subs": [
         {
@@ -600,10 +446,7 @@
     {
       "in": "thích",
       "val": "upvote",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "+",
       "subs": [
         {
@@ -615,35 +458,25 @@
     {
       "in": "không thích",
       "val": "downvote",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "0+"
     },
     {
       "in": "giải quyết",
       "val": "solve",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "kl"
     },
     {
       "in": "giúp đỡ",
       "val": "help",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "mn"
     },
     {
       "in": "dừng",
       "val": "stop",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "-",
       "subs": [
         {
@@ -655,9 +488,7 @@
     {
       "in": "đúng",
       "val": "yes",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": ".",
       "subs": [
         {
@@ -669,9 +500,7 @@
     {
       "in": "ok",
       "val": "yes",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "/",
       "subs": [
         {
@@ -683,17 +512,13 @@
     {
       "in": "xác nhận",
       "val": "yes",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "oY"
     },
     {
       "in": "không",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "0",
       "subs": [
         {
@@ -705,9 +530,7 @@
     {
       "in": "sai",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "9",
       "subs": [
         {
@@ -719,9 +542,7 @@
     {
       "in": "xoá",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": ":",
       "subs": [
         {
@@ -733,9 +554,7 @@
     {
       "in": "đóng",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": ";",
       "subs": [
         {
@@ -747,18 +566,13 @@
     {
       "in": "huỷ bỏ",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "pq"
     },
     {
       "in": "xanh",
       "val": "green",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "<",
       "subs": [
         {
@@ -770,10 +584,7 @@
     {
       "in": "vàng",
       "val": "yellow",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "=",
       "subs": [
         {
@@ -785,10 +596,7 @@
     {
       "in": "đỏ",
       "val": "red",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": ">",
       "subs": [
         {
@@ -800,10 +608,7 @@
     {
       "in": "hồng",
       "val": "pink",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "?",
       "subs": [
         {
@@ -815,10 +620,7 @@
     {
       "in": "tím",
       "val": "purple",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "@",
       "subs": [
         {
@@ -830,10 +632,7 @@
     {
       "in": "cam",
       "val": "orange",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "A",
       "subs": [
         {
@@ -845,10 +644,7 @@
     {
       "in": "nâu",
       "val": "brown",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "C",
       "subs": [
         {
@@ -860,10 +656,7 @@
     {
       "in": "trắng",
       "val": "white",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "D",
       "subs": [
         {
@@ -875,28 +668,19 @@
     {
       "in": "xanh nước biển",
       "val": "blue",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "<rs"
     },
     {
       "in": "chiếu hết",
       "val": "",
-      "tags": [
-        "move",
-        "ignore"
-      ],
+      "tags": ["move", "ignore"],
       "tok": "Et"
     },
     {
       "in": "chiếu",
       "val": "",
-      "tags": [
-        "move",
-        "ignore"
-      ],
+      "tags": ["move", "ignore"],
       "tok": "E",
       "subs": [
         {
@@ -908,17 +692,13 @@
     {
       "in": "cờ thế",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "uv"
     },
     {
       "in": "và",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "F",
       "subs": [
         {
@@ -930,9 +710,7 @@
     {
       "in": "oh",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "G",
       "subs": [
         {
@@ -944,9 +722,7 @@
     {
       "in": "um",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "H",
       "subs": [
         {
@@ -958,9 +734,7 @@
     {
       "in": "uh",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "I",
       "subs": [
         {
@@ -972,9 +746,7 @@
     {
       "in": "hmm",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "J",
       "subs": [
         {
@@ -986,9 +758,7 @@
     {
       "in": "huh",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "L",
       "subs": [
         {
@@ -1000,9 +770,7 @@
     {
       "in": "à",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "M",
       "subs": [
         {
@@ -1014,9 +782,7 @@
     {
       "in": "nhập",
       "tok": "O",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1027,9 +793,7 @@
     {
       "in": "thành",
       "tok": "S",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1040,9 +804,7 @@
     {
       "in": "gần",
       "tok": "T",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1053,9 +815,7 @@
     {
       "in": "cánh",
       "tok": "U",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1066,9 +826,7 @@
     {
       "in": "xa",
       "tok": "V",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1079,9 +837,7 @@
     {
       "in": "xin",
       "tok": "W",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1092,9 +848,7 @@
     {
       "in": "chấp",
       "tok": "X",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1105,9 +859,7 @@
     {
       "in": "nhận",
       "tok": "Y",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1118,9 +870,7 @@
     {
       "in": "chơi",
       "tok": "Z",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1131,9 +881,7 @@
     {
       "in": "lại",
       "tok": "[",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1144,9 +892,7 @@
     {
       "in": "ván",
       "tok": "\\",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1157,9 +903,7 @@
     {
       "in": "nữa",
       "tok": "]",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1170,9 +914,7 @@
     {
       "in": "đồng",
       "tok": "^",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1183,9 +925,7 @@
     {
       "in": "hồ",
       "tok": "_",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1196,9 +936,7 @@
     {
       "in": "đối",
       "tok": "`",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1209,9 +947,7 @@
     {
       "in": "thủ",
       "tok": "i",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1222,9 +958,7 @@
     {
       "in": "theo",
       "tok": "j",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1235,9 +969,7 @@
     {
       "in": "giải",
       "tok": "k",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1248,9 +980,7 @@
     {
       "in": "quyết",
       "tok": "l",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1261,9 +991,7 @@
     {
       "in": "giúp",
       "tok": "m",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1274,9 +1002,7 @@
     {
       "in": "đỡ",
       "tok": "n",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1287,9 +1013,7 @@
     {
       "in": "xác",
       "tok": "o",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1300,9 +1024,7 @@
     {
       "in": "huỷ",
       "tok": "p",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1313,9 +1035,7 @@
     {
       "in": "bỏ",
       "tok": "q",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1326,9 +1046,7 @@
     {
       "in": "nước",
       "tok": "r",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1339,9 +1057,7 @@
     {
       "in": "biển",
       "tok": "s",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1352,9 +1068,7 @@
     {
       "in": "hết",
       "tok": "t",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1365,9 +1079,7 @@
     {
       "in": "cờ",
       "tok": "u",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1378,9 +1090,7 @@
     {
       "in": "thế",
       "tok": "v",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",

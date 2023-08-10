@@ -1,39 +1,14 @@
 {
   "partials": {
-    "commands": [
-      "yes",
-      "no"
-    ],
-    "colors": [
-      "green",
-      "blue",
-      "purple",
-      "pink",
-      "yellow",
-      "orange",
-      "red",
-      "brown"
-    ],
-    "numbers": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8"
-    ]
+    "commands": ["yes", "no"],
+    "colors": ["green", "blue", "purple", "pink", "yellow", "orange", "red", "brown"],
+    "numbers": ["1", "2", "3", "4", "5", "6", "7", "8"]
   },
   "entries": [
     {
       "in": "adana",
       "tok": "a",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -44,11 +19,7 @@
     {
       "in": "bursa",
       "tok": "b",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -59,11 +30,7 @@
     {
       "in": "ceyhan",
       "tok": "c",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -74,11 +41,7 @@
     {
       "in": "denizli",
       "tok": "d",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -89,11 +52,7 @@
     {
       "in": "edirne",
       "tok": "e",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -104,11 +63,7 @@
     {
       "in": "fatsa",
       "tok": "f",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -119,11 +74,7 @@
     {
       "in": "giresun",
       "tok": "g",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -134,11 +85,7 @@
     {
       "in": "hatay",
       "tok": "h",
-      "tags": [
-        "file",
-        "move",
-        "phonetic"
-      ],
+      "tags": ["file", "move", "phonetic"],
       "subs": [
         {
           "to": "",
@@ -149,11 +96,7 @@
     {
       "in": "bir",
       "tok": "1",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -164,11 +107,7 @@
     {
       "in": "iki",
       "tok": "2",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -179,11 +118,7 @@
     {
       "in": "üç",
       "tok": "3",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -194,11 +129,7 @@
     {
       "in": "dört",
       "tok": "4",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -209,11 +140,7 @@
     {
       "in": "beş",
       "tok": "5",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -224,11 +151,7 @@
     {
       "in": "altı",
       "tok": "6",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -239,11 +162,7 @@
     {
       "in": "yedi",
       "tok": "7",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -254,11 +173,7 @@
     {
       "in": "sekiz",
       "tok": "8",
-      "tags": [
-        "rank",
-        "move",
-        "choice"
-      ],
+      "tags": ["rank", "move", "choice"],
       "subs": [
         {
           "to": "",
@@ -269,10 +184,7 @@
     {
       "in": "piyon",
       "tok": "P",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -283,10 +195,7 @@
     {
       "in": "at",
       "tok": "N",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -297,10 +206,7 @@
     {
       "in": "fil",
       "tok": "B",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -311,10 +217,7 @@
     {
       "in": "kale",
       "tok": "R",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -325,10 +228,7 @@
     {
       "in": "veziri",
       "tok": "Q",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -339,10 +239,7 @@
     {
       "in": "şah",
       "tok": "K",
-      "tags": [
-        "role",
-        "move"
-      ],
+      "tags": ["role", "move"],
       "subs": [
         {
           "to": "",
@@ -353,9 +250,7 @@
     {
       "in": "rok",
       "val": "castle",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "!",
       "subs": [
         {
@@ -367,57 +262,43 @@
     {
       "in": "kısa rok",
       "val": "O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "m!"
     },
     {
       "in": "şah kanadı",
       "val": "O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "Wn"
     },
     {
       "in": "şah kanadına",
       "val": "O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "Wo"
     },
     {
       "in": "uzun rok",
       "val": "O-O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "p!"
     },
     {
       "in": "veziri kanadına",
       "val": "O-O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "Qo"
     },
     {
       "in": "veziri kanadı",
       "val": "O-O-O",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "Qn"
     },
     {
       "in": "al",
       "val": "x",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "#",
       "subs": [
         {
@@ -429,9 +310,7 @@
     {
       "in": "alır",
       "val": "x",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "$",
       "subs": [
         {
@@ -443,9 +322,7 @@
     {
       "in": "ye",
       "val": "x",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "%",
       "subs": [
         {
@@ -457,9 +334,7 @@
     {
       "in": "yer",
       "val": "x",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "&",
       "subs": [
         {
@@ -471,25 +346,19 @@
     {
       "in": "terfi ettir",
       "val": "=",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "(q"
     },
     {
       "in": "terfi eder",
       "val": "=",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "(r"
     },
     {
       "in": "terfi",
       "val": "=",
-      "tags": [
-        "move"
-      ],
+      "tags": ["move"],
       "tok": "(",
       "subs": [
         {
@@ -501,18 +370,13 @@
     {
       "in": "geri al",
       "val": "takeback",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "s#"
     },
     {
       "in": "berabere",
       "val": "draw",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": ")",
       "subs": [
         {
@@ -524,54 +388,37 @@
     {
       "in": "berabere teklif et",
       "val": "draw",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": ")tu"
     },
     {
       "in": "berabere kabul et",
       "val": "draw",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": ")vu"
     },
     {
       "in": "terk et",
       "val": "resign",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "wu"
     },
     {
       "in": "tekrar oyna",
       "val": "rematch",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "xy"
     },
     {
       "in": "ters çevir",
       "val": "flip",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "z{"
     },
     {
       "in": "saat",
       "val": "clock",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "*",
       "subs": [
         {
@@ -583,10 +430,7 @@
     {
       "in": "rakip",
       "val": "who",
-      "tags": [
-        "command",
-        "round"
-      ],
+      "tags": ["command", "round"],
       "tok": "+",
       "subs": [
         {
@@ -598,10 +442,7 @@
     {
       "in": "sonraki",
       "val": "next",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "-",
       "subs": [
         {
@@ -613,37 +454,25 @@
     {
       "in": "devam et",
       "val": "next",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "|u"
     },
     {
       "in": "artı bir ver",
       "val": "upvote",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "}1Ā"
     },
     {
       "in": "eksi bir ver",
       "val": "downvote",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": "ā1Ā"
     },
     {
       "in": "çözüm",
       "val": "solve",
-      "tags": [
-        "command",
-        "puzzle"
-      ],
+      "tags": ["command", "puzzle"],
       "tok": ".",
       "subs": [
         {
@@ -655,9 +484,7 @@
     {
       "in": "yardım",
       "val": "help",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "/",
       "subs": [
         {
@@ -669,9 +496,7 @@
     {
       "in": "dur",
       "val": "stop",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "0",
       "subs": [
         {
@@ -683,25 +508,19 @@
     {
       "in": "dinlemeyi durdur",
       "val": "mic-off",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "Ăă"
     },
     {
       "in": "kaydı durdur",
       "val": "mic-off",
-      "tags": [
-        "command"
-      ],
+      "tags": ["command"],
       "tok": "Ąă"
     },
     {
       "in": "evet",
       "val": "yes",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "9",
       "subs": [
         {
@@ -713,9 +532,7 @@
     {
       "in": "onayla",
       "val": "yes",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": ":",
       "subs": [
         {
@@ -727,9 +544,7 @@
     {
       "in": "hayır",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": ";",
       "subs": [
         {
@@ -741,9 +556,7 @@
     {
       "in": "temizle",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "<",
       "subs": [
         {
@@ -755,9 +568,7 @@
     {
       "in": "kapat",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": "=",
       "subs": [
         {
@@ -769,9 +580,7 @@
     {
       "in": "iptal",
       "val": "no",
-      "tags": [
-        "choice"
-      ],
+      "tags": ["choice"],
       "tok": ">",
       "subs": [
         {
@@ -783,10 +592,7 @@
     {
       "in": "mavi",
       "val": "blue",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "?",
       "subs": [
         {
@@ -798,10 +604,7 @@
     {
       "in": "yeşil",
       "val": "green",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "@",
       "subs": [
         {
@@ -813,10 +616,7 @@
     {
       "in": "sarı",
       "val": "yellow",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "A",
       "subs": [
         {
@@ -828,10 +628,7 @@
     {
       "in": "kırmızı",
       "val": "red",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "C",
       "subs": [
         {
@@ -843,10 +640,7 @@
     {
       "in": "pembe",
       "val": "pink",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "D",
       "subs": [
         {
@@ -858,10 +652,7 @@
     {
       "in": "mor",
       "val": "purple",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "E",
       "subs": [
         {
@@ -873,10 +664,7 @@
     {
       "in": "turuncu",
       "val": "orange",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "F",
       "subs": [
         {
@@ -888,10 +676,7 @@
     {
       "in": "kahverengi",
       "val": "brown",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "G",
       "subs": [
         {
@@ -903,10 +688,7 @@
     {
       "in": "beyaz",
       "val": "white",
-      "tags": [
-        "color",
-        "choice"
-      ],
+      "tags": ["color", "choice"],
       "tok": "H",
       "subs": [
         {
@@ -918,11 +700,7 @@
     {
       "in": "alfa",
       "val": "a",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "I",
       "subs": [
         {
@@ -934,11 +712,7 @@
     {
       "in": "bravo",
       "val": "b",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "J",
       "subs": [
         {
@@ -950,11 +724,7 @@
     {
       "in": "charlie",
       "val": "c",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "L",
       "subs": [
         {
@@ -966,11 +736,7 @@
     {
       "in": "delta",
       "val": "d",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "M",
       "subs": [
         {
@@ -982,11 +748,7 @@
     {
       "in": "echo",
       "val": "e",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "O",
       "subs": [
         {
@@ -998,11 +760,7 @@
     {
       "in": "foxtrot",
       "val": "f",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "S",
       "subs": [
         {
@@ -1014,11 +772,7 @@
     {
       "in": "golf",
       "val": "g",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "T",
       "subs": [
         {
@@ -1030,11 +784,7 @@
     {
       "in": "hotel",
       "val": "h",
-      "tags": [
-        "file",
-        "move",
-        "nato"
-      ],
+      "tags": ["file", "move", "nato"],
       "tok": "U",
       "subs": [
         {
@@ -1046,10 +796,7 @@
     {
       "in": "mat",
       "val": "",
-      "tags": [
-        "move",
-        "ignore"
-      ],
+      "tags": ["move", "ignore"],
       "tok": "V",
       "subs": [
         {
@@ -1061,10 +808,7 @@
     {
       "in": "şah",
       "val": "",
-      "tags": [
-        "move",
-        "ignore"
-      ],
+      "tags": ["move", "ignore"],
       "tok": "W",
       "subs": [
         {
@@ -1076,9 +820,7 @@
     {
       "in": "bulmaca",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "X",
       "subs": [
         {
@@ -1090,9 +832,7 @@
     {
       "in": "ve",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "Y",
       "subs": [
         {
@@ -1104,9 +844,7 @@
     {
       "in": "oh",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "Z",
       "subs": [
         {
@@ -1118,9 +856,7 @@
     {
       "in": "um",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "[",
       "subs": [
         {
@@ -1132,9 +868,7 @@
     {
       "in": "oy",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "\\",
       "subs": [
         {
@@ -1146,9 +880,7 @@
     {
       "in": "hah",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "]",
       "subs": [
         {
@@ -1160,9 +892,7 @@
     {
       "in": "hmm",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "^",
       "subs": [
         {
@@ -1174,9 +904,7 @@
     {
       "in": "ya",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "_",
       "subs": [
         {
@@ -1188,9 +916,7 @@
     {
       "in": "şey",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "`",
       "subs": [
         {
@@ -1202,9 +928,7 @@
     {
       "in": "onun",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "i",
       "subs": [
         {
@@ -1216,9 +940,7 @@
     {
       "in": "şu",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "j",
       "subs": [
         {
@@ -1230,9 +952,7 @@
     {
       "in": "onların",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "k",
       "subs": [
         {
@@ -1244,9 +964,7 @@
     {
       "in": "eğitim",
       "val": "",
-      "tags": [
-        "ignore"
-      ],
+      "tags": ["ignore"],
       "tok": "l",
       "subs": [
         {
@@ -1258,9 +976,7 @@
     {
       "in": "kısa",
       "tok": "m",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1271,9 +987,7 @@
     {
       "in": "kanadı",
       "tok": "n",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1284,9 +998,7 @@
     {
       "in": "kanadına",
       "tok": "o",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1297,9 +1009,7 @@
     {
       "in": "uzun",
       "tok": "p",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1310,9 +1020,7 @@
     {
       "in": "ettir",
       "tok": "q",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1323,9 +1031,7 @@
     {
       "in": "eder",
       "tok": "r",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1336,9 +1042,7 @@
     {
       "in": "geri",
       "tok": "s",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1349,9 +1053,7 @@
     {
       "in": "teklif",
       "tok": "t",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1362,9 +1064,7 @@
     {
       "in": "et",
       "tok": "u",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1375,9 +1075,7 @@
     {
       "in": "kabul",
       "tok": "v",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1388,9 +1086,7 @@
     {
       "in": "terk",
       "tok": "w",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1401,9 +1097,7 @@
     {
       "in": "tekrar",
       "tok": "x",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1414,9 +1108,7 @@
     {
       "in": "oyna",
       "tok": "y",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1427,9 +1119,7 @@
     {
       "in": "ters",
       "tok": "z",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1440,9 +1130,7 @@
     {
       "in": "çevir",
       "tok": "{",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1453,9 +1141,7 @@
     {
       "in": "devam",
       "tok": "|",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1466,9 +1152,7 @@
     {
       "in": "artı",
       "tok": "}",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1479,9 +1163,7 @@
     {
       "in": "ver",
       "tok": "Ā",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1492,9 +1174,7 @@
     {
       "in": "eksi",
       "tok": "ā",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1505,9 +1185,7 @@
     {
       "in": "dinlemeyi",
       "tok": "Ă",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1518,9 +1196,7 @@
     {
       "in": "durdur",
       "tok": "ă",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
@@ -1531,9 +1207,7 @@
     {
       "in": "kaydı",
       "tok": "Ą",
-      "tags": [
-        "part"
-      ],
+      "tags": ["part"],
       "subs": [
         {
           "to": "",
