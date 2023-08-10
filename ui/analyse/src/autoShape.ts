@@ -151,21 +151,21 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   if (ctrl.showAutoShapes() && ctrl.node.children.length > 1) {
     ctrl.node.children.forEach((node, i) => {
       const existing = shapes.find(s => s.orig === node.uci!.slice(0, 2) && s.dest === node.uci!.slice(2, 4));
-      const label = node.glyphs?.[0]?.symbol ? { text: node.glyphs[0].symbol } : undefined;
+      const symbol = node.glyphs?.[0]?.symbol;
       if (existing) {
         existing.brush = i === 0 ? 'purple' : existing.brush;
         if (i === ctrl.fork.selected()) {
           existing.modifiers ??= {};
           existing.modifiers.hilite = true;
         }
-        existing.label = label;
+        if (symbol) existing.label = { text: symbol };
       } else
         shapes.push({
           orig: node.uci!.slice(0, 2) as Key,
           dest: node.uci?.slice(2, 4) as Key,
           brush: i === 0 ? 'purple' : 'pink',
           modifiers: { hilite: i === ctrl.fork.selected() },
-          label,
+          label: symbol ? { text: symbol } : undefined,
         });
     });
   }
