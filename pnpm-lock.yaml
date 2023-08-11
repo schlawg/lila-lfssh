@@ -24,8 +24,8 @@ importers:
         specifier: github:lichess-org/ab-stub
         version: github.com/lichess-org/ab-stub/94236bf34dbc9c05daf50f4c9842d859b9142be0
       chessground:
-        specifier: npm:schlawground@8.3.14
-        version: /schlawground@8.3.14
+        specifier: link:/home/gamblej/ws/lichess/chessground
+        version: link:../chessground
       eslint:
         specifier: ^8.43.0
         version: 8.43.0
@@ -5787,10 +5787,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       xmlchars: 2.2.0
-    dev: false
-
-  /schlawground@8.3.14:
-    resolution: {integrity: sha512-DTlqtWLQ9wBFJa4Ap4JQU7gSCCiTP1pAp+nJM9p47NT+Oaot8+n8+9Fcu8qpqJN6Y1XLcyBfMjIKN5NNjPhn8A==}
     dev: false
 
   /semver@6.3.1:
