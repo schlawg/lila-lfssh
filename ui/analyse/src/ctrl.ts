@@ -398,7 +398,6 @@ export default class AnalyseCtrl {
     this.explorer.setNode();
     this.updateHref();
     this.autoScroll();
-    this.fork.onJump();
     this.promotion.cancel();
     if (pathChanged) {
       if (this.retro) this.retro.onJump();

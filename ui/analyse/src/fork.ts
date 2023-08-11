@@ -14,7 +14,6 @@ export interface ForkCtrl {
   selected(): number | undefined;
   next: (cycle?: boolean) => boolean | undefined;
   prev: (cycle?: boolean) => boolean | undefined;
-  onJump: () => void;
   hover: (uci: Uci | null | undefined) => void;
   highlight: (it?: number) => void;
   proceed: (it?: number) => boolean | undefined;
@@ -79,12 +78,6 @@ export function make(root: AnalyseCtrl): ForkCtrl {
       const uci = defined(nodeUci) ? nodeUci : null;
 
       root.explorer.setHovering(root.node.fen, uci);
-    },
-    onJump() {
-      //console.log('onJump', selections);
-      //if (!displayed()) return;
-      //selected = selections.get(root.path) ?? 0;
-      //if (selected >= root.node.children.length) selected = 0;
     },
     proceed(it) {
       if (displayed()) {
