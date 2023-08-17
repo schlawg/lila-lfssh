@@ -21,7 +21,7 @@ export function makeShapesFromUci(
   uci: Uci,
   brush: string,
   modifiers?: DrawModifiers,
-  label?: string
+  label?: string,
 ): DrawShape[] {
   if (uci === 'Current Position') return [];
   const move = parseUci(uci)!;
@@ -101,7 +101,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
             shapes = shapes.concat(
               makeShapesFromUci(color, pv.moves[0], 'paleGrey', {
                 lineWidth: Math.round(12 - shift * 50), // 12 to 2
-              })
+              }),
             );
           }
         });
@@ -119,7 +119,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
         shapes = shapes.concat(
           makeShapesFromUci(rcolor, pv.moves[0], 'paleRed', {
             lineWidth: Math.round(11 - shift * 45), // 11 to 2
-          })
+          }),
         );
       }
     });

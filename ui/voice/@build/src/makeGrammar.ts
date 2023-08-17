@@ -11,7 +11,7 @@ const buildMode: SubRestriction = { del: true, sub: 2 }; // allow dels and/or sp
 function buildCostMap(
   subMap: Map<string, SubInfo>, // the map of all valid substitutions within --max-ops distance
   freqThreshold: number, // minimum frequency of a substitution to be considered
-  countThreshold: number // minimum count for a substitution to be considered
+  countThreshold: number, // minimum count for a substitution to be considered
 ) {
   const costMax = 0.9;
   const subCostMin = 0.4;
@@ -74,7 +74,7 @@ function parseTransforms(xss: Transform[][], entry: LexEntry, subMap: Map<string
         cost.count++;
         cost.conf += x.at < entry.c.length ? entry.c[x.at] : 0;
         subMap.set(`${x.from} ${x.to}`, cost);
-      })
+      }),
     );
 }
 
@@ -86,7 +86,7 @@ function findTransforms(
   pos = 0, // for recursion
   line: Transform[] = [],
   lines: Transform[][] = [],
-  crumbs = new Map<string, number>()
+  crumbs = new Map<string, number>(),
 ): Transform[][] {
   if (h === x) return [line];
   if (pos >= x.length && !mode.del) return [];
@@ -101,8 +101,8 @@ function findTransforms(
       pos + (op === 'skip' ? 1 : op.to.length),
       op === 'skip' ? line : [...line, op],
       lines,
-      crumbs
-    )
+      crumbs,
+    ),
   );
 }
 
@@ -153,7 +153,7 @@ function ppCost(key: string, e: SubInfo) {
         prettyPair('freq', e.freq.toFixed(3)),
         prettyPair('cost', e.cost?.toFixed(2) ?? '1'),
       ].join(grey(', ')) +
-      ` }${grey(',')}`
+      ` }${grey(',')}`,
   );
 }
 
@@ -303,7 +303,7 @@ class Builder {
   }
   addOccurrence(phrase: string) {
     [...this.encode(phrase)].forEach(token =>
-      this.occurrences.set(token, (this.occurrences.get(token) ?? 0) + 1)
+      this.occurrences.set(token, (this.occurrences.get(token) ?? 0) + 1),
     );
   }
   addSub(token: string, sub: Sub) {
@@ -356,7 +356,7 @@ class Builder {
                     return `{ to: '${s.to}', cost: ${c} }`;
                   })
                   .join(',\n      ')}${e.subs.length > 1 ? ',\n    ],' : '],'}`
-              : '')
+              : ''),
         )
         .join('\n  },\n  {\n    ') +
       '\n  },\n]'

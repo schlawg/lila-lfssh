@@ -13,7 +13,7 @@ export function hooks(ctrl: LobbyController): Hooks {
       if (id === 'custom') ctrl.setupCtrl.openModal('hook');
       else if (id) ctrl.clickPool(id);
     },
-    ctrl.redraw
+    ctrl.redraw,
   );
 }
 
@@ -39,7 +39,7 @@ export function render(ctrl: LobbyController) {
             ? h('div.range', member.range.replace('-', '–'))
             : h('div.perf', pool.perf),
           active ? spinner() : null,
-        ]
+        ],
       );
     })
     .concat(
@@ -49,7 +49,7 @@ export function render(ctrl: LobbyController) {
           class: { transp: !!member },
           attrs: { 'data-id': 'custom' },
         },
-        ctrl.trans.noarg('custom')
-      )
+        ctrl.trans.noarg('custom'),
+      ),
     );
 }
