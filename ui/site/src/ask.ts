@@ -58,7 +58,7 @@ function askXhr(req: { ask: Ask; url: string; method?: string; body?: FormData; 
     },
     (rsp: Response) => {
       console.log(`Ask failed: ${rsp.status} ${rsp.statusText}`);
-    }
+    },
   );
 }
 
