@@ -1,5 +1,6 @@
 import * as control from './control';
 import * as xhr from 'common/xhr';
+import { isTouchDevice } from 'common/mobile';
 import AnalyseCtrl from './ctrl';
 import { h, VNode } from 'snabbdom';
 import { snabModal } from 'common/modal';
@@ -26,17 +27,16 @@ export const bind = (ctrl: AnalyseCtrl) => {
     .bind(['shift+right', 'shift+j'], () => {})
     .bind(['right', 'j'], () => {
       if (!ctrl.fork.proceed()) control.next(ctrl);
-
       ctrl.redraw();
     })
     .bind(['up', '0', 'home'], () => {
-      if (!ctrl.fork.prev()) control.first(ctrl);
-      else ctrl.setAutoShapes();
+      /*if (!ctrl.fork.prev())*/ control.first(ctrl);
+      //else ctrl.setAutoShapes();
       ctrl.redraw();
     })
     .bind(['down', '$', 'end'], () => {
-      if (!ctrl.fork.next()) control.last(ctrl);
-      else ctrl.setAutoShapes();
+      /*if (!ctrl.fork.next())*/ control.last(ctrl);
+      //else ctrl.setAutoShapes();
       ctrl.redraw();
     })
     .bind('shift+c', () => {
@@ -137,5 +137,19 @@ export function view(ctrl: AnalyseCtrl): VNode {
       ctrl.redraw();
     },
     content: [h('div.scrollable', spinner())],
+  });
+}
+
+export function maybeShowShiftKeyHelp(ctrl: AnalyseCtrl) {
+  if (ctrl.node.children.length <= 1 || isTouchDevice() || !lichess.once('shift-key-help')) return;
+  Promise.all([lichess.loadCssPath('analyse.keyboard'), xhr.text('/help/shift-key')]).then(([, html]) => {
+    $('.cg-wrap').append($(html).attr('id', 'transient-navigation-tooltip'));
+    $(document).on('mousedown keydown wheel', () => {
+      setTimeout(() => {
+        $(document).off('mousedown keydown wheel');
+        $('#transient-navigation-tooltip').addClass('fade-out');
+        setTimeout(() => $('#transient-navigation-tooltip').remove(), 1000);
+      }, 2000);
+    });
   });
 }
