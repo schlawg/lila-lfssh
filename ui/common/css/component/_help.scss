@@ -76,14 +76,13 @@
   transform: translate(-50%, -50%);
   width: auto;
   align-items: center;
-  flex-wrap: nowrap;
   background: set-alpha($c-bg-popup, 0.8);
   box-shadow: 0 0 1em rgba(0, 0, 0, 0.4);
   color: $c-font-clear;
   border-radius: 0.5em;
   padding: 1em 2em;
   user-select: none;
-  white-space: nowrap;
+  pointer-events: none;
 
   kbd {
     font-family: roboto, sans-serif;
@@ -106,7 +105,7 @@
   }
 
   &.fade-out {
-    transition: opacity 1s linear;
+    transition: opacity 0.5s linear;
     opacity: 0;
   }
 }

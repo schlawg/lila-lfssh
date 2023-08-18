@@ -140,13 +140,9 @@ export function view(ctrl: AnalyseCtrl): VNode {
   });
 }
 
-let shown = false;
 export function maybeShowShiftKeyHelp() {
   // we can probably delete this after a month or so
-  isTouchDevice;
-  if (shown) return;
-  shown = true;
-  //if (isTouchDevice() || !lichess.once('help.analyse.shift-key')) return;
+  if (isTouchDevice() || !lichess.once('help.analyse.shift-key')) return;
   Promise.all([lichess.loadCssPath('analyse.keyboard'), xhr.text('/help/analyse/shift-key')]).then(
     ([, html]) => {
       $('.cg-wrap').append($(html).attr('id', 'analyse-shift-key-tooltip'));
@@ -155,8 +151,8 @@ export function maybeShowShiftKeyHelp() {
           $(document).off('mousedown keydown wheel');
           $('#analyse-shift-key-tooltip').addClass('fade-out');
 
-          setTimeout(() => $('#analyse-shift-key-tooltip').remove(), 1000);
-        }, 2000);
+          setTimeout(() => $('#analyse-shift-key-tooltip').remove(), 500);
+        }, 700);
       });
     },
   );
