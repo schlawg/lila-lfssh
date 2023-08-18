@@ -66,7 +66,7 @@ object help:
       table(
         tbody(
           navigateMoves,
-          row(kbd("shift"), "Hilite previous/next variation arrow"),
+          row(kbd("shift"), "Cycle selected move arrow"),
           row(frag(kbd("shift"), kbd("←"), or, kbd("shift"), kbd("J")), "Rewind to mainline"),
           header(trans.analysisOptions()),
           flip,
@@ -106,23 +106,21 @@ object help:
       )
     )
 
-  def analyseShiftKeyHelp(using Lang) =
+  def analyseShiftKey(using Lang) =
     frag(
       div(cls := "help-ephemeral")(
-        "Press either ",
-        span(cls := "key", "SHIFT"),
-        " key to hilite:",
         ul(
-          li("Purple arrow for the mainline"),
-          li("Pink arrow for a variation")
+          li("Purple arrow is mainline move"),
+          li("Pink arrows are variations"),
+          li("Blue arrow is eval best move")
         ),
-        "Then use ",
-        span(cls := "key", "→"),
-        " to play the selected move.",
-        br,
-        "To return to the mainline, press ",
-        span(cls := "key", "SHIFT"),
-        span(cls := "key", "←")
+        table(
+          tbody(
+            row(kbd("shift"), "cycle selected move arrow"),
+            row(kbd("→"), "play selected move"),
+            row(span(kbd("shift"), or, kbd("←")), "return to previous mainline move")
+          )
+        )
       )
     )
 

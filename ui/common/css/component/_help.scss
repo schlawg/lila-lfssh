@@ -1,22 +1,5 @@
-%help-modal {
+%help {
   @extend %flex-column;
-
-  > div {
-    padding: 0 !important;
-  }
-
-  h2 {
-    margin: 0.5em 0 0 0;
-  }
-
-  .scrollable {
-    overflow-y: auto;
-    padding: 0.8em 0;
-  }
-
-  table {
-    width: 100%;
-  }
 
   th p {
     margin: 1.2em 0 0.6em 0;
@@ -31,20 +14,21 @@
     text-align: left;
   }
 
+  .desc:first-letter {
+    text-transform: uppercase;
+  }
+
   .keys {
     padding-#{$end-direction}: 1em;
     text-align: right;
     white-space: nowrap;
   }
 
-  .desc:first-letter {
-    text-transform: uppercase;
-  }
-
   or {
     margin-#{$start-direction}: 0.2em;
     opacity: 0.5;
   }
+
   kbd {
     display: inline-block;
     padding: 4px 5px;
@@ -61,9 +45,29 @@
   }
 }
 
+%help-modal {
+  @extend %help;
+
+  table {
+    width: 100%;
+  }
+
+  > div {
+    padding: 0 !important;
+  }
+
+  h2 {
+    margin: 0.5em 0 0 0;
+  }
+
+  .scrollable {
+    overflow-y: auto;
+    padding: 0.8em 0;
+  }
+}
+
 .help-ephemeral {
-  display: block;
-  background: rgba($c-bg-popup, 0.9);
+  @extend %help;
   @include back-blur();
   position: absolute;
   z-index: 100;
@@ -71,30 +75,36 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: auto;
+  align-items: center;
+  flex-wrap: nowrap;
+  background: set-alpha($c-bg-popup, 0.8);
+  box-shadow: 0 0 1em rgba(0, 0, 0, 0.4);
   color: $c-font-clear;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
+  border-radius: 0.5em;
+  padding: 1em 2em;
   user-select: none;
   white-space: nowrap;
+
+  kbd {
+    font-family: roboto, sans-serif;
+  }
+
+  table {
+    display: inline-block;
+    width: auto;
+  }
+
   ul {
-    padding-left: 16px;
-    margin: 4px 8px;
+    margin-bottom: 1em;
+    display: inline-block;
+    width: auto;
+    font-size: larger;
     li {
+      padding-left: 0.5em;
       list-style: disc;
-      margin: 2px 4px;
     }
   }
-  .key {
-    font-family: monospace;
-    color: #333;
-    background-color: #fff;
-    padding: 2px 5px;
-    border-radius: 3px;
-    border: 1px solid #ccc;
-    display: inline-block;
-    margin: 0 2px;
-  }
+
   &.fade-out {
     transition: opacity 1s linear;
     opacity: 0;

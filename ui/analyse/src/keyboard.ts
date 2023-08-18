@@ -140,16 +140,24 @@ export function view(ctrl: AnalyseCtrl): VNode {
   });
 }
 
-export function maybeShowShiftKeyHelp(ctrl: AnalyseCtrl) {
-  if (ctrl.node.children.length <= 1 || isTouchDevice() || !lichess.once('shift-key-help')) return;
-  Promise.all([lichess.loadCssPath('analyse.keyboard'), xhr.text('/help/shift-key')]).then(([, html]) => {
-    $('.cg-wrap').append($(html).attr('id', 'transient-navigation-tooltip'));
-    $(document).on('mousedown keydown wheel', () => {
-      setTimeout(() => {
-        $(document).off('mousedown keydown wheel');
-        $('#transient-navigation-tooltip').addClass('fade-out');
-        setTimeout(() => $('#transient-navigation-tooltip').remove(), 1000);
-      }, 2000);
-    });
-  });
+let shown = false;
+export function maybeShowShiftKeyHelp() {
+  // we can probably delete this after a month or so
+  isTouchDevice;
+  if (shown) return;
+  shown = true;
+  //if (isTouchDevice() || !lichess.once('help.analyse.shift-key')) return;
+  Promise.all([lichess.loadCssPath('analyse.keyboard'), xhr.text('/help/analyse/shift-key')]).then(
+    ([, html]) => {
+      $('.cg-wrap').append($(html).attr('id', 'analyse-shift-key-tooltip'));
+      $(document).on('mousedown keydown wheel', () => {
+        setTimeout(() => {
+          $(document).off('mousedown keydown wheel');
+          $('#analyse-shift-key-tooltip').addClass('fade-out');
+
+          setTimeout(() => $('#analyse-shift-key-tooltip').remove(), 1000);
+        }, 2000);
+      });
+    },
+  );
 }
