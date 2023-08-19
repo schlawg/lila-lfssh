@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@types/cash':
+        specifier: workspace:*
+        version: link:ui/@types/cash
+      '@types/lichess':
+        specifier: workspace:*
+        version: link:ui/@types/lichess
       '@types/node':
         specifier: ^20.5.0
         version: 20.5.0
@@ -82,18 +88,12 @@ importers:
       '@badrap/result':
         specifier: ^0.2.13
         version: 0.2.13
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/debounce-promise':
         specifier: ^3.1.6
         version: 3.1.6
       '@types/highcharts':
         specifier: '=4.2.57'
         version: 4.2.57
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       '@types/yaireo__tagify':
         specifier: ^4.17.0
         version: 4.17.0
@@ -139,12 +139,6 @@ importers:
 
   ui/board:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -157,12 +151,6 @@ importers:
       '@badrap/result':
         specifier: ^0.2.13
         version: 0.2.13
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chessops:
         specifier: ^0.12.7
         version: 0.12.7
@@ -178,12 +166,6 @@ importers:
 
   ui/challenge:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -193,27 +175,15 @@ importers:
 
   ui/chart:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/highcharts':
         specifier: '=4.2.57'
         version: 4.2.57
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
 
   ui/chat:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -226,12 +196,6 @@ importers:
 
   ui/chess:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -241,12 +205,6 @@ importers:
 
   ui/cli:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -256,15 +214,9 @@ importers:
 
   ui/common:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       lichess-pgn-viewer:
-        specifier: npm:schlawg-pgn-viewer@2.0.0
-        version: /schlawg-pgn-viewer@2.0.0
+        specifier: ^2.0.0
+        version: 2.0.0
       snabbdom:
         specifier: ^3.5.1
         version: 3.5.1
@@ -277,15 +229,9 @@ importers:
       '@fnando/sparkline':
         specifier: ^0.3.10
         version: 0.3.10
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/fnando__sparkline':
         specifier: ^0.3.4
         version: 0.3.4
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -298,12 +244,6 @@ importers:
 
   ui/dasher:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -313,24 +253,12 @@ importers:
 
   ui/dgt:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chessops:
         specifier: ^0.12.7
         version: 0.12.7
 
   ui/editor:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chessops:
         specifier: ^0.12.7
         version: 0.12.7
@@ -343,12 +271,6 @@ importers:
 
   ui/game:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -358,15 +280,9 @@ importers:
 
   ui/insight:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/highcharts':
         specifier: '=4.2.57'
         version: 4.2.57
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -382,12 +298,6 @@ importers:
       '@jest/globals':
         specifier: ^29.3.1
         version: 29.3.1
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chess:
         specifier: workspace:*
         version: link:../chess
@@ -400,15 +310,9 @@ importers:
 
   ui/learn:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/chess.js':
         specifier: '=0.10.1'
         version: 0.10.1
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chess.js:
         specifier: github:ornicar/chess.js#learn
         version: github.com/ornicar/chess.js/ad0709c0b07773d9d0da8e4605a9a2a28f00d249
@@ -424,15 +328,9 @@ importers:
 
   ui/lobby:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/debounce-promise':
         specifier: ^3.1.6
         version: 3.1.6
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -448,15 +346,9 @@ importers:
 
   ui/mod:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/debounce-promise':
         specifier: ^3.1.6
         version: 3.1.6
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       '@types/yaireo__tagify':
         specifier: ^4.16.0
         version: 4.16.0
@@ -481,12 +373,6 @@ importers:
 
   ui/msg:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -496,12 +382,6 @@ importers:
 
   ui/notify:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -511,12 +391,6 @@ importers:
 
   ui/nvui:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chess:
         specifier: workspace:*
         version: link:../chess
@@ -529,15 +403,9 @@ importers:
 
   ui/opening:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/debounce-promise':
         specifier: ^3.1.6
         version: 3.1.6
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chart.js:
         specifier: '=3.9.1'
         version: 3.9.1
@@ -559,12 +427,6 @@ importers:
 
   ui/palantir:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       '@types/webrtc':
         specifier: ^0.0.33
         version: 0.0.33
@@ -577,12 +439,6 @@ importers:
 
   ui/puz:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chessops:
         specifier: ^0.12.7
         version: 0.12.7
@@ -595,12 +451,6 @@ importers:
 
   ui/puzzle:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       board:
         specifier: workspace:*
         version: link:../board
@@ -637,12 +487,6 @@ importers:
 
   ui/racer:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chess:
         specifier: workspace:*
         version: link:../chess
@@ -661,12 +505,6 @@ importers:
 
   ui/round:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       board:
         specifier: workspace:*
         version: link:../board
@@ -697,24 +535,12 @@ importers:
 
   ui/serviceWorker:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       types-serviceworker:
         specifier: ^0.0.1
         version: 0.0.1
 
   ui/simul:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chat:
         specifier: workspace:*
         version: link:../chat
@@ -736,9 +562,6 @@ importers:
       '@toast-ui/editor':
         specifier: '=3.1.7'
         version: 3.1.7
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/debounce-promise':
         specifier: ^3.1.6
         version: 3.1.6
@@ -748,9 +571,6 @@ importers:
       '@types/highcharts':
         specifier: '=4.2.57'
         version: 4.2.57
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       '@types/yaireo__tagify':
         specifier: ^4.17.0
         version: 4.17.0
@@ -811,12 +631,6 @@ importers:
 
   ui/storm:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chess:
         specifier: workspace:*
         version: link:../chess
@@ -835,12 +649,6 @@ importers:
 
   ui/swiss:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chat:
         specifier: workspace:*
         version: link:../chat
@@ -859,12 +667,6 @@ importers:
 
   ui/tournament:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chat:
         specifier: workspace:*
         version: link:../chat
@@ -880,12 +682,6 @@ importers:
 
   ui/tournamentCalendar:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -898,15 +694,9 @@ importers:
 
   ui/tournamentSchedule:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
       '@types/dragscroll':
         specifier: 0.0.0
         version: 0.0.0
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -919,24 +709,12 @@ importers:
 
   ui/tree:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
 
   ui/tutor:
     dependencies:
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       common:
         specifier: workspace:*
         version: link:../common
@@ -952,12 +730,6 @@ importers:
       '@types/audioworklet':
         specifier: ^0.0.36
         version: 0.0.36
-      '@types/cash':
-        specifier: workspace:*
-        version: link:../@types/cash
-      '@types/lichess':
-        specifier: workspace:*
-        version: link:../@types/lichess
       chess:
         specifier: workspace:*
         version: link:../chess
@@ -2713,6 +2485,10 @@ packages:
       mithril: github.com/ornicar/mithril.js/d99d36d445fad1b22f4b285963ea065291d99ad4
     dev: false
 
+  /chessground@9.0.2:
+    resolution: {integrity: sha512-3YRrA052eN+LRqxsjZ6Jesk12PWnONll0Hkfqf68abwbi9JN168D2PXOWeEygy4mPEWcDfSajAmn5r/vYSE8pQ==}
+    dev: false
+
   /chessops@0.12.7:
     resolution: {integrity: sha512-ylWwKOudgTNJCDq7vx/Rs9fkZwPB3CEk0AJ8NtAfEYOoA3DGRQdS/Z/oQRsnQvs92rUu0yEobn4ZIPzLh8y9/w==}
     dependencies:
@@ -4300,6 +4076,15 @@ packages:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+    dev: false
+
+  /lichess-pgn-viewer@2.0.0:
+    resolution: {integrity: sha512-vh50un9jHKwiwMs9EUKgGDJCwUYvjR2Td74eQm2kv7dRpX7Y1QJH32vtC25S1fMPPC1KIU65miKX0nwEa63fYA==}
+    dependencies:
+      '@types/node': 20.5.0
+      chessground: 9.0.2
+      chessops: 0.12.7
+      snabbdom: 3.5.1
     dev: false
 
   /lilconfig@2.1.0:

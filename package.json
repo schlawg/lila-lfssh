@@ -25,6 +25,8 @@
     "*.{js,ts,md,json,scss}": "prettier --write"
   },
   "dependencies": {
+    "@types/cash": "workspace:*",
+    "@types/lichess": "workspace:*",
     "@types/node": "^20.5.0",
     "@types/web": "^0.0.113",
     "@typescript-eslint/eslint-plugin": "^6.4.0",

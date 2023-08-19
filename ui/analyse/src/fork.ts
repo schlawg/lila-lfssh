@@ -12,8 +12,8 @@ export interface ForkCtrl {
     displayed: boolean;
   };
   selected(): number | undefined;
-  next: (cycle?: boolean) => boolean | undefined;
-  prev: (cycle?: boolean) => boolean | undefined;
+  next: () => boolean;
+  prev: () => boolean;
   hover: (uci: Uci | null | undefined) => void;
   highlight: (it?: number) => void;
   proceed: (it?: number) => boolean | undefined;
@@ -41,25 +41,17 @@ export function make(root: AnalyseCtrl): ForkCtrl {
         displayed: displayed(),
       };
     },
-    next(cycle = false) {
-      if (displayed()) {
-        selected = cycle
-          ? (selected + 1) % root.node.children.length
-          : Math.min(root.node.children.length - 1, selected + 1);
-        selections.set(root.path, selected);
-        return true;
-      }
-      return undefined;
+    next() {
+      if (!displayed()) return false;
+      selected = (selected + 1) % root.node.children.length;
+      selections.set(root.path, selected);
+      return true;
     },
-    prev(cycle = false) {
-      if (displayed()) {
-        selected = cycle
-          ? (selected + root.node.children.length - 1) % root.node.children.length
-          : Math.max(0, selected - 1);
-        selections.set(root.path, selected);
-        return true;
-      }
-      return undefined;
+    prev() {
+      if (!displayed()) return false;
+      selected = (selected + root.node.children.length - 1) % root.node.children.length;
+      selections.set(root.path, selected);
+      return true;
     },
     hover(uci: Uci | undefined | null) {
       hovering = root.node.children.findIndex(n => n.uci === uci);
@@ -97,7 +89,7 @@ export function make(root: AnalyseCtrl): ForkCtrl {
 const eventToIndex = (e: MouseEvent): number | undefined => {
   const target = e.target as HTMLElement;
   return parseInt(
-    (target.parentNode as HTMLElement).getAttribute('data-it') || target.getAttribute('data-it') || '',
+    (target.parentNode as HTMLElement).getAttribute('data-it') || target.getAttribute('data-it') || ''
   );
 };
 
@@ -133,10 +125,10 @@ export function view(root: AnalyseCtrl, concealOf?: ConcealOf) {
               showEval: root.showComputer(),
               showGlyphs: root.showComputer(),
             },
-            node,
-          )!,
+            node
+          )!
         );
       return undefined;
-    }),
+    })
   );
 }
