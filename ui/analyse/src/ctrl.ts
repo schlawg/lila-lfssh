@@ -95,6 +95,7 @@ export default class AnalyseCtrl {
   flipped = false;
   showComments = true; // whether to display comments in the move tree
   showAutoShapes = storedBooleanProp('analyse.show-auto-shapes', true);
+  showVariationArrows = storedBooleanProp('analyse.show-variation-arrows', true);
   showGauge = storedBooleanProp('analyse.show-gauge', true);
   showComputer = storedBooleanProp('analyse.show-computer', true);
   showMoveAnnotation = storedBooleanProp('analyse.show-move-annotation', true);
@@ -611,7 +612,7 @@ export default class AnalyseCtrl {
 
   setAutoShapes = (): void => {
     this.withCg(cg => cg.setAutoShapes(computeAutoShapes(this)));
-    if (this.node.children.length > 1) keyboard.maybeShowShiftKeyHelp();
+    if (this.node.children.length > 1) keyboard.maybeShowVariationArrowHelp();
   };
 
   private onNewCeval = (ev: Tree.ClientEval, path: Tree.Path, isThreat?: boolean): void => {
@@ -772,12 +773,18 @@ export default class AnalyseCtrl {
   };
 
   private resetAutoShapes() {
-    if (this.showAutoShapes() || this.showMoveAnnotation()) this.setAutoShapes();
+    if (this.showAutoShapes() || this.showVariationArrows() || this.showMoveAnnotation())
+      this.setAutoShapes();
     else this.chessground && this.chessground.setAutoShapes([]);
   }
 
   toggleAutoShapes = (v: boolean): void => {
     this.showAutoShapes(v);
+    this.resetAutoShapes();
+  };
+
+  toggleVariationArrows = (v: boolean): void => {
+    this.showVariationArrows(v);
     this.resetAutoShapes();
   };
 
@@ -794,7 +801,8 @@ export default class AnalyseCtrl {
     if (!this.showComputer()) {
       this.tree.removeComputerVariations();
       if (this.ceval.enabled()) this.toggleCeval();
-    } else this.resetAutoShapes();
+    }
+    this.resetAutoShapes();
   }
 
   toggleComputer = () => {
