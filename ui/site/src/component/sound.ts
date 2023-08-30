@@ -61,12 +61,13 @@ export default new (class implements SoundI {
     if (sound && (await this.resumeContext())) await sound.play(this.getVolume() * volume);
   }
 
-  move: SoundMove = throttle(100, async node => {
+  move = throttle(100, async (node?: { uci?: Uci; san?: string }, music?: boolean) => {
     if (this.theme === 'music') {
+      if (music === false) return;
       this.music ??= await lichess.loadEsm<SoundMove>('soundMove');
       this.music(node);
       return;
-    }
+    } else if (music === true) return;
     if (node?.san?.includes('x')) this.play('capture');
     else this.play('move');
     if (node?.san?.endsWith('#') || node?.san?.endsWith('+')) this.play('check');
@@ -217,8 +218,10 @@ export default new (class implements SoundI {
 
   primer = () => {
     // some browsers fail audioContext.resume() on contexts created prior to user interaction
-    this.ctx = makeAudioContext()!;
-    for (const s of this.sounds.values()) s.rewire(this.ctx);
+    const ctx = makeAudioContext()!;
+    for (const s of this.sounds.values()) s.rewire(ctx);
+    this.ctx?.close();
+    this.ctx = ctx;
     $('body').off('mouseup touchend keydown', this.primer);
     setTimeout(() => $('#warn-no-autoplay').removeClass('shown'), 500);
   };

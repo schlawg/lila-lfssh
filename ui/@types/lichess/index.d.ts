@@ -123,7 +123,7 @@ interface SoundI {
   load(name: string, path?: string): void;
   play(name: string, volume?: number): Promise<void>;
   playOnce(name: string): void;
-  move(node?: { san?: string; uci?: Uci }): void;
+  move(node?: { san?: string; uci?: Uci }, music?: boolean): void;
   countdown(count: number, intervalMs?: number): Promise<void>; // default interval 1000ms
   getVolume(): number;
   setVolume(v: number): void;
