@@ -4,6 +4,7 @@ import { winningChances } from 'ceval';
 import * as cg from 'chessground/types';
 import { opposite } from 'chessground/util';
 import { DrawModifiers, DrawShape } from 'chessground/draw';
+import { isTouchDevice } from 'common/mobile';
 import AnalyseCtrl from './ctrl';
 
 const pieceDrop = (key: cg.Key, role: cg.Role, color: Color): DrawShape => ({
@@ -75,7 +76,8 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   ctrl.fork.hover(hovering?.uci);
   if (ctrl.showAutoShapes() && ctrl.showComputer()) {
-    if (nEval.best) shapes = shapes.concat(makeShapesFromUci(rcolor, nEval.best, 'paleGreen'));
+    if (nEval.best && !ctrl.showVariationArrows())
+      shapes = shapes.concat(makeShapesFromUci(rcolor, nEval.best, 'paleGreen'));
     if (!hovering && instance.multiPv()) {
       const nextBest = instance.enabled() && nCeval ? nCeval.pvs[0].moves[0] : ctrl.nextNodeBest();
       if (nextBest) shapes = shapes.concat(makeShapesFromUci(color, nextBest, 'paleBlue', undefined));
@@ -116,29 +118,37 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     });
   }
   shapes = shapes.concat(annotationShapes(ctrl));
-
-  if (ctrl.showAutoShapes() && ctrl.node.children.length > 1) {
+  if (showVariationArrows(ctrl)) {
     ctrl.node.children.forEach((node, i) => {
       const existing = shapes.find(s => s.orig === node.uci!.slice(0, 2) && s.dest === node.uci!.slice(2, 4));
-      const symbol = node.glyphs?.[0]?.symbol;
       if (existing) {
-        existing.brush = i === 0 ? 'purple' : existing.brush;
         if (i === ctrl.fork.selected()) {
           existing.modifiers ??= {};
           existing.modifiers.hilite = true;
         }
-        if (symbol) existing.label = { text: symbol, fill: glyphColors[symbol] };
-      } else
+      } else {
         shapes.push({
           orig: node.uci!.slice(0, 2) as Key,
           dest: node.uci?.slice(2, 4) as Key,
-          brush: i === 0 ? 'purple' : 'pink',
+          brush: 'pink',
           modifiers: { hilite: i === ctrl.fork.selected() },
-          label: symbol ? { text: symbol, fill: glyphColors[symbol] } : undefined,
         });
+      }
     });
   }
   return shapes;
+}
+
+function showVariationArrows(ctrl: AnalyseCtrl): boolean {
+  const chap = ctrl.study?.data.chapter;
+  return (
+    !isTouchDevice() &&
+    !chap?.practice &&
+    !chap?.conceal &&
+    !chap?.gamebook &&
+    ctrl.showVariationArrows() &&
+    ctrl.node.children.length > 1
+  );
 }
 
 const glyphColors: { [k: string]: string } = {
