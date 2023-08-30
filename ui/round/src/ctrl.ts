@@ -192,7 +192,7 @@ export default class RoundController {
       if (this.data.game.variant.key === 'atomic') {
         lichess.sound.play('explosion');
         atomic.capture(this, dest);
-      } else lichess.sound.move({ san: 'x' }, false); // capture hint
+      } else lichess.sound.move({ san: 'x' }, false);
     } else lichess.sound.move({}, false);
   };
 

@@ -8,8 +8,6 @@ import { charRole } from 'chess';
 type Name = string;
 type Path = string;
 
-export type SoundMove = (node?: { san?: string; uci?: string }) => void;
-
 export default new (class implements SoundI {
   ctx = makeAudioContext();
   sounds = new Map<Path, Sound>(); // All loaded sounds and their instances
@@ -65,9 +63,10 @@ export default new (class implements SoundI {
     if (this.theme === 'music') {
       if (music === false) return;
       this.music ??= await lichess.loadEsm<SoundMove>('soundMove');
-      this.music(node);
+      this.music(node, music);
       return;
-    } else if (music === true) return;
+    }
+    if (music === true) return;
     if (node?.san?.includes('x')) this.play('capture');
     else this.play('move');
     if (node?.san?.endsWith('#') || node?.san?.endsWith('+')) this.play('check');
