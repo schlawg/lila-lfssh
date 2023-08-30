@@ -188,7 +188,6 @@ export default class RoundController {
   };
 
   private onMove = (orig: cg.Key, dest: cg.Key, captured?: cg.Piece) => {
-    console.log('onMove calling lichess.sound.move()');
     if (captured || this.enpassant(orig, dest)) {
       if (this.data.game.variant.key === 'atomic') {
         lichess.sound.play('explosion');
