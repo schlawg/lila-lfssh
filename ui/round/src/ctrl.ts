@@ -277,7 +277,7 @@ export default class RoundController {
         dests: util.parsePossibleMoves(this.data.possibleMoves),
       };
     this.chessground.set(config);
-    if (isForwardStep) lichess.sound.move(s);
+    if (s.san && isForwardStep) lichess.sound.move(s);
     this.autoScroll();
     const canMove = ply === this.lastPly() && this.data.player.color === config.turnColor;
     this.voiceMove?.update(s.fen, canMove);
