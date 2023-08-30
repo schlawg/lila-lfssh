@@ -141,9 +141,9 @@ export function view(ctrl: AnalyseCtrl): VNode {
     content: [h('div.scrollable', spinner())],
   });
 }
-let once = 0;
+
 export function maybeShowVariationArrowHelp() {
-  if (isTouchDevice() || ++once != 1) return; //!lichess.once('help.analyse.variation-arrows-rtfm')) return;
+  if (isTouchDevice() || !lichess.once('help.analyse.variation-arrows-rtfm')) return;
   showDialog({
     cls: 'variation-arrow-help',
     htmlUrl: '/help/analyse/variation-arrow',
