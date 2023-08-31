@@ -322,7 +322,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
             name: 'showVariationArrows',
             title: 'Variation navigation arrows',
             id: 'variationArrows',
-            checked: ctrl.showVariationArrows(),
+            checked: ctrl.variationArrowsProp(),
             change: ctrl.toggleVariationArrows,
           },
           ctrl,

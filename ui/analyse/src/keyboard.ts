@@ -1,6 +1,5 @@
 import * as control from './control';
 import * as xhr from 'common/xhr';
-import { isTouchDevice } from 'common/mobile';
 import AnalyseCtrl from './ctrl';
 import { h, VNode } from 'snabbdom';
 import { snabModal } from 'common/modal';
@@ -142,11 +141,11 @@ export function view(ctrl: AnalyseCtrl): VNode {
   });
 }
 
-export function maybeShowVariationArrowHelp() {
-  if (isTouchDevice() || !lichess.once('help.analyse.variation-arrows-rtfm')) return;
-  showDialog({
-    cls: 'variation-arrow-help',
-    htmlUrl: '/help/analyse/variation-arrow',
-    cssPath: 'analyse.keyboard',
-  });
+export function maybeShowVariationArrowHelp(ctrl: AnalyseCtrl) {
+  if (ctrl.showVariationArrows() && lichess.once('help.analyse.variation-arrows-rtfm'))
+    showDialog({
+      cls: 'variation-arrow-help',
+      htmlUrl: '/help/analyse/variation-arrow',
+      cssPath: 'analyse.keyboard',
+    });
 }

@@ -4,7 +4,6 @@ import { winningChances } from 'ceval';
 import * as cg from 'chessground/types';
 import { opposite } from 'chessground/util';
 import { DrawModifiers, DrawShape } from 'chessground/draw';
-import { isTouchDevice } from 'common/mobile';
 import AnalyseCtrl from './ctrl';
 
 const pieceDrop = (key: cg.Key, role: cg.Role, color: Color): DrawShape => ({
@@ -118,7 +117,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     });
   }
   shapes = shapes.concat(annotationShapes(ctrl));
-  if (showVariationArrows(ctrl)) {
+  if (ctrl.showVariationArrows()) {
     ctrl.node.children.forEach((node, i) => {
       const existing = shapes.find(s => s.orig === node.uci!.slice(0, 2) && s.dest === node.uci!.slice(2, 4));
       if (existing) {
@@ -137,18 +136,6 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     });
   }
   return shapes;
-}
-
-function showVariationArrows(ctrl: AnalyseCtrl): boolean {
-  const chap = ctrl.study?.data.chapter;
-  return (
-    !isTouchDevice() &&
-    !chap?.practice &&
-    !chap?.conceal &&
-    !chap?.gamebook &&
-    ctrl.showVariationArrows() &&
-    ctrl.node.children.length > 1
-  );
 }
 
 const glyphColors: { [k: string]: string } = {
