@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -30,8 +30,8 @@ importers:
         specifier: github:lichess-org/ab-stub
         version: github.com/lichess-org/ab-stub/94236bf34dbc9c05daf50f4c9842d859b9142be0
       chessground:
-        specifier: ^9.0.2
-        version: 9.0.2
+        specifier: npm:schlawground@9.0.3
+        version: /schlawground@9.0.3
       eslint:
         specifier: ^8.47.0
         version: 8.47.0
@@ -4391,6 +4391,10 @@ packages:
 
   /schlawground@9.0.1:
     resolution: {integrity: sha512-nIlOhNk4InEN1aNXDazF2fqia3b9jBmYT+YphoTMYS2f43P6MaFPze7dz1NDCr9oTDNUupdDnwGu6h6TtpAAYQ==}
+    dev: false
+
+  /schlawground@9.0.3:
+    resolution: {integrity: sha512-g3rmI7e6sbHwoLJB4oqYbZWKihj31maXsEwIiZbUBhf8mkatkCmCLGtqMTOMLfQS86/joiKTqMCsvVaaVywPHQ==}
     dev: false
 
   /semver@6.3.1:
