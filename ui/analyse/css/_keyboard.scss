@@ -1,18 +1,9 @@
 .keyboard-help {
-  @extend %help-modal;
-
   td.mouse li {
     list-style: disc inside;
     margin-#{$start-direction}: 1em;
   }
 }
-
-.variation-arrow-help {
-  @extend %help-dialog;
-  > div {
-    min-height: 1px; // safari
-    align-items: center;
-    text-align: center;
-    overflow-y: auto;
-  }
+dialog .variation-help {
+  padding: 2em;
 }
