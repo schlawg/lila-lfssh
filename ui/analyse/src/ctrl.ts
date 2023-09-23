@@ -785,7 +785,7 @@ export default class AnalyseCtrl {
     return (
       !isTouchDevice() &&
       !chap?.practice &&
-      !chap?.conceal &&
+      chap?.conceal === undefined &&
       !chap?.gamebook &&
       this.variationArrowsProp() &&
       this.node.children.length > 1
@@ -797,8 +797,8 @@ export default class AnalyseCtrl {
     this.resetAutoShapes();
   };
 
-  toggleVariationArrows = (v: boolean): void => {
-    this.variationArrowsProp(v);
+  toggleVariationArrows = (v?: boolean): void => {
+    this.variationArrowsProp(v ?? !this.variationArrowsProp());
     this.resetAutoShapes();
   };
 

@@ -28,7 +28,7 @@ object Dependencies {
   val scalatags   = "com.lihaoyi"                  %% "scalatags"                       % "0.12.0"
   val lettuce     = "io.lettuce"                    % "lettuce-core"                    % "6.2.6.RELEASE"
   val nettyTransport =
-    "io.netty" % s"netty-transport-native-$notifier" % "4.1.97.Final" classifier s"$os-$arch"
+    "io.netty" % s"netty-transport-native-$notifier" % "4.1.98.Final" classifier s"$os-$arch"
   val munit       = "org.scalameta"              %% "munit"         % "1.0.0-M10" % Test
   val uaparser    = "org.uaparser"               %% "uap-scala"     % "0.16.0"
   val apacheText  = "org.apache.commons"          % "commons-text"  % "1.10.0"
@@ -72,7 +72,7 @@ object Dependencies {
     val server      = "com.typesafe.play" %% "play-server"       % playVersion
     val netty       = "com.typesafe.play" %% "play-netty-server" % playVersion
     val logback     = "com.typesafe.play" %% "play-logback"      % playVersion
-    val mailer      = "com.typesafe.play" %% "play-mailer"       % "9.0.0-M2"
+    val mailer      = "com.typesafe.play" %% "play-mailer"       % "9.0.0-RC1"
   }
 
   object playWs {
