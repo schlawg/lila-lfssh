@@ -787,6 +787,7 @@ export default class AnalyseCtrl {
       !chap?.practice &&
       chap?.conceal === undefined &&
       !chap?.gamebook &&
+      !this.retro &&
       this.variationArrowsProp() &&
       this.node.children.length > 1
     );
