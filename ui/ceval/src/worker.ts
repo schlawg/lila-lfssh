@@ -3,6 +3,8 @@ import { Protocol } from './protocol';
 import { Cache } from './cache';
 import { randomToken } from 'common/random';
 import { readNdJson } from 'common/ndjson';
+import { objectStorage } from 'common/objectStorage';
+import type StockfishWeb from 'schlawgfish-web';
 
 export enum CevalState {
   Initial,
@@ -107,6 +109,84 @@ declare global {
   }
 }
 
+export class StockfishWebWorker implements CevalWorker {
+  private failed = false;
+  private protocol = new Protocol();
+  private worker: StockfishWeb;
+
+  constructor(
+    readonly progress: (mb: number) => void,
+    readonly redraw: Redraw,
+  ) {}
+
+  async boot(): Promise<StockfishWeb> {
+    const dontBundleMe = '/assets/npm/schlawgfish-web/';
+    const module = await import(dontBundleMe + 'stockfishWeb.js');
+    this.worker = await module.default();
+    const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' });
+    let nnue = await nnueStore.get('nnue').catch(() => undefined);
+    console.log(nnue, nnue?.byteLength);
+    if (!nnue) {
+      const name = this.worker.recommendedNnue;
+      console.log(name);
+      const req = new XMLHttpRequest();
+      req.open('get', lichess.assetUrl(`lifat/nnue/${name}`, { version: name.slice(3, 9) }), true);
+      req.responseType = 'arraybuffer';
+      req.onprogress = e => this.progress(e.loaded);
+      nnue = await new Promise((resolve, reject) => {
+        req.onerror = event => {
+          console.error(event);
+          reject(event);
+        };
+        req.onload = _ => resolve(new Uint8Array(req.response));
+        req.send();
+      });
+      this.progress(0);
+      await nnueStore.put('nnue', nnue!);
+      console.log(nnue?.byteLength);
+    }
+    this.worker.receive = data => this.protocol.received(data);
+    this.worker.nnue(nnue!);
+    console.log('set nnue');
+    this.protocol.connected(cmd => this.worker.send(cmd));
+    // todo, catch errors, clean up idb on corrupted nnue, etc.
+    return this.worker;
+  }
+  getState() {
+    return !this.worker
+      ? CevalState.Initial
+      : this.failed
+      ? CevalState.Failed
+      : !this.protocol.engineName
+      ? CevalState.Loading
+      : this.protocol.isComputing()
+      ? CevalState.Computing
+      : CevalState.Idle;
+  }
+
+  start(work: Work) {
+    this.protocol.compute(work);
+
+    if (!this.worker) {
+      this.boot().catch(e => {
+        console.error(e);
+        this.failed = true;
+      });
+    }
+  }
+
+  stop() {
+    this.protocol.compute(undefined);
+  }
+
+  engineName() {
+    return this.protocol.engineName;
+  }
+
+  destroy() {
+    //this.worker?.terminate();
+  }
+}
 export class ThreadedWasmWorker implements CevalWorker {
   private static failed: { Stockfish: boolean; StockfishMv: boolean } = {
     Stockfish: false,

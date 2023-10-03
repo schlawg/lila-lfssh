@@ -4,6 +4,7 @@ import {
   CevalWorker,
   WebWorker,
   ThreadedWasmWorker,
+  StockfishWebWorker,
   ExternalEngine,
   ExternalWorker,
 } from './worker';
@@ -175,6 +176,15 @@ export default class CevalCtrl {
     if (!this.worker) {
       if (this.externalEngine) this.worker = new ExternalWorker(this.externalEngine, this.opts.redraw);
       else if (this.technology == 'nnue')
+        this.worker = new StockfishWebWorker(
+          throttle(200, mb => {
+            this.downloadProgress(mb);
+            this.opts.redraw();
+          }),
+          this.opts.redraw,
+        );
+      else if (this.technology == 'hce') {
+        console.log('wtf1');
         this.worker = new ThreadedWasmWorker(
           {
             baseUrl: 'npm/stockfish-nnue.wasm/',
@@ -186,20 +196,15 @@ export default class CevalCtrl {
             version: 'b6939d',
             wasmMemory: sharedWasmMemory(2048, this.platform.maxWasmPages(2048)),
             cache: window.indexedDB && new Cache('ceval-wasm-cache'),
-          },
-          this.opts.redraw,
-        );
-      else if (this.technology == 'hce')
-        this.worker = new ThreadedWasmWorker(
-          {
-            baseUrl: this.officialStockfish ? 'npm/stockfish.wasm/' : 'npm/stockfish-mv.wasm/',
+            /*  baseUrl: this.officialStockfish ? 'npm/stockfish.wasm/' : 'npm/stockfish-mv.wasm/',
             module: this.officialStockfish ? 'Stockfish' : 'StockfishMv',
             version: 'a022fa',
             wasmMemory: sharedWasmMemory(1024, this.platform.maxWasmPages(1088)),
+        */
           },
           this.opts.redraw,
         );
-      else
+      } else
         this.worker = new WebWorker(
           {
             url:
@@ -283,7 +288,7 @@ export default class CevalCtrl {
     this.curDepth() < 99 &&
     !this.isDeeper() &&
     ((!this.infinite() && this.getState() !== CevalState.Computing) || this.showingCloud());
-  shortEngineName = () => engineName(this.technology, this.externalEngine);
+  shortEngineName = () => engineName(this.technology, this.worker);
   longEngineName = () => this.worker?.engineName();
   destroy = () => this.worker?.destroy();
 }

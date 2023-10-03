@@ -1,5 +1,5 @@
 import { CevalTechnology } from './platform';
-import { ExternalEngine } from './worker';
+import { CevalWorker } from './worker';
 
 export function isEvalBetter(a: Tree.ClientEval, b: Tree.ClientEval): boolean {
   return a.depth > b.depth || (a.depth === b.depth && a.nodes > b.nodes);
@@ -51,8 +51,7 @@ export function defaultDepth(technology: CevalTechnology, threads: number, multi
   }
 }
 
-export function engineName(technology: CevalTechnology, externalEngine?: ExternalEngine): string {
-  if (externalEngine) return externalEngine.name;
+export function engineName(technology: CevalTechnology, worker?: CevalWorker): string {
   switch (technology) {
     case 'wasm':
     case 'asmjs':
@@ -60,6 +59,6 @@ export function engineName(technology: CevalTechnology, externalEngine?: Externa
     case 'hce':
       return 'Stockfish 11+';
     default:
-      return 'Stockfish 14+';
+      return worker?.engineName() || 'Nofish';
   }
 }
