@@ -113,7 +113,12 @@ object ForumPost:
           case (reaction, users) if users(me.id) => reaction
         .toSet
 
-  case class WithFrag(post: ForumPost, body: scalatags.Text.all.Frag, asks: Iterable[Option[lila.ask.Ask]])
+  case class WithFrag(
+      post: ForumPost,
+      body: scalatags.Text.all.Frag,
+      asks: Iterable[Option[lila.ask.Ask]],
+      hide: Boolean = false
+  )
 
   def make(
       topicId: ForumTopicId,

@@ -23,8 +23,9 @@ final private class ForumTopicApi(
     timeline: lila.hub.actors.Timeline,
     shutup: lila.hub.actors.Shutup,
     detectLanguage: DetectLanguage,
-    askApi: lila.ask.AskApi,
-    cacheApi: CacheApi
+    cacheApi: CacheApi,
+    relationApi: lila.relation.RelationApi,
+    askApi: lila.ask.AskApi
 )(using Executor):
 
   import BSONHandlers.given
@@ -38,14 +39,26 @@ final private class ForumTopicApi(
   )(using me: Option[Me]): Fu[Option[(ForumCateg, ForumTopic, Paginator[ForumPost.WithFrag])]] =
     for
       data <- categRepo byId categId flatMapz { categ =>
-        topicRepo.forUser(me).byTree(categId, slug) dmap {
-          _ map (categ -> _)
-        }
+        topicRepo
+          .forUser(me)
+          .byTree(categId, slug)
+          .dmap:
+            _.map(categ -> _)
       }
-      res <- data so { (categ, topic) =>
+      res <- data.so: (categ, topic) =>
         lila.mon.forum.topic.view.increment()
-        paginator.topicPosts(topic, page) map { (categ, topic, _).some }
-      }
+        paginator
+          .topicPosts(topic, page)
+          .flatMap: paginated =>
+            val authors = paginated.currentPageResults.flatMap(_.post.userId)
+            me.so(relationApi.filterBlocked(_, authors))
+              .map: blockedAuthors =>
+                (
+                  categ,
+                  topic,
+                  paginated.mapResults: p =>
+                    p.copy(hide = p.post.userId.so(blockedAuthors(_)))
+                ).some
     yield res
 
   object findDuplicate:

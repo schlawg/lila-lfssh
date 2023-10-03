@@ -37,7 +37,7 @@ object post:
       canModCateg: Boolean,
       canReact: Boolean
   )(using ctx: PageContext) = postWithFrag match
-    case ForumPost.WithFrag(post, body, asks) =>
+    case ForumPost.WithFrag(post, body, asks, hide) =>
       st.article(cls := List("forum-post" -> true, "erased" -> post.erased), id := post.number)(
         div(cls := "forum-post__metas")(
           (!post.erased || canModCateg) option div(
@@ -63,7 +63,7 @@ object post:
               given Me = me
               if !post.erased && post.canBeEditedByMe
               then
-                postForm(action := routes.ForumPost.delete(categ.slug, post.id))(
+                postForm(action := routes.ForumPost.delete(post.id))(
                   submitButton(
                     cls      := "mod delete button button-empty confirm",
                     dataIcon := licon.Trash,
@@ -75,7 +75,7 @@ object post:
                   if canModCateg || topic.isUblogAuthor(me) then
                     a(
                       cls      := "mod delete button button-empty",
-                      href     := routes.ForumPost.delete(categ.slug, post.id),
+                      href     := routes.ForumPost.delete(post.id),
                       dataIcon := licon.Trash,
                       title    := "Delete"
                     )
@@ -104,8 +104,19 @@ object post:
           ),
           a(cls := "anchor", href := url)(s"#${post.number}")
         ),
-        p(cls := "forum-post__message expand-text"):
-          if post.erased then "<Comment deleted by user>" else views.html.ask.renderMany(body, asks)
+        frag:
+          val postFrag = p(cls := s"forum-post__message expand-text")(
+            if post.erased then "<Comment deleted by user>"
+            else views.html.ask.renderMany(body, asks)
+          )
+          if hide then
+            div(cls := "forum-post__blocked")(
+              postFrag,
+              button(cls := "button button-empty", tpe := "button")(
+                "Show blocked message"
+              )
+            )
+          else postFrag
         ,
         !post.erased option reactions(post, canReact),
         ctx.me.soUse(post.shouldShowEditForm) option
