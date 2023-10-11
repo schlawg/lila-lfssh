@@ -131,6 +131,7 @@ export class StockfishWebWorker implements CevalWorker {
     const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' });
     let nnue = await nnueStore.get('nnue').catch(() => undefined);
     if (!nnue) {
+      console.log('thingy', Date.now());
       const name = worker.getRecommendedNnue();
       const req = new XMLHttpRequest();
       req.open('get', lichess.assetUrl(`lifat/nnue/${name}`, { version: name.slice(3, 9) }), true);
