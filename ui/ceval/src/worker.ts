@@ -120,9 +120,14 @@ export class StockfishWebWorker implements CevalWorker {
   ) {}
 
   async boot(): Promise<StockfishWeb> {
-    const dontBundleMe = '/assets/npm/stockfish-web/';
-    const module = await import(dontBundleMe + 'stockfishWeb.js');
-    this.worker = await module.default();
+    const module = await import(lichess.assetUrl('npm/stockfish-web/stockfishWeb.js', { version: '000001' }));
+    this.worker = await module.default({
+      locateFile: (name: string) =>
+        lichess.assetUrl(`npm/stockfish-web/${name}`, {
+          version: '000001',
+          sameDomain: name.endsWith('.worker.js'),
+        }),
+    });
     const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' });
     let nnue = await nnueStore.get('nnue').catch(() => undefined);
     if (!nnue) {
@@ -139,7 +144,7 @@ export class StockfishWebWorker implements CevalWorker {
       this.progress(0);
       await nnueStore.put('nnue', nnue!);
     }
-    this.worker.receive = data => this.protocol.received(data);
+    this.worker.receive = (data: string) => this.protocol.received(data);
     this.worker.setNnueBuffer(nnue!);
     this.protocol.connected(cmd => this.worker.send(cmd));
     return this.worker;
