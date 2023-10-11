@@ -294,7 +294,7 @@ export default class CevalCtrl {
     this.curDepth() < 99 &&
     !this.isDeeper() &&
     ((!this.infinite() && this.getState() !== CevalState.Computing) || this.showingCloud());
-  shortEngineName = () => engineName(this.technology, this.worker);
+  shortEngineName = () => engineName(this.technology, this.externalEngine);
   longEngineName = () => this.worker?.engineName();
   destroy = () => this.worker?.destroy();
 }
