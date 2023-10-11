@@ -109,80 +109,6 @@ declare global {
   }
 }
 
-export class StockfishWebWorker implements CevalWorker {
-  private failed = false;
-  private protocol = new Protocol();
-  private worker: StockfishWeb;
-
-  constructor(
-    readonly progress: (mb: number) => void,
-    readonly redraw: Redraw,
-  ) {}
-
-  async boot(): Promise<StockfishWeb> {
-    const module = await import(lichess.assetUrl('npm/stockfish-web/stockfishWeb.js', { version: '000001' }));
-    const worker = await module.default({
-      locateFile: (name: string) =>
-        lichess.assetUrl(`npm/stockfish-web/${name}`, {
-          version: '000001',
-          sameDomain: name.endsWith('.worker.js'),
-        }),
-    });
-    const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' });
-    let nnue = await nnueStore.get('nnue').catch(() => undefined);
-    if (!nnue) {
-      console.log('thingy', Date.now());
-      const name = worker.getRecommendedNnue();
-      const req = new XMLHttpRequest();
-      req.open('get', lichess.assetUrl(`lifat/nnue/${name}`, { version: name.slice(3, 9) }), true);
-      req.responseType = 'arraybuffer';
-      req.onprogress = e => this.progress(e.loaded);
-      nnue = await new Promise((resolve, reject) => {
-        req.onerror = event => reject(event);
-        req.onload = _ => resolve(new Uint8Array(req.response));
-        req.send();
-      });
-      this.progress(0);
-      await nnueStore.put('nnue', nnue!);
-    }
-    worker.receive = (data: string) => this.protocol.received(data);
-    worker.setNnueBuffer(nnue!);
-    this.protocol.connected(cmd => worker.send(cmd));
-    return (this.worker = worker);
-  }
-  getState() {
-    return this.failed
-      ? CevalState.Failed
-      : !this.worker
-      ? CevalState.Loading
-      : this.protocol.isComputing()
-      ? CevalState.Computing
-      : CevalState.Idle;
-  }
-
-  start(work: Work) {
-    this.protocol.compute(work);
-
-    if (!this.worker) {
-      this.boot().catch(e => {
-        console.error(e);
-        this.failed = true;
-      });
-    }
-  }
-
-  stop() {
-    this.protocol.compute(undefined);
-  }
-
-  engineName() {
-    return this.protocol.engineName;
-  }
-
-  destroy() {
-    this.worker?.send('stop');
-  }
-}
 export class ThreadedWasmWorker implements CevalWorker {
   private static failed: { Stockfish: boolean; StockfishMv: boolean } = {
     Stockfish: false,
@@ -405,4 +331,69 @@ export class ExternalWorker implements CevalWorker {
   destroy() {
     this.stop();
   }
+}
+
+export class StockfishWebWorker implements CevalWorker {
+  private failed = false;
+  private protocol = new Protocol();
+  private worker: StockfishWeb;
+
+  constructor(
+    readonly progress: (mb: number) => void,
+    readonly redraw: Redraw,
+  ) {
+    this.boot().catch(e => {
+      console.error(e);
+      this.failed = true;
+    });
+  }
+
+  async boot() {
+    const module = await import(lichess.assetUrl('npm/stockfish-web/stockfishWeb.js', { version: '000001' }));
+    const worker = await module.default({
+      locateFile: (name: string) =>
+        lichess.assetUrl(`npm/stockfish-web/${name}`, {
+          version: '000001',
+          sameDomain: name.endsWith('.worker.js'),
+        }),
+    });
+    const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' });
+    const nnueFilename = worker.getRecommendedNnue();
+    const nnueVersion = nnueFilename.slice(3, 9);
+
+    let nnueBuffer = await nnueStore.get(nnueVersion).catch(() => undefined);
+    if (!nnueBuffer) {
+      const req = new XMLHttpRequest();
+      req.open('get', lichess.assetUrl(`lifat/nnue/${nnueFilename}`, { version: nnueVersion }), true);
+      req.responseType = 'arraybuffer';
+      req.onprogress = e => this.progress(e.loaded);
+
+      nnueBuffer = await new Promise((resolve, reject) => {
+        req.onerror = event => reject(event);
+        req.onload = _ => resolve(new Uint8Array(req.response));
+        req.send();
+      });
+      this.progress(0);
+      nnueStore.put(nnueVersion, nnueBuffer!).catch(() => console.warn('IDB store failed'));
+    }
+    worker.receive = (data: string) => this.protocol.received(data);
+    worker.setNnueBuffer(nnueBuffer!);
+    this.protocol.connected(cmd => worker.send(cmd));
+    this.worker = worker;
+  }
+
+  getState() {
+    return this.failed
+      ? CevalState.Failed
+      : !this.worker
+      ? CevalState.Loading
+      : this.protocol.isComputing()
+      ? CevalState.Computing
+      : CevalState.Idle;
+  }
+
+  start = (work?: Work) => this.protocol.compute(work);
+  stop = () => this.protocol.compute(undefined);
+  engineName = () => this.protocol.engineName;
+  destroy = () => this.stop();
 }
