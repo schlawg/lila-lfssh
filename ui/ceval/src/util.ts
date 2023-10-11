@@ -1,5 +1,6 @@
 import { CevalTechnology } from './platform';
 import { ExternalEngine } from './worker';
+import { isIOS } from 'common/device';
 
 export function isEvalBetter(a: Tree.ClientEval, b: Tree.ClientEval): boolean {
   return a.depth > b.depth || (a.depth === b.depth && a.nodes > b.nodes);
@@ -60,6 +61,6 @@ export function engineName(technology: CevalTechnology, externalEngine?: Externa
     case 'hce':
       return 'Stockfish 11+';
     default:
-      return 'Stockfish 14+';
+      return isIOS() ? 'Stockfish 14+' : 'Stockfish 16';
   }
 }
