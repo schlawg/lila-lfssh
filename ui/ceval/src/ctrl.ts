@@ -16,7 +16,7 @@ import { parseFen } from 'chessops/fen';
 import { isStandardMaterial } from 'chessops/chess';
 import { lichessRules } from 'chessops/compat';
 import { povChances } from './winningChances';
-import { prop, Toggle, toggle } from 'common';
+import { prop, propWithEffect, Toggle, toggle } from 'common';
 import { isIOS } from 'common/device';
 import { Result } from '@badrap/result';
 import { storedBooleanProp, storedIntProp, StoredProp, storedStringProp } from 'common/storage';
@@ -49,7 +49,7 @@ export default class CevalCtrl {
   multiPv: StoredProp<number>;
   allowed = toggle(true);
   enabled: Toggle;
-  downloadProgress = prop(0);
+  downloadProgress = propWithEffect(0, () => this.opts.redraw());
   hovering = prop<Hovering | null>(null);
   pvBoard = prop<PvBoard | null>(null);
   isDeeper = toggle(false);
@@ -182,10 +182,7 @@ export default class CevalCtrl {
               {
                 baseUrl: 'npm/stockfish-nnue.wasm/',
                 module: 'Stockfish',
-                downloadProgress: throttle(200, mb => {
-                  this.downloadProgress(mb);
-                  this.opts.redraw();
-                }),
+                downloadProgress: throttle(200, mb => this.downloadProgress(mb)),
                 version: 'b6939d',
                 wasmMemory: sharedWasmMemory(2048, this.platform.maxWasmPages(2048)),
                 cache: window.indexedDB && new Cache('ceval-wasm-cache'),
@@ -193,11 +190,7 @@ export default class CevalCtrl {
               this.opts.redraw,
             )
           : new StockfishWebWorker(
-              () =>
-                throttle(200, mb => {
-                  this.downloadProgress(mb);
-                  this.opts.redraw();
-                }),
+              throttle(200, mb => this.downloadProgress(mb)),
               this.opts.redraw,
             );
       else if (this.technology == 'hce')

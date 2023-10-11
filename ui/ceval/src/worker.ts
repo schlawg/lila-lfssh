@@ -150,11 +150,9 @@ export class StockfishWebWorker implements CevalWorker {
     return this.worker;
   }
   getState() {
-    return !this.worker
-      ? CevalState.Initial
-      : this.failed
+    return this.failed
       ? CevalState.Failed
-      : !this.protocol.engineName
+      : !this.worker
       ? CevalState.Loading
       : this.protocol.isComputing()
       ? CevalState.Computing
