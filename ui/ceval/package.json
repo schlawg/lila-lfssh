@@ -22,9 +22,9 @@
     "snabbdom": "^3.5.1",
     "stockfish-mv.wasm": "^0.6.1",
     "stockfish-nnue.wasm": "1.0.0-1946a675.smolnet",
+    "stockfish-web": "^0.0.3",
     "stockfish.js": "^10.0.2",
-    "stockfish.wasm": "^0.10.0",
-    "schlawgfish-web": "0.0.10"
+    "stockfish.wasm": "^0.10.0"
   },
   "scripts": {
     "compile": "tsc",
@@ -36,10 +36,6 @@
       {
         "src": "node_modules/stockfish*/*.{js,wasm}",
         "dest": "../../public/npm"
-      },
-      {
-        "src": "node_modules/schlawgfish-web/*.{js,wasm}",
-        "dest": "../../public/npm/schlawgfish-web"
       }
     ]
   }

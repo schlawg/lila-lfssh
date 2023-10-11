@@ -451,8 +451,13 @@ final class UserRepo(val coll: Coll)(using Executor):
   def filterEnabled(userIds: Seq[UserId]): Fu[Set[UserId]] =
     coll.distinctEasy[UserId, Set](F.id, $inIds(userIds) ++ enabledSelect, _.sec)
 
-  def filterDisabled(userIds: Seq[UserId]): Fu[Set[UserId]] =
-    coll.distinctEasy[UserId, Set](F.id, $inIds(userIds) ++ disabledSelect, _.sec)
+  def filterDisabled(userIds: Iterable[UserId]): Fu[Set[UserId]] =
+    userIds.nonEmpty.so:
+      coll.distinctEasy[UserId, Set](F.id, $inIds(userIds) ++ disabledSelect, _.sec)
+
+  def containsDisabled(userIds: Iterable[UserId]): Fu[Boolean] =
+    userIds.nonEmpty.so:
+      coll.secondaryPreferred.exists($inIds(userIds) ++ disabledSelect)
 
   def userIdsWithRoles(roles: List[String]): Fu[Set[UserId]] =
     coll.distinctEasy[UserId, Set]("_id", $doc("roles" $in roles))

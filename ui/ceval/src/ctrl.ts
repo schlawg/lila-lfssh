@@ -17,6 +17,7 @@ import { isStandardMaterial } from 'chessops/chess';
 import { lichessRules } from 'chessops/compat';
 import { povChances } from './winningChances';
 import { prop, Toggle, toggle } from 'common';
+import { isIOS } from 'common/device';
 import { Result } from '@badrap/result';
 import { storedBooleanProp, storedIntProp, StoredProp, storedStringProp } from 'common/storage';
 import { Rules } from 'chessops';
@@ -176,35 +177,40 @@ export default class CevalCtrl {
     if (!this.worker) {
       if (this.externalEngine) this.worker = new ExternalWorker(this.externalEngine, this.opts.redraw);
       else if (this.technology == 'nnue')
-        this.worker = new StockfishWebWorker(
-          throttle(200, mb => {
-            this.downloadProgress(mb);
-            this.opts.redraw();
-          }),
-          this.opts.redraw,
-        );
-      else if (this.technology == 'hce') {
-        console.log('wtf1');
+        this.worker = isIOS()
+          ? new ThreadedWasmWorker(
+              {
+                baseUrl: 'npm/stockfish-nnue.wasm/',
+                module: 'Stockfish',
+                downloadProgress: throttle(200, mb => {
+                  this.downloadProgress(mb);
+                  this.opts.redraw();
+                }),
+                version: 'b6939d',
+                wasmMemory: sharedWasmMemory(2048, this.platform.maxWasmPages(2048)),
+                cache: window.indexedDB && new Cache('ceval-wasm-cache'),
+              },
+              this.opts.redraw,
+            )
+          : new StockfishWebWorker(
+              () =>
+                throttle(200, mb => {
+                  this.downloadProgress(mb);
+                  this.opts.redraw();
+                }),
+              this.opts.redraw,
+            );
+      else if (this.technology == 'hce')
         this.worker = new ThreadedWasmWorker(
           {
-            baseUrl: 'npm/stockfish-nnue.wasm/',
-            module: 'Stockfish',
-            downloadProgress: throttle(200, mb => {
-              this.downloadProgress(mb);
-              this.opts.redraw();
-            }),
-            version: 'b6939d',
-            wasmMemory: sharedWasmMemory(2048, this.platform.maxWasmPages(2048)),
-            cache: window.indexedDB && new Cache('ceval-wasm-cache'),
-            /*  baseUrl: this.officialStockfish ? 'npm/stockfish.wasm/' : 'npm/stockfish-mv.wasm/',
+            baseUrl: this.officialStockfish ? 'npm/stockfish.wasm/' : 'npm/stockfish-mv.wasm/',
             module: this.officialStockfish ? 'Stockfish' : 'StockfishMv',
             version: 'a022fa',
             wasmMemory: sharedWasmMemory(1024, this.platform.maxWasmPages(1088)),
-        */
           },
           this.opts.redraw,
         );
-      } else
+      else
         this.worker = new WebWorker(
           {
             url:

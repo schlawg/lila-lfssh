@@ -45,7 +45,8 @@ case class Tournament(
 
   def isPrivate = password.isDefined
 
-  def isTeamBattle = teamBattle.isDefined
+  def isTeamBattle  = teamBattle.isDefined
+  def isTeamRelated = isTeamBattle || conditions.teamMember.isDefined
 
   def name(full: Boolean = true)(using Lang): String =
     if isMarathon || isUnique then name
@@ -102,6 +103,9 @@ case class Tournament(
     (schedule, other.schedule) match
       case (Some(s1), Some(s2)) if s1 similarTo s2 => true
       case _                                       => false
+
+  def sameNameAndTeam(other: Tournament) =
+    name == other.name && conditions.teamMember == other.conditions.teamMember
 
   def speed = Speed(clock)
 

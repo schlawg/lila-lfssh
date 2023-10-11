@@ -4,7 +4,7 @@ import { Cache } from './cache';
 import { randomToken } from 'common/random';
 import { readNdJson } from 'common/ndjson';
 import { objectStorage } from 'common/objectStorage';
-import type StockfishWeb from 'schlawgfish-web';
+import type StockfishWeb from 'stockfish-web';
 
 export enum CevalState {
   Initial,
@@ -120,36 +120,28 @@ export class StockfishWebWorker implements CevalWorker {
   ) {}
 
   async boot(): Promise<StockfishWeb> {
-    const dontBundleMe = '/assets/npm/schlawgfish-web/';
+    const dontBundleMe = '/assets/npm/stockfish-web/';
     const module = await import(dontBundleMe + 'stockfishWeb.js');
     this.worker = await module.default();
     const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' });
     let nnue = await nnueStore.get('nnue').catch(() => undefined);
-    console.log(nnue, nnue?.byteLength);
     if (!nnue) {
-      const name = this.worker.recommendedNnue;
-      console.log(name);
+      const name = this.worker.getRecommendedNnue();
       const req = new XMLHttpRequest();
       req.open('get', lichess.assetUrl(`lifat/nnue/${name}`, { version: name.slice(3, 9) }), true);
       req.responseType = 'arraybuffer';
       req.onprogress = e => this.progress(e.loaded);
       nnue = await new Promise((resolve, reject) => {
-        req.onerror = event => {
-          console.error(event);
-          reject(event);
-        };
+        req.onerror = event => reject(event);
         req.onload = _ => resolve(new Uint8Array(req.response));
         req.send();
       });
       this.progress(0);
       await nnueStore.put('nnue', nnue!);
-      console.log(nnue?.byteLength);
     }
     this.worker.receive = data => this.protocol.received(data);
-    this.worker.nnue(nnue!);
-    console.log('set nnue');
+    this.worker.setNnueBuffer(nnue!);
     this.protocol.connected(cmd => this.worker.send(cmd));
-    // todo, catch errors, clean up idb on corrupted nnue, etc.
     return this.worker;
   }
   getState() {
@@ -184,7 +176,7 @@ export class StockfishWebWorker implements CevalWorker {
   }
 
   destroy() {
-    //this.worker?.terminate();
+    this.worker?.send('stop');
   }
 }
 export class ThreadedWasmWorker implements CevalWorker {
