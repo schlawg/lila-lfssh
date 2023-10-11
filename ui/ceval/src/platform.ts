@@ -1,6 +1,6 @@
 import { isAndroid, isIOS, isIPad } from 'common/device';
 import { pow2floor, sharedWasmMemory } from './util';
-import { ExternalEngine } from './worker';
+import { ExternalEngine } from './engines/externalEngine';
 
 export type CevalTechnology = 'asmjs' | 'wasm' | 'hce' | 'nnue' | 'external';
 

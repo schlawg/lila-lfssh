@@ -13,7 +13,7 @@ import { parseFen, makeBoardFen } from 'chessops/fen';
 import { renderEval } from './util';
 import { setupPosition } from 'chessops/variant';
 import { uciToMove } from 'chessground/util';
-import { CevalState } from './worker';
+import { CevalState } from './engines/worker';
 import CevalCtrl from './ctrl';
 
 let gaugeLast = 0;
