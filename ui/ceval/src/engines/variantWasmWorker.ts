@@ -3,7 +3,7 @@ import { Protocol } from '../protocol';
 import { Redraw, Work } from '../types';
 import { Cache } from '../cache';
 
-export interface LegacyWasmOpts {
+export interface VariantWasmOpts {
   baseUrl: string;
   version: string;
   nnueProgress?: (mb: number) => void;
@@ -27,17 +27,17 @@ interface Stockfish {
 declare global {
   interface Window {
     StockfishMv?: WasmModule;
-    Stockfish?: WasmModule;
+    Stockfish?: WasmModule; // hopefully this will be unused, but hang on to it
   }
 }
 
-export class LegacyWasmWorker implements CevalWorker {
+export class VariantWasmWorker implements CevalWorker {
   private failed = false;
   private protocol = new Protocol();
   private sf: Promise<void>;
 
   constructor(
-    private opts: LegacyWasmOpts,
+    private opts: VariantWasmOpts,
     private redraw: Redraw,
   ) {}
 

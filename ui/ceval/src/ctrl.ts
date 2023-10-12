@@ -1,6 +1,6 @@
 import throttle from 'common/throttle';
 import { CevalState, CevalWorker, WebWorker } from './engines/worker';
-import { LegacyWasmWorker } from './engines/legacyWasmWorker';
+import { VariantWasmWorker } from './engines/variantWasmWorker';
 import { WasmWorker } from './engines/wasmWorker';
 import { ExternalEngine, ExternalWorker } from './engines/externalEngine';
 //import { Cache } from './cache';
@@ -172,11 +172,11 @@ export default class CevalCtrl {
     if (!this.worker) {
       const nnueProgress = throttle(200, mb => this.downloadProgress(mb));
       if (this.externalEngine) this.worker = new ExternalWorker(this.externalEngine, this.opts.redraw);
-      else if (this.technology == 'nnue') this.worker = new WasmWorker(sharedWasmMemory(1024), nnueProgress);
+      else if (this.technology == 'nnue') this.worker = new WasmWorker(sharedWasmMemory(2048), nnueProgress);
       else if (this.technology == 'hce')
         this.worker = this.officialStockfish
           ? new WasmWorker(sharedWasmMemory(1024))
-          : new LegacyWasmWorker(
+          : new VariantWasmWorker(
               {
                 baseUrl: 'npm/stockfish-mv.wasm/',
                 version: 'a022fa',
@@ -268,7 +268,7 @@ export default class CevalCtrl {
     this.curDepth() < 99 &&
     !this.isDeeper() &&
     ((!this.infinite() && this.getState() !== CevalState.Computing) || this.showingCloud());
-  shortEngineName = () => engineName(this.platform, this.externalEngine);
+  shortEngineName = () => engineName(this.technology, this.officialStockfish, this.externalEngine);
   longEngineName = () => this.worker?.engineName();
   destroy = () => this.worker?.destroy();
 }
