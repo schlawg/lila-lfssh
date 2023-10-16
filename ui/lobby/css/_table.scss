@@ -27,10 +27,12 @@
     }
 
     @include breakpoint($mq-col4) {
-      justify-content: center;
+      margin-top: 0;
+      padding-bottom: 4em;
+      justify-content: flex-end;
 
       button {
-        margin: 1.2em 0;
+        margin: 0;
         padding: 1em;
       }
     }

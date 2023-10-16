@@ -20,7 +20,7 @@ $mq-not-col3: $mq-not-small;
 .lobby {
   grid-area: main;
   display: grid;
-  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'tv' 'puzzle' 'leader' 'winner' 'tours' 'about';
+  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'tv' 'puzzle' 'tours' 'leader' 'winner' 'timeline' 'about';
   grid-gap: $block-gap;
 
   &__counters {
@@ -34,22 +34,19 @@ $mq-not-col3: $mq-not-small;
     max-height: 20em;
   }
 
-  .timeline {
-    display: none;
-  }
-
   @include breakpoint($mq-col2) {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: auto repeat(3, fit-content(0));
     grid-template-areas:
-      'app    app'
-      'side  table'
-      'blog   blog'
-      'tv   puzzle'
-      'support support'
-      'tours  tours'
-      'leader winner'
-      'about  about';
+      'app      app'
+      'side     table'
+      'blog     blog'
+      'tv       puzzle'
+      'support  support'
+      'tours    tours'
+      'leader   winner'
+      'timeline timeline'
+      'about    about';
 
     &__support {
       display: grid;
@@ -60,15 +57,16 @@ $mq-not-col3: $mq-not-small;
 
   @include breakpoint($mq-col3) {
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 12em repeat(2, fit-content(0)) auto auto fit-content(0);
+    grid-template-rows: 12em repeat(2, fit-content(0) auto) auto fit-content(0);
     grid-template-areas:
-      'table  app     app'
-      'side   app     app'
-      'tv     blog    blog'
-      'tv     support support'
-      'puzzle tours   tours'
-      'puzzle leader  winner'
-      'about  leader  winner';
+      'table    app     app'
+      'side     app     app'
+      'timeline app     app'
+      'tv       blog    blog'
+      'tv       support support'
+      'puzzle   tours   tours'
+      'puzzle   leader  winner'
+      'about    leader  winner';
 
     &__start {
       flex-flow: column;
@@ -79,38 +77,29 @@ $mq-not-col3: $mq-not-small;
     &__counters {
       margin: #{$block-gap / 3} 0 #{$block-gap / -3} 0;
     }
-
-    .timeline {
-      display: block;
-      margin-#{$start-direction}: 0;
-    }
   }
 
   @include breakpoint($mq-col4) {
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, fit-content(0)) auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto fit-content(0) auto auto;
     grid-template-areas:
-      'side   app     app   table'
-      'tv     blog    blog  puzzle'
-      'tv     tours  tours  puzzle'
-      'about  tours  tours  support'
-      'about  leader winner support';
+      'timeline app     app     side'
+      'timeline app     app     table'
+      'tv       blog    blog    puzzle'
+      'tv       support support puzzle'
+      'leader   tours   tours   winner'
+      '.        about   about   .';
 
     &__side {
       margin-top: 2em;
     }
 
     &__counters {
-      margin: 0;
+      margin-top: 2em;
     }
 
-    &__support {
-      display: flex;
-      flex-flow: column;
-      gap: $block-gap;
-      a {
-        flex: 0 1 auto;
-      }
+    .timeline {
+      margin-top: 2em;
     }
   }
 
@@ -164,5 +153,9 @@ $mq-not-col3: $mq-not-small;
 
   &__about {
     grid-area: about;
+  }
+
+  .timeline {
+    grid-area: timeline;
   }
 }

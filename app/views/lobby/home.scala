@@ -96,26 +96,7 @@ object home:
                 simulBBB map views.html.simul.bits.homepageSpotlight
               )
             }
-          ),
-          if ctx.isAuth then
-            div(cls := "timeline")(
-              ctx.blind option h2("Timeline"),
-              views.html.timeline entries userTimeline,
-              userTimeline.nonEmpty option a(cls := "more", href := routes.Timeline.home)(
-                trans.more(),
-                " »"
-              )
-            )
-          else
-            div(cls := "about-side")(
-              ctx.blind option h2("About"),
-              trans.xIsAFreeYLibreOpenSourceChessServer(
-                "Lichess",
-                a(cls := "blue", href := routes.Plan.features)(trans.really.txt())
-              ),
-              " ",
-              a(href := "/about")(trans.aboutX("Lichess"), "...")
-            )
+          )
         ),
         featured.map: g =>
           div(cls := "lobby__tv"):
@@ -140,6 +121,27 @@ object home:
               span(trans.playChessInStyle())
             )
           )
+        ),
+        div(cls := "timeline")(
+          if ctx.isAuth then
+            div(
+              ctx.blind option h2("Timeline"),
+              views.html.timeline entries userTimeline,
+              userTimeline.nonEmpty option a(cls := "more", href := routes.Timeline.home)(
+                trans.more(),
+                " »"
+              )
+            )
+          else
+            div(cls := "about-side")(
+              ctx.blind option h2("About"),
+              trans.xIsAFreeYLibreOpenSourceChessServer(
+                "Lichess",
+                a(cls := "blue", href := routes.Plan.features)(trans.really.txt())
+              ),
+              " ",
+              a(href := "/about")(trans.aboutX("Lichess"), "...")
+            )
         ),
         div(cls := "lobby__about")(
           ctx.blind option h2("About"),
