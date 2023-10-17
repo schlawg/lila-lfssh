@@ -81,22 +81,22 @@ $mq-not-col3: $mq-not-small;
 
   @include breakpoint($mq-col4) {
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: auto auto auto fit-content(0) auto auto;
+    grid-template-rows: 12em auto auto fit-content(0) auto auto;
     grid-template-areas:
-      'timeline app     app     side'
-      'timeline app     app     table'
-      'tv       blog    blog    puzzle'
-      'tv       support support puzzle'
-      'leader   tours   tours   winner'
-      '.        about   about   .';
+      'table  app     app     timeline'
+      'side   app     app     timeline'
+      'tv     blog    blog    puzzle'
+      'tv     support support puzzle'
+      'leader tours   tours   winner'
+      '.      about   about   .';
 
-    &__side {
+    /*&__side {
       margin-top: 2em;
     }
 
     &__counters {
       margin-top: 2em;
-    }
+    }*/
 
     .timeline {
       margin-top: 2em;

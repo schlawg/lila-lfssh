@@ -8,7 +8,7 @@
   &__start {
     @extend %flex-column;
 
-    justify-content: stretch;
+    justify-content: flex-start;
     flex: 1 1 auto;
     gap: 0.5em;
 
@@ -27,10 +27,6 @@
     }
 
     @include breakpoint($mq-col4) {
-      margin-top: 0;
-      padding-bottom: 4em;
-      justify-content: flex-end;
-
       button {
         margin: 0;
         padding: 1em;
@@ -47,12 +43,12 @@
       display: flex;
     }
 
-    @include breakpoint($mq-col4) {
+    /*@include breakpoint($mq-col4) {
       flex-flow: column;
       align-items: flex-start;
       position: absolute;
       bottom: 0;
-    }
+    }*/
 
     a {
       color: $c-font-page;
