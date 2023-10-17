@@ -231,3 +231,30 @@ final class ForumPostApi(
         edit
       )
     }
+
+  def recentPosts(nb: Int): Fu[List[MiniForumPost]] =
+    RecentPosts
+      .get(nb * 3)
+      .flatMap(miniPosts)
+      .map:
+        _.groupBy(_.topicName)
+          .map: (_, topicPosts) =>
+            val keepPost = topicPosts.maxBy(_.createdAt)
+            val conts =
+              topicPosts.flatMap(_.userId).filterNot(keepPost.userId.has(_)).distinct
+            keepPost.copy(contributors = if conts.isEmpty then none else conts.some)
+          .toList
+          .sortBy(_.createdAt)(Ordering[Instant].reverse)
+          .take(nb)
+
+  private object RecentPosts:
+
+    val categs = List(
+      "general-chess-discussion",
+      "off-topic-discussion",
+      "lichess-feedback",
+      "game-analysis",
+      "community-blog-discussions"
+    ).map(ForumCategId(_))
+
+    def get(nb: Int) = postRepo.recentInCategs(nb)(categs, Nil)

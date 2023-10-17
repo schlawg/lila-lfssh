@@ -18,14 +18,11 @@ $mq-not-col3: $mq-not-small;
 }
 
 .lobby {
+  --cols: 1;
   grid-area: main;
   display: grid;
-  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'tv' 'puzzle' 'tours' 'leader' 'winner' 'timeline' 'about';
+  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'tv' 'puzzle' 'tours' 'leader' 'winner' 'timeline' 'forum' 'about';
   grid-gap: $block-gap;
-
-  &__counters {
-    margin-top: $block-gap;
-  }
 
   &__tournaments,
   &__simuls,
@@ -34,7 +31,14 @@ $mq-not-col3: $mq-not-small;
     max-height: 20em;
   }
 
+  &__counters {
+    @extend %flex-between, %page-text;
+    display: none;
+    margin: 0.5em 0 calc(0.5em + 2px);
+  }
+
   @include breakpoint($mq-col2) {
+    --cols: 2;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: auto repeat(3, fit-content(0));
     grid-template-areas:
@@ -45,7 +49,7 @@ $mq-not-col3: $mq-not-small;
       'support  support'
       'tours    tours'
       'leader   winner'
-      'timeline timeline'
+      'timeline forum'
       'about    about';
 
     &__support {
@@ -56,49 +60,48 @@ $mq-not-col3: $mq-not-small;
   }
 
   @include breakpoint($mq-col3) {
+    --cols: 3;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: 12em repeat(2, fit-content(0) auto) auto fit-content(0);
     grid-template-areas:
       'table    app     app'
-      'side     app     app'
-      'timeline app     app'
+      'sideline app     app'
       'tv       blog    blog'
       'tv       support support'
       'puzzle   tours   tours'
       'puzzle   leader  winner'
       'about    leader  winner';
 
+    &__counters {
+      display: flex;
+      margin-left: 3em;
+    }
+
     &__start {
       flex-flow: column;
       align-items: stretch;
       justify-content: center;
     }
-
-    &__counters {
-      margin: #{$block-gap / 3} 0 #{$block-gap / -3} 0;
-    }
   }
 
   @include breakpoint($mq-col4) {
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 12em auto auto fit-content(0) auto auto;
-    grid-template-areas:
-      'table  app     app     timeline'
-      'side   app     app     timeline'
-      'tv     blog    blog    puzzle'
-      'tv     support support puzzle'
-      'leader tours   tours   winner'
-      '.      about   about   .';
+    --cols: 4;
 
-    /*&__side {
-      margin-top: 2em;
-    }
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, fit-content(0));
+    grid-template-areas:
+      'sideline app     app     tableforum'
+      'tv       blog    blog    puzzle'
+      'tv       support support puzzle'
+      'leader   tours   tours   winner'
+      '.        about   about   .';
 
     &__counters {
-      margin-top: 2em;
-    }*/
+      margin-right: 4em;
+      margin-left: 0em;
+    }
 
-    .timeline {
+    .lobby__side-timeline {
       margin-top: 2em;
     }
   }
@@ -155,7 +158,19 @@ $mq-not-col3: $mq-not-small;
     grid-area: about;
   }
 
-  .timeline {
+  .lobby__timeline {
     grid-area: timeline;
+  }
+
+  .lobby__forum {
+    grid-area: forum;
+  }
+
+  .lobby__side-timeline {
+    grid-area: sideline;
+  }
+
+  .lobby__table-forum {
+    grid-area: tableforum;
   }
 }

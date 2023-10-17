@@ -1,4 +1,4 @@
-.timeline {
+.lobby__timeline {
   @extend %page-text;
   display: block;
   flex: 1 1 auto;
@@ -35,4 +35,9 @@
   .more {
     @extend %lobby__side__more;
   }
+}
+
+.lobby__side-timeline {
+  @extend %flex-column;
+  gap: 1em;
 }

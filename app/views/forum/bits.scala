@@ -5,7 +5,7 @@ import controllers.routes
 
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
-import lila.forum.ForumPost
+import lila.forum.{ ForumPost, MiniForumPost }
 import lila.security.{ Granter, Permission }
 
 object bits:
@@ -21,6 +21,21 @@ object bits:
         )
       )
     )
+
+  def recentPosts(forumPosts: List[MiniForumPost])(using PageContext) =
+    forumPosts.map: post =>
+      div(cls := "post")(
+        span()(
+          userIdLink(post.userId),
+          " in ",
+          a(href := routes.ForumPost.redirect(post.postId), title := post.text)(
+            shorten(post.topicName, 50)
+          )
+        ),
+        br,
+        post.contributors.map: conts =>
+          span("+ ", conts.map(cont => userIdLink(cont.some)).join(" · "))
+      )
 
   def authorLink(post: ForumPost, cssClass: Option[String] = None, withOnline: Boolean = true)(using
       PageContext

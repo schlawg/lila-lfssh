@@ -12,33 +12,6 @@ export default function table(ctrl: LobbyController) {
     opts.playban || opts.hasUnreadLichessMessage || ctrl.me?.isBot || hasOngoingRealTimeGame;
   const { members, rounds } = data.counters;
   return h('div.lobby__table', [
-    h(
-      'div.lobby__start',
-      (lichess.blindMode ? [h('h2', 'Play')] : []).concat(
-        [
-          ['hook', 'createAGame', hookDisabled],
-          ['friend', 'playWithAFriend', hasOngoingRealTimeGame],
-          ['ai', 'playWithTheMachine', hasOngoingRealTimeGame],
-        ].map(([gameType, transKey, disabled]: [GameType, string, boolean]) =>
-          h(
-            `button.button.button-metal.config_${gameType}`,
-            {
-              class: { active: ctrl.setupCtrl.gameType === gameType, disabled },
-              attrs: { type: 'button' },
-              hook: disabled
-                ? {}
-                : bind(
-                    lichess.blindMode ? 'click' : 'mousedown',
-                    () => ctrl.setupCtrl.openModal(gameType),
-                    ctrl.redraw,
-                  ),
-            },
-            trans(transKey),
-          ),
-        ),
-      ),
-    ),
-    renderSetupModal(ctrl),
     // Use a thunk here so that snabbdom does not rerender; we will do so manually after insert
     thunk(
       'div.lobby__counters',
@@ -84,5 +57,32 @@ export default function table(ctrl: LobbyController) {
         ]),
       [],
     ),
+    h(
+      'div.lobby__start',
+      (lichess.blindMode ? [h('h2', 'Play')] : []).concat(
+        [
+          ['hook', 'createAGame', hookDisabled],
+          ['friend', 'playWithAFriend', hasOngoingRealTimeGame],
+          ['ai', 'playWithTheMachine', hasOngoingRealTimeGame],
+        ].map(([gameType, transKey, disabled]: [GameType, string, boolean]) =>
+          h(
+            `button.button.button-metal.config_${gameType}`,
+            {
+              class: { active: ctrl.setupCtrl.gameType === gameType, disabled },
+              attrs: { type: 'button' },
+              hook: disabled
+                ? {}
+                : bind(
+                    lichess.blindMode ? 'click' : 'mousedown',
+                    () => ctrl.setupCtrl.openModal(gameType),
+                    ctrl.redraw,
+                  ),
+            },
+            trans(transKey),
+          ),
+        ),
+      ),
+    ),
+    renderSetupModal(ctrl),
   ]);
 }

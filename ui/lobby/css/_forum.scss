@@ -1,0 +1,45 @@
+.lobby__forum {
+  @extend %page-text;
+  display: block;
+  white-space: nowrap;
+  flex: 1 1 auto;
+
+  @include hoverflow;
+
+  h3 {
+    font-weight: bold;
+  }
+
+  > * {
+    @extend %roboto;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5em;
+    border-bottom: 1px solid;
+    border-image-source: linear-gradient(to $end-direction, $c-border 20%, $c-bg-page);
+    border-image-slice: 1;
+    border-image-width: 0 0 1px;
+
+    a {
+      @extend %base-font, %page-font;
+
+      &:hover {
+        color: $c-link;
+      }
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .line:not(.patron) {
+      display: none;
+    }
+  }
+}
+
+.lobby__table-forum {
+  @extend %flex-column;
+  overflow: hidden;
+  gap: 1em;
+}

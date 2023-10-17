@@ -48,20 +48,6 @@ object home:
           "lobby-nope" -> (playban.isDefined || currentGame.isDefined || homepage.hasUnreadLichessMessage)
         )
       )(
-        div(cls := "lobby__table")(
-          (ctx.isAnon && ctx.pref.bg == lila.pref.Pref.Bg.SYSTEM) option div(
-            cls   := "bg-switch",
-            title := "Dark mode"
-          )(
-            div(cls := "bg-switch__track"),
-            div(cls := "bg-switch__thumb")
-          ),
-          div(cls := "lobby__start")(
-            button(cls := "button button-metal", tpe := "button", trans.createAGame()),
-            button(cls := "button button-metal", tpe := "button", trans.playWithAFriend()),
-            button(cls := "button button-metal", tpe := "button", trans.playWithTheMachine())
-          )
-        ),
         currentGame
           .map(bits.currentGameInfo)
           .orElse:
@@ -71,33 +57,6 @@ object home:
           .getOrElse:
             if ctx.blind then blindLobby(blindGames) else bits.lobbyApp
         ,
-        div(cls := "lobby__side")(
-          ctx.blind option h2("Highlights"),
-          ctx.noKid option st.section(cls := "lobby__streams")(
-            views.html.streamer.bits liveStreams streams,
-            streams.live.streams.nonEmpty option a(href := routes.Streamer.index(), cls := "more")(
-              trans.streamersMenu(),
-              " »"
-            )
-          ),
-          div(cls := "lobby__spotlights")(
-            events.map(bits.spotlight),
-            relays.map(views.html.relay.bits.spotlight),
-            !ctx.isBot option {
-              val nbManual = events.size + relays.size
-              val simulBBB = simuls.find(isFeaturable(_) && nbManual < 4)
-              val nbForced = nbManual + simulBBB.size.toInt
-              val tourBBBs = if nbForced > 3 then 0 else if nbForced == 3 then 1 else 3 - nbForced
-              frag(
-                lila.tournament.Spotlight.select(tours, tourBBBs).map {
-                  views.html.tournament.homepageSpotlight(_)
-                },
-                swiss.ifTrue(nbForced < 3) map views.html.swiss.bits.homepageSpotlight,
-                simulBBB map views.html.simul.bits.homepageSpotlight
-              )
-            }
-          )
-        ),
         featured.map: g =>
           div(cls := "lobby__tv"):
             views.html.game.mini(Pov naturalOrientation g, tv = true)
@@ -122,26 +81,75 @@ object home:
             )
           )
         ),
-        div(cls := "timeline")(
-          if ctx.isAuth then
-            div(
-              ctx.blind option h2("Timeline"),
-              views.html.timeline entries userTimeline,
-              userTimeline.nonEmpty option a(cls := "more", href := routes.Timeline.home)(
-                trans.more(),
+        div(cls := "lobby__table-forum")(
+          div(cls := "lobby__table")(
+            (ctx.isAnon && ctx.pref.bg == lila.pref.Pref.Bg.SYSTEM) option div(
+              cls   := "bg-switch",
+              title := "Dark mode"
+            )(
+              div(cls := "bg-switch__track"),
+              div(cls := "bg-switch__thumb")
+            ),
+            div(cls := "lobby__start")(
+              button(cls := "button button-metal", tpe := "button", trans.createAGame()),
+              button(cls := "button button-metal", tpe := "button", trans.playWithAFriend()),
+              button(cls := "button button-metal", tpe := "button", trans.playWithTheMachine())
+            )
+          ),
+          div(cls := "lobby__forum")(
+            h3("Recent forum posts"),
+            views.html.forum.bits.recentPosts(forumPosts)
+          )
+        ),
+        div(cls := "lobby__side-timeline")(
+          div(cls := "lobby__side")(
+            ctx.blind option h2("Highlights"),
+            ctx.noKid option st.section(cls := "lobby__streams")(
+              views.html.streamer.bits liveStreams streams,
+              streams.live.streams.nonEmpty option a(href := routes.Streamer.index(), cls := "more")(
+                trans.streamersMenu(),
                 " »"
               )
+            ),
+            div(cls := "lobby__spotlights")(
+              events.map(bits.spotlight),
+              relays.map(views.html.relay.bits.spotlight),
+              !ctx.isBot option {
+                val nbManual = events.size + relays.size
+                val simulBBB = simuls.find(isFeaturable(_) && nbManual < 4)
+                val nbForced = nbManual + simulBBB.size.toInt
+                val tourBBBs = if nbForced > 3 then 0 else if nbForced == 3 then 1 else 3 - nbForced
+                frag(
+                  lila.tournament.Spotlight.select(tours, tourBBBs).map {
+                    views.html.tournament.homepageSpotlight(_)
+                  },
+                  swiss.ifTrue(nbForced < 3) map views.html.swiss.bits.homepageSpotlight,
+                  simulBBB map views.html.simul.bits.homepageSpotlight
+                )
+              }
             )
-          else
-            div(cls := "about-side")(
-              ctx.blind option h2("About"),
-              trans.xIsAFreeYLibreOpenSourceChessServer(
-                "Lichess",
-                a(cls := "blue", href := routes.Plan.features)(trans.really.txt())
-              ),
-              " ",
-              a(href := "/about")(trans.aboutX("Lichess"), "...")
-            )
+          ),
+          div(cls := "lobby__timeline")(
+            if ctx.isAuth then
+              div(
+                ctx.blind option h2("Timeline"),
+                views.html.timeline entries userTimeline,
+                userTimeline.nonEmpty option a(cls := "more", href := routes.Timeline.home)(
+                  trans.more(),
+                  " »"
+                )
+              )
+            else
+              div(cls := "about-side")(
+                ctx.blind option h2("About"),
+                trans.xIsAFreeYLibreOpenSourceChessServer(
+                  "Lichess",
+                  a(cls := "blue", href := routes.Plan.features)(trans.really.txt())
+                ),
+                " ",
+                a(href := "/about")(trans.aboutX("Lichess"), "...")
+              )
+          )
         ),
         div(cls := "lobby__about")(
           ctx.blind option h2("About"),
