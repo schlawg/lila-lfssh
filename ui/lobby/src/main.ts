@@ -24,6 +24,9 @@ export default function main(opts: LobbyOpts) {
   }
 
   let cols = 0;
+  const tv = $as<HTMLElement>($('.lobby__puzzle').clone());
+  tv.classList.add('lobby__tv');
+  tv.classList.remove('lobby__puzzle');
 
   layout(); // escape row boundary constraints in the grid without using css subgrid
   window.addEventListener('resize', layout);
@@ -46,8 +49,9 @@ export default function main(opts: LobbyOpts) {
       table.append(side, timeline);
     } else if (cols === 4) {
       side.append(timeline);
-      table.append(forum);
+      table.append(tv);
     }
+    tv.classList.toggle('none', cols < 4);
     forum.classList.toggle('none', cols < 4);
   }
 

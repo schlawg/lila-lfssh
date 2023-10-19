@@ -69,17 +69,22 @@ $app-tab-spacer: calc(2.25em + 2px);
   @include breakpoint($mq-col4) {
     --cols: 4;
     grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: fit-content(0);
     grid-template-areas:
-      'side     app     app     table' // side gets counters & timeline, table gets forum
-      'tv       blog    blog    puzzle'
-      'tv       support support puzzle'
-      'leader   winner  tours   tours'
-      'about    about   about   about';
+      'side   app     app     table' // side gets counters & timeline, table gets tv
+      'forum  blog    blog    puzzle'
+      'forum  support support puzzle'
+      'leader winner  tours   tours'
+      'about  about   about   about';
 
     &__side {
       @include lobby-app-size;
       padding-top: $app-tab-spacer;
       overflow: hidden;
+    }
+
+    &__table {
+      row-gap: 2em;
     }
 
     &__counters {

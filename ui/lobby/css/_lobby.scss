@@ -100,8 +100,14 @@ body {
   }
 }
 
-.lobby__tv .mini-game {
-  overflow: visible;
+.lobby__tv {
+  .text {
+    color: $c-font-dim;
+  }
+
+  .mini-game {
+    overflow: visible;
+  }
 }
 
 .lobby__puzzle .text {
