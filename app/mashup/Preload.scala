@@ -84,7 +84,7 @@ final class Preload(
       (ctx.userId so playbanApi.currentBan).mon(_.lobby segment "playban") zip
       (ctx.blind so ctx.me so roundProxy.urgentGames) zip
       lastPostsCache.get {} zip
-      forumApi.recentTopics(10).mon(_.lobby segment "forumTopics") zip
+      forumApi.recentTopics(20).mon(_.lobby segment "forumTopics") zip
       ctx.userId
         .ifTrue(nbNotifications > 0)
         .filterNot(liveStreamApi.isStreaming)
