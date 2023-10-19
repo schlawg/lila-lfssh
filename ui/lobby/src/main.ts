@@ -25,13 +25,12 @@ export default function main(opts: LobbyOpts) {
   }
 
   let cols = 0;
-  const tv = $as<HTMLElement>(`
-    <div class="lobby__tv"><span class="text">Fake TV</span>
-      <span class="mini-board"
-        data-state="3R1r1k/pp4p1/2n1Q1bp/1Bp5/PqN4P/2b2NP1/1P4P1/2K4R,black,d1d8"/>
-    </div>`); // TODO: REMOVE TV
-  initBoard(tv.querySelector('.mini-board')!); // TODO: REMOVE TV
-  tv.append($as<HTMLElement>('<span class="text">Cannot hurt you!</span>')); // TODO: REMOVE TV
+  const tv = $as<HTMLElement>(`<div class="lobby__tv"><span class="text">Fake TV</span>
+    <span class="mini-board"
+      data-state="3R1r1k/pp4p1/2n1Q1bp/1Bp5/PqN4P/2b2NP1/1P4P1/2K4R,black,d1d8"/>
+   </div>`); // TODO: REMOVE
+  if (tv) initBoard(tv.querySelector('.mini-board')!);
+  tv?.append($as<HTMLElement>('<span class="text">Cannot hurt you!</span>'));
   layout();
   window.addEventListener('resize', layout);
 
