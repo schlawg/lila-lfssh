@@ -4,6 +4,7 @@ import { LobbyOpts } from './interfaces';
 import makeCtrl from './ctrl';
 import appView from './view/main';
 import tableView from './view/table';
+import { init as initBoard } from 'common/mini-board';
 import { counterView } from './view/counter';
 
 export const patch = init([classModule, attributesModule, eventListenersModule]);
@@ -24,11 +25,14 @@ export default function main(opts: LobbyOpts) {
   }
 
   let cols = 0;
-  const tv = $as<HTMLElement>($('.lobby__puzzle').clone()); // TODO: REMOVE TV
-  tv.classList.add('lobby__tv'); // TODO: REMOVE TV
-  tv.classList.remove('lobby__puzzle'); // TODO: REMOVE TV
-
-  layout(); // escape row boundary constraints in the grid without using css subgrid
+  const tv = $as<HTMLElement>(`
+    <div class="lobby__tv"><span class="text">Fake TV</span>
+      <span class="mini-board"
+        data-state="3R1r1k/pp4p1/2n1Q1bp/1Bp5/PqN4P/2b2NP1/1P4P1/2K4R,black,d1d8"/>
+    </div>`); // TODO: REMOVE TV
+  initBoard(tv.querySelector('.mini-board')!); // TODO: REMOVE TV
+  tv.append($as<HTMLElement>('<span class="text">Cannot hurt you!</span>')); // TODO: REMOVE TV
+  layout();
   window.addEventListener('resize', layout);
 
   function layout() {
@@ -51,7 +55,6 @@ export default function main(opts: LobbyOpts) {
       side.append(timeline);
       table.append(forum);
     }
-    tv.classList.toggle('none', cols < 3); // TODO: REMOVE TV
   }
 
   return ctrl;
