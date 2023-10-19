@@ -5,7 +5,7 @@ import com.github.blemale.scaffeine.AsyncLoadingCache
 import play.api.libs.json.*
 
 import lila.event.Event
-import lila.forum.MiniForumPost
+import lila.forum.RecentForumTopic
 import lila.game.{ Game, Pov }
 import lila.playban.TempBan
 import lila.simul.{ Simul, SimulIsFeaturable }
@@ -66,7 +66,7 @@ final class Preload(
           ),
           ublogPosts
         ),
-        forumPosts
+        forumTopics
       ),
       lichessMsg
     ) <- lobbyApi.apply.mon(_.lobby segment "lobbyApi") zip
@@ -84,7 +84,7 @@ final class Preload(
       (ctx.userId so playbanApi.currentBan).mon(_.lobby segment "playban") zip
       (ctx.blind so ctx.me so roundProxy.urgentGames) zip
       lastPostsCache.get {} zip
-      forumApi.recentPosts(10).mon(_.lobby segment "forumPosts") zip
+      forumApi.recentTopics(10).mon(_.lobby segment "forumTopics") zip
       ctx.userId
         .ifTrue(nbNotifications > 0)
         .filterNot(liveStreamApi.isStreaming)
@@ -93,7 +93,9 @@ final class Preload(
       .mon(_.lobby segment "currentGame") zip
       lightUserApi
         .preloadMany(
-          tWinners.map(_.userId) ::: forumPosts.flatMap(_.userId) ::: entries.flatMap(_.userIds).toList
+          tWinners.map(_.userId) ::: forumTopics.flatMap(_.posts).flatMap(_.userId) ::: entries
+            .flatMap(_.userIds)
+            .toList
         )
         .mon(_.lobby segment "lightUsers")
   yield Homepage(
@@ -115,7 +117,7 @@ final class Preload(
     blindGames,
     lastPostCache.apply,
     ublogPosts,
-    forumPosts,
+    forumTopics,
     withPerfs,
     hasUnreadLichessMessage = lichessMsg
   )
@@ -159,7 +161,7 @@ object Preload:
       blindGames: List[Pov],
       lastPost: Option[lila.blog.MiniPost],
       ublogPosts: List[UblogPost.PreviewPost],
-      forumPosts: List[MiniForumPost],
+      forumTopics: List[RecentForumTopic],
       me: Option[User.WithPerfs],
       hasUnreadLichessMessage: Boolean
   )

@@ -1,37 +1,21 @@
-.lobby {
-  &__table {
-    @extend %flex-column;
+.lobby__table {
+  @extend %flex-column;
+  justify-content: center;
+  margin: 0;
+  overflow: hidden;
+  row-gap: 0.75em;
+}
 
-    position: relative;
-  }
+.lobby__start {
+  @extend %flex-column;
+  row-gap: 0.75em;
 
-  &__start {
-    @extend %flex-column;
+  button {
+    font-size: 1.1em;
+    text-align: center;
 
-    justify-content: flex-start;
-    flex: 1 1 auto;
-    gap: 0.75em;
-    margin: 0;
-
-    button {
-      font-size: 1.1em;
-      text-align: center;
-      padding: 0.75em;
-
-      &.disabled {
-        opacity: 0.2;
-      }
-    }
-  }
-
-  &__counters a {
-    font-family: Roboto;
-    color: $c-font-page;
-
-    @include transition(color);
-
-    &:hover {
-      color: $c-link;
+    &.disabled {
+      opacity: 0.2;
     }
   }
 }

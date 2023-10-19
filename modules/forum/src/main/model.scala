@@ -57,14 +57,16 @@ case class MiniForumPost(
     userId: Option[UserId],
     text: String,
     createdAt: Instant,
-    contributors: Option[List[UserId]] = None
+    categId: ForumCategId
 )
 
-/*case class MiniTopic(
-    id: ForumTopicId,
-    name: String,
-    updatedAt: Instant,
-)*/
+class RecentForumTopic(minis: List[MiniForumPost]):
+  val posts     = minis.sortBy(_.createdAt)(Ordering[Instant])
+  val name      = posts.head.topicName
+  val categId   = posts.head.categId
+  val updatedAt = posts.last.createdAt
+  val postId    = posts.head.postId
+  val contribs  = posts.map(_.userId).distinct.reverse
 
 case class PostUrlData(categ: ForumCategId, topicSlug: String, page: Int, number: Int)
 

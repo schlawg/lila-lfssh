@@ -36,8 +36,3 @@
     @extend %lobby__side__more;
   }
 }
-
-.lobby__side-timeline {
-  @extend %flex-column;
-  gap: 1em;
-}
