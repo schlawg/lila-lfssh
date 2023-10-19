@@ -136,8 +136,11 @@ object home:
               a(href := "/about")(trans.aboutX("Lichess"), "...")
             )
         ),
-        div(cls := "lobby__forum")(
-          h3("Recent topics"),
+        div(cls := "lobby__forum disclosed")(
+          h3(
+            button(cls := "button-link disclose-topics"),
+            "Recent topics"
+          ),
           views.html.forum.bits.recentTopics(forumTopics)
         ),
         div(cls := "lobby__counters"),

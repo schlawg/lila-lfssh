@@ -99,6 +99,7 @@ body {
 }
 
 .lobby__tv {
+  position: relative;
   .text {
     color: $c-font-dim; // TODO: REMOVE TV - delete style
   }

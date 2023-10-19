@@ -3,7 +3,10 @@ import { LobbyOpts } from './interfaces';
 
 import makeCtrl from './ctrl';
 import appView from './view/main';
+import * as licon from 'common/licon';
+import { storedBooleanPropWithEffect } from 'common/storage';
 import tableView from './view/table';
+import { init as initBoard } from 'common/mini-board';
 import { counterView } from './view/counter';
 
 export const patch = init([classModule, attributesModule, eventListenersModule]);
@@ -24,13 +27,28 @@ export default function main(opts: LobbyOpts) {
   }
 
   let cols = 0;
-  const tv = $as<HTMLElement>($('.lobby__puzzle').clone()); // TODO: REMOVE TV
-  tv.classList.add('lobby__tv'); // TODO: REMOVE TV
-  tv.classList.remove('lobby__puzzle'); // TODO: REMOVE TV
-
-  layout(); // escape row boundary constraints in the grid without using css subgrid
+  const tv = $as<HTMLElement>(`<div class="lobby__tv"><span class="text">Fake TV</span>
+    <span class="mini-board"
+      data-state="3R1r1k/pp4p1/2n1Q1bp/1Bp5/PqN4P/2b2NP1/1P4P1/2K4R,black,d1d8"/>
+   </div>`); // TODO: REMOVE
+  if (tv) initBoard(tv.querySelector('.mini-board')!);
+  tv?.append($as<HTMLElement>('<span class="text">Cannot hurt you!</span>'));
+  layout();
   window.addEventListener('resize', layout);
-
+  const disclose = (v: boolean) => {
+    if (v) {
+      $('.lobby__forum').addClass('disclosed');
+      $('.disclose-topics').attr('data-icon', licon.DownTriangle);
+    } else {
+      $('.lobby__forum').removeClass('disclosed');
+      $('.disclose-topics').attr('data-icon', licon.PlusButton);
+    }
+  };
+  const disclosed = storedBooleanPropWithEffect('lobby.topics.disclosed', true, disclose);
+  disclose(disclosed());
+  $('.disclose-topics').on('click', function () {
+    disclosed(!disclosed());
+  });
   function layout() {
     const lobby = document.querySelector('.lobby') as HTMLElement;
     const newCols = Number(window.getComputedStyle(lobby).getPropertyValue('--cols'));
@@ -51,7 +69,6 @@ export default function main(opts: LobbyOpts) {
       side.append(timeline);
       table.append(forum);
     }
-    tv.classList.toggle('none', cols < 3); // TODO: REMOVE TV
   }
 
   return ctrl;
