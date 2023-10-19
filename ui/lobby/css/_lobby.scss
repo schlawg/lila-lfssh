@@ -98,8 +98,14 @@ body {
   }
 }
 
-.lobby__tv .mini-game {
-  overflow: visible;
+.lobby__tv {
+  .text {
+    color: $c-font-dim; // TODO: REMOVE TV - delete style
+  }
+
+  .mini-game {
+    overflow: visible;
+  }
 }
 
 .lobby__puzzle .text {
