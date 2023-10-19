@@ -24,9 +24,9 @@ export default function main(opts: LobbyOpts) {
   }
 
   let cols = 0;
-  const tv = $as<HTMLElement>($('.lobby__puzzle').clone());
-  tv.classList.add('lobby__tv');
-  tv.classList.remove('lobby__puzzle');
+  const tv = $as<HTMLElement>($('.lobby__puzzle').clone()); // TODO: REMOVE TV
+  tv.classList.add('lobby__tv'); // TODO: REMOVE TV
+  tv.classList.remove('lobby__puzzle'); // TODO: REMOVE TV
 
   layout(); // escape row boundary constraints in the grid without using css subgrid
   window.addEventListener('resize', layout);
@@ -43,16 +43,15 @@ export default function main(opts: LobbyOpts) {
     const timeline = lobby.querySelector('.lobby__timeline') as HTMLElement;
     const side = lobby.querySelector('.lobby__side') as HTMLElement;
 
-    lobby.append(side, table, timeline, forum); // reset to start
+    lobby.append(side, table, timeline, forum, tv); // reset to start // TODO: REMOVE TV
 
     if (cols === 3) {
       table.append(side, timeline);
     } else if (cols === 4) {
       side.append(timeline);
-      table.append(tv);
+      table.append(forum);
     }
-    tv.classList.toggle('none', cols < 4);
-    forum.classList.toggle('none', cols < 4);
+    tv.classList.toggle('none', cols < 3); // TODO: REMOVE TV
   }
 
   return ctrl;
