@@ -38,7 +38,7 @@ export default function main(opts: LobbyOpts) {
   const disclose = (v: boolean) => {
     if (v) {
       $('.lobby__forum').addClass('disclosed');
-      $('.disclose-topics').attr('data-icon', licon.DownTriangle);
+      $('.disclose-topics').attr('data-icon', licon.MinusButton);
     } else {
       $('.lobby__forum').removeClass('disclosed');
       $('.disclose-topics').attr('data-icon', licon.PlusButton);
