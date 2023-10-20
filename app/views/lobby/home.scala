@@ -136,7 +136,7 @@ object home:
               a(href := "/about")(trans.aboutX("Lichess"), "...")
             )
         ),
-        div(cls := "lobby__forum disclosed")(
+        div(cls := "lobby__forum")(
           h3(
             button(cls := "button-link disclose-topics"),
             "Recent topics"

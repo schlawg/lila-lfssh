@@ -44,7 +44,7 @@ export default function main(opts: LobbyOpts) {
       $('.disclose-topics').attr('data-icon', licon.PlusButton);
     }
   };
-  const disclosed = storedBooleanPropWithEffect('lobby.topics.disclosed', true, disclose);
+  const disclosed = storedBooleanPropWithEffect('lobby.topics.disclosed2', false, disclose);
   disclose(disclosed());
   $('.disclose-topics').on('click', function () {
     disclosed(!disclosed());
