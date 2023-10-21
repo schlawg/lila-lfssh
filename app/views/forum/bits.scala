@@ -39,9 +39,9 @@ object bits:
             a(
               href  := routes.ForumCateg.show(topic.categId),
               title := topic.categId.split("-").map(_.capitalize).mkString(" "),
-              cls   := s"categ"
+              cls   := s"categ-link"
             )(
-              categs.get(topic.categId).getOrElse("TEAM")
+              categs.get(topic.categId.pp).getOrElse("TEAM")
             ),
             ": ",
             a(

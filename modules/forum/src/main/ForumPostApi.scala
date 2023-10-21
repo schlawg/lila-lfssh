@@ -233,9 +233,9 @@ final class ForumPostApi(
       )
     }
 
-  def recentTopics(nb: Int): Fu[List[RecentForumTopic]] =
+  def recentTopics(nb: Int, categs: List[ForumCategId] = Nil): Fu[List[RecentForumTopic]] =
     postRepo
-      .recentInCategs(nb * 3)(RecentTopics.categs, Nil)
+      .recentInCategs(nb * 3)(RecentTopics.categs ::: categs, Nil)
       .flatMap(miniPosts)
       .map:
         _.groupBy(_.topicName)

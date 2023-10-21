@@ -50,7 +50,7 @@
     }
   }
 
-  .categ {
+  .categ-link {
     font-size: smaller;
     font-weight: bold;
     color: $c-font-dimmer;
@@ -62,5 +62,8 @@
     flex-flow: row wrap;
     column-gap: 0.3em;
     padding-#{$start-direction}: 0.5em;
+  }
+
+  .categ-list {
   }
 }

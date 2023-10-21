@@ -36,7 +36,8 @@ final class Preload(
     msgApi: lila.msg.MsgApi,
     relayApi: lila.relay.RelayApi,
     notifyApi: lila.notify.NotifyApi,
-    forumApi: lila.forum.ForumPostApi
+    forumApi: lila.forum.ForumPostApi,
+    teamCache: lila.team.Cached
 )(using Executor):
 
   import Preload.*
@@ -50,6 +51,8 @@ final class Preload(
   )(using ctx: Context): Fu[Homepage] = for
     nbNotifications <- ctx.me.so(notifyApi.unreadCount(_))
     withPerfs       <- ctx.user.soFu(perfsRepo.withPerfs)
+    teams           <- ctx.me.so(teams)
+    teamNames       <- teamCache.nameCache.asyncMany(teams)
     given Option[User.WithPerfs] = withPerfs
     (
       (
@@ -84,7 +87,9 @@ final class Preload(
       (ctx.userId so playbanApi.currentBan).mon(_.lobby segment "playban") zip
       (ctx.blind so ctx.me so roundProxy.urgentGames) zip
       lastPostsCache.get {} zip
-      forumApi.recentTopics(12).mon(_.lobby segment "forumTopics") zip
+      forumApi
+        .recentTopics(12, teams.map(lila.forum.ForumCateg.fromTeamId))
+        .mon(_.lobby segment "forumTopics") zip
       ctx.userId
         .ifTrue(nbNotifications > 0)
         .filterNot(liveStreamApi.isStreaming)
@@ -118,6 +123,7 @@ final class Preload(
     lastPostCache.apply,
     ublogPosts,
     forumTopics,
+    // teamNames,
     withPerfs,
     hasUnreadLichessMessage = lichessMsg
   )
@@ -139,6 +145,13 @@ final class Preload(
           CurrentGame(pov = pov, opponent = opponent).some
         }
     }
+
+  private def teams(me: Me): Fu[List[lila.team.TeamId]] =
+    teamCache
+      .teamIdsList(me)
+      .flatMap:
+        _.filterA:
+          teamCache.forumAccess.get(_).map(_ != lila.team.Team.Access.NONE)
 
 object Preload:
 

@@ -65,7 +65,7 @@ object index:
       title = s"Blog posts about $top",
       posts = posts,
       menuItem = "topics",
-      route = (p, bd) => routes.Ublog.topic(top.value, p, bd),
+      route = (p, bd) => routes.Ublog.topic(top.value, p, ~bd),
       onEmpty = "Nothing to show.",
       byDate.some
     )

@@ -8,6 +8,7 @@ import { storedBooleanPropWithEffect } from 'common/storage';
 import tableView from './view/table';
 import { init as initBoard } from 'common/mini-board';
 import { counterView } from './view/counter';
+//import { toggle } from 'common/controls';
 
 export const patch = init([classModule, attributesModule, eventListenersModule]);
 
@@ -71,5 +72,12 @@ export default function main(opts: LobbyOpts) {
     }
   }
 
+  /*function category(id: string, name: string, checked: boolean) {
+    return toggle({ name, id, checked, change: () => {} }, ctrl.trans, redraw);
+  }
+
+  function categList() {
+
+  }*/
   return ctrl;
 }
