@@ -8,7 +8,7 @@ const version = 'sf1600';
 
 export class WasmWorker implements CevalWorker {
   private failed = false;
-  private protocol = new Protocol();
+  private protocol = new Protocol({ reasonableDepthLimit: 99 });
   private module: StockfishWeb;
 
   constructor(
@@ -28,19 +28,29 @@ export class WasmWorker implements CevalWorker {
       locateFile: (name: string) =>
         lichess.assetUrl(`npm/stockfish-web/${name}`, { version, sameDomain: name.endsWith('.worker.js') }),
     });
+
     const nnueFilename = module.getRecommendedNnue();
     const nnueVersion = nnueFilename.slice(3, 9);
     const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' }).catch(() => undefined);
+
     module.errorHandler = (msg: string) => {
-      if (msg.startsWith('BAD NNUE')) {
-        console.warn(`Corrupt NNUE file, removing ${nnueVersion} from IDB`);
-        nnueStore?.remove(nnueVersion);
+      if (msg.startsWith('BAD_NNUE')) {
+        // stockfish doesn't like our nnue file, let's remove it from IDB.
+        // this will happen before nnueStore.put completes so let that finish before deletion.
+        // otherwise, the resulting object store will best be described as undefined
+        setTimeout(() => {
+          console.warn(`Corrupt NNUE file, removing ${nnueVersion} from IDB`);
+          nnueStore?.remove(nnueVersion);
+        }, 2000);
       } else console.error(msg);
     };
+
     if (this.nnueProgress && nnueStore) {
       let nnueBuffer = await nnueStore.get(nnueVersion).catch(() => undefined);
+
       if (!nnueBuffer || nnueBuffer.byteLength < 1024 * 1024) {
         const req = new XMLHttpRequest();
+
         req.open('get', lichess.assetUrl(`lifat/nnue/${nnueFilename}`, { version: nnueVersion }), true);
         req.responseType = 'arraybuffer';
         req.onprogress = e => this.nnueProgress?.(e.loaded);
