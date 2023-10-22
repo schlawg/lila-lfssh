@@ -5,7 +5,6 @@ import com.github.blemale.scaffeine.AsyncLoadingCache
 import play.api.libs.json.*
 
 import lila.event.Event
-import lila.forum.RecentForumTopic
 import lila.game.{ Game, Pov }
 import lila.playban.TempBan
 import lila.simul.{ Simul, SimulIsFeaturable }
@@ -35,9 +34,7 @@ final class Preload(
     lastPostsCache: AsyncLoadingCache[Unit, List[UblogPost.PreviewPost]],
     msgApi: lila.msg.MsgApi,
     relayApi: lila.relay.RelayApi,
-    notifyApi: lila.notify.NotifyApi,
-    forumApi: lila.forum.ForumPostApi,
-    teamCache: lila.team.Cached
+    notifyApi: lila.notify.NotifyApi
 )(using Executor):
 
   import Preload.*
@@ -51,25 +48,20 @@ final class Preload(
   )(using ctx: Context): Fu[Homepage] = for
     nbNotifications <- ctx.me.so(notifyApi.unreadCount(_))
     withPerfs       <- ctx.user.soFu(perfsRepo.withPerfs)
-    teams           <- ctx.me.so(teams)
-    teamNames       <- teamCache.nameCache.asyncMany(teams)
     given Option[User.WithPerfs] = withPerfs
     (
       (
         (
           (
             (
-              (
-                (((((((((data, povs), tours), events), simuls), feat), entries), lead), tWinners), puzzle),
-                streams
-              ),
-              playban
+              (((((((((data, povs), tours), events), simuls), feat), entries), lead), tWinners), puzzle),
+              streams
             ),
-            blindGames
+            playban
           ),
-          ublogPosts
+          blindGames
         ),
-        forumTopics
+        ublogPosts
       ),
       lichessMsg
     ) <- lobbyApi.apply.mon(_.lobby segment "lobbyApi") zip
@@ -87,9 +79,6 @@ final class Preload(
       (ctx.userId so playbanApi.currentBan).mon(_.lobby segment "playban") zip
       (ctx.blind so ctx.me so roundProxy.urgentGames) zip
       lastPostsCache.get {} zip
-      forumApi
-        .recentTopics(12, teams.map(lila.forum.ForumCateg.fromTeamId))
-        .mon(_.lobby segment "forumTopics") zip
       ctx.userId
         .ifTrue(nbNotifications > 0)
         .filterNot(liveStreamApi.isStreaming)
@@ -97,11 +86,7 @@ final class Preload(
     (currentGame, _) <- (ctx.me soUse currentGameMyTurn(povs, lightUserApi.sync))
       .mon(_.lobby segment "currentGame") zip
       lightUserApi
-        .preloadMany(
-          tWinners.map(_.userId) ::: forumTopics.flatMap(_.posts).flatMap(_.userId) ::: entries
-            .flatMap(_.userIds)
-            .toList
-        )
+        .preloadMany(tWinners.map(_.userId) ::: entries.flatMap(_.userIds).toList)
         .mon(_.lobby segment "lightUsers")
   yield Homepage(
     data,
@@ -122,8 +107,6 @@ final class Preload(
     blindGames,
     lastPostCache.apply,
     ublogPosts,
-    forumTopics,
-    // teamNames,
     withPerfs,
     hasUnreadLichessMessage = lichessMsg
   )
@@ -146,13 +129,6 @@ final class Preload(
         }
     }
 
-  private def teams(me: Me): Fu[List[lila.team.TeamId]] =
-    teamCache
-      .teamIdsList(me)
-      .flatMap:
-        _.filterA:
-          teamCache.forumAccess.get(_).map(_ != lila.team.Team.Access.NONE)
-
 object Preload:
 
   case class Homepage(
@@ -174,7 +150,6 @@ object Preload:
       blindGames: List[Pov],
       lastPost: Option[lila.blog.MiniPost],
       ublogPosts: List[UblogPost.PreviewPost],
-      forumTopics: List[RecentForumTopic],
       me: Option[User.WithPerfs],
       hasUnreadLichessMessage: Boolean
   )
