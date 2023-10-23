@@ -1,5 +1,5 @@
 import CevalCtrl from './ctrl';
-import * as view from './view';
+import * as view from './view/main';
 import * as winningChances from './winningChances';
 
 export type { NodeEvals, Eval, EvalMeta, CevalOpts } from './types';
