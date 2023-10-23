@@ -950,4 +950,6 @@ export default class AnalyseCtrl {
 
   withCg = <A>(f: (cg: ChessgroundApi) => A): A | undefined =>
     this.chessground && this.cgVersion.js === this.cgVersion.dom ? f(this.chessground) : undefined;
+
+  externalEngines = () => this.data.externalEngines;
 }

@@ -5,8 +5,7 @@ import { isTouchDevice } from 'common/device';
 import { bind, dataIcon, MaybeVNodes } from 'common/snabbdom';
 import { h, VNode } from 'snabbdom';
 import { AutoplayDelay } from '../autoplay';
-import { config as externalEngineConfig } from './externalEngine';
-import { toggle, ToggleSettings /*, rangeConfig*/ } from 'common/controls';
+import { toggle, ToggleSettings } from 'common/controls';
 import AnalyseCtrl from '../ctrl';
 import { cont as contRoute } from 'game/router';
 import * as pgnExport from '../pgnExport';
@@ -64,8 +63,6 @@ function autoplayButtons(ctrl: AnalyseCtrl): VNode {
     }),
   );
 }
-
-//const formatHashSize = (v: number): string => (v < 1000 ? v + 'MB' : Math.round(v / 1024) + 'GB');
 
 const hiddenInput = (name: string, value: string) => h('input', { attrs: { type: 'hidden', name, value } });
 
@@ -272,7 +269,6 @@ export function view(ctrl: AnalyseCtrl): VNode {
     ...tools,
     ...notationConfig,
     ...cevalConfig,
-    ...externalEngineConfig(ctrl),
     ...(ctrl.mainline.length > 4 ? [h('h2', noarg('replayMode')), autoplayButtons(ctrl)] : []),
     canContinue
       ? h('div.continue-with.none.g_' + d.game.id, [
