@@ -66,7 +66,7 @@ function threatInfo(ctrl: ParentCtrl, threat?: Tree.LocalEval | false): string {
 
 function threatButton(ctrl: ParentCtrl): VNode | null {
   if (ctrl.getCeval().download || (ctrl.disableThreatMode && ctrl.disableThreatMode())) return null;
-  return h('a.show-threat', {
+  return h('button.show-threat', {
     class: {
       active: ctrl.threatMode(),
       hidden: !!ctrl.getNode().check,
@@ -277,7 +277,7 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
       {
         class: { computing: percent < 100 && instance.getState() === CevalState.Computing },
       },
-      [progressBar, switchButton, h('div.status', [...body, threatButton(ctrl)]), settingsGear],
+      [progressBar, switchButton, ...body, threatButton(ctrl), settingsGear],
     ),
     renderCevalSettings(ctrl),
   ];

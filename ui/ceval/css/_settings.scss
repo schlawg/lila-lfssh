@@ -1,22 +1,24 @@
 #ceval-settings-anchor {
-  width: 100%;
   position: relative;
 }
+
 #ceval-settings {
   @extend %flex-column, %dropdown-shadow, %box-radius-bottom;
   position: absolute;
   border-top: 2px solid $c-primary;
   z-index: z(mz-menu);
   width: 100%;
-  background: $c-bg-popup;
+  background: $c-bg-high;
   gap: 1.5em;
-  padding: 1.5em;
+  padding: 2em 1.5em;
+
   > hr {
     margin: 5px;
   }
 
   .setting {
     @extend %flex-center-nowrap;
+
     * {
       white-space: nowrap;
     }

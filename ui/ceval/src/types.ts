@@ -81,6 +81,7 @@ export interface ParentCtrl {
   cevalSetMultiPv?: (multiPv: number) => void;
   cevalReset?: () => void;
   redraw?: () => void;
+  externalEngines?: () => ExternalEngine[] | undefined;
   trans: Trans;
 }
 

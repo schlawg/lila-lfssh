@@ -1,7 +1,7 @@
 import { h, VNode } from 'snabbdom';
 import { ParentCtrl } from '../types';
 import { toggle, ToggleSettings, rangeConfig } from 'common/controls';
-import { onInsert } from 'common/snabbdom';
+import { onInsert, bind } from 'common/snabbdom';
 import { onClickAway } from 'common';
 
 const ctrlToggle = (t: ToggleSettings, ctrl: ParentCtrl) =>
@@ -21,31 +21,6 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
           'div#ceval-settings',
           { hook: onInsert(onClickAway(() => (ceval.showEnginePrefs(false), ceval.opts.redraw()))) },
           [
-            ceval.technology != 'external'
-              ? ctrlToggle(
-                  {
-                    name: 'High Performance',
-                    title: ceval.platform.supportsNnue
-                      ? 'Downloads 40 MB neural network evaluation file (page reload required after change)'
-                      : notSupported,
-                    id: 'enable-nnue',
-                    checked: ceval.platform.supportsNnue && ceval.enableNnue(),
-                    change: ceval.enableNnue,
-                    disabled: !ceval.platform.supportsNnue,
-                  },
-                  ctrl,
-                )
-              : null,
-            ctrlToggle(
-              {
-                name: 'infiniteAnalysis',
-                title: 'removesTheDepthLimit',
-                id: 'infinite',
-                checked: ceval.infinite(),
-                change: x => (ceval.infinite(x), ctrl.cevalReset?.()),
-              },
-              ctrl,
-            ),
             (id => {
               const max = 5;
               return h('div.setting', [
@@ -101,8 +76,65 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
                 }),
                 h('div.range_value', formatHashSize(ceval.hashSize())),
               ]))('analyse-memory'),
+            h('hr'),
+            ceval.technology !== 'external'
+              ? ctrlToggle(
+                  {
+                    name: 'Best Eval (NNUE)',
+                    title: ceval.platform.supportsNnue
+                      ? 'Downloads 40 MB neural network evaluation file (page reload required after change)'
+                      : notSupported,
+                    id: 'enable-nnue',
+                    checked: ceval.platform.supportsNnue && ceval.enableNnue(),
+                    change: ceval.enableNnue,
+                    disabled: !ceval.platform.supportsNnue,
+                  },
+                  ctrl,
+                )
+              : null,
+            ctrlToggle(
+              {
+                name: 'infiniteAnalysis',
+                title: 'removesTheDepthLimit',
+                id: 'infinite',
+                checked: ceval.infinite(),
+                change: x => (ceval.infinite(x), ctrl.cevalReset?.()),
+              },
+              ctrl,
+            ),
+            ...engineSelection(ctrl),
           ],
         ),
       )
     : null;
+}
+
+function engineSelection(ctrl: ParentCtrl) {
+  const engines = ctrl.externalEngines?.(),
+    ceval = ctrl.getCeval();
+  if (!engines?.length || !ceval.possible || !ceval.allowed()) return [];
+  return [
+    h('hr'),
+    h(
+      'select.external__select.setting',
+      {
+        hook: bind('change', e => ctrl.getCeval().selectEngine((e.target as HTMLSelectElement).value)),
+      },
+      [
+        h('option', { attrs: { value: 'lichess' } }, 'Lichess'),
+        ...engines.map(engine =>
+          h(
+            'option',
+            {
+              attrs: {
+                value: engine.id,
+                selected: ctrl.getCeval().externalEngine?.id == engine.id,
+              },
+            },
+            engine.name,
+          ),
+        ),
+      ],
+    ),
+  ];
 }
