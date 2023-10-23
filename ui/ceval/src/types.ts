@@ -77,6 +77,10 @@ export interface ParentCtrl {
   threatMode(): boolean;
   getNode(): Tree.Node;
   showComputer(): boolean;
+  toggleComputer?: () => void;
+  cevalSetMultiPv?: (multiPv: number) => void;
+  cevalReset?: () => void;
+  redraw?: () => void;
   trans: Trans;
 }
 

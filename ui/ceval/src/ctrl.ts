@@ -46,6 +46,7 @@ export default class CevalCtrl {
   hovering = prop<Hovering | null>(null);
   pvBoard = prop<PvBoard | null>(null);
   isDeeper = toggle(false);
+  showEnginePrefs = toggle(false);
 
   curEval: Tree.LocalEval | null = null;
   lastStarted: Started | false = false; // last started object (for going deeper even if stopped)
@@ -169,7 +170,7 @@ export default class CevalCtrl {
 
     if (!this.worker) {
       const nnueProgress = throttle(200, (download?: { bytes: number; total: number }) => {
-        this.download = download;
+        if (this.enabled()) this.download = download;
         this.opts.redraw();
       });
       if (this.externalEngine) this.worker = new ExternalWorker(this.externalEngine, this.opts.redraw);
@@ -259,6 +260,7 @@ export default class CevalCtrl {
     } else {
       lichess.tempStorage.set('ceval.enabled-after', '');
       this.enabled(false);
+      this.download = undefined;
     }
   };
   selectEngine = (id: string) => {

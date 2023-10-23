@@ -1,6 +1,5 @@
 .ceval {
   @extend %metal-bg;
-
   position: relative;
   display: flex;
   align-items: stretch;
@@ -14,15 +13,35 @@
     }
   }
 
+  // div.ceval = [div.switch, div.status (grow/shrink), button.gear]
+  // div.status = [pearl (grow), div.engine (grow/shrink), div.show-threat (grow)]
   .switch {
     @extend %flex-center;
-
     flex: 0 0 40px;
-    margin-#{$end-direction}: 8px;
+    margin-#{$start-direction}: 6px;
+  }
+
+  .status {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+    flex: auto;
   }
 
   pearl {
-    flex: 0 0 75px;
+    flex: 1 0 auto;
+  }
+
+  help,
+  .engine {
+    flex: 2 1 auto;
+  }
+
+  .show-threat {
+    flex: 0 0 18px;
+  }
+
+  pearl {
     line-height: 38px;
     font-size: 1.6em;
     text-align: center;
@@ -36,8 +55,7 @@
   help,
   .engine {
     @extend %nowrap-hidden;
-
-    flex: 1 1 auto;
+    padding: 0 2px;
     font-size: 12px;
     line-height: 16px;
     margin-top: 3px;
@@ -48,7 +66,6 @@
     .cloud,
     .infinite {
       @extend %roboto, %box-radius;
-
       margin-#{$start-direction}: 4px;
       background: $c-secondary-dim;
       color: $c-secondary-over;
@@ -74,6 +91,7 @@
 
   .technology {
     margin-#{$start-direction}: 5px;
+
     &.good {
       color: $c-good;
     }
@@ -114,11 +132,10 @@
   }
 
   .show-threat {
-    flex: 0 99 auto;
     line-height: 38px;
     color: $c-font-dim;
     font-size: 0.9em;
-    padding-#{$end-direction}: 0.5em;
+    padding-#{$start-direction}: 2px;
     overflow: hidden;
     visibility: hidden;
 
@@ -130,6 +147,30 @@
     &.hidden {
       opacity: 0.3;
       cursor: default;
+    }
+
+    &::before {
+      vertical-align: sub;
+    }
+  }
+
+  .settings-gear {
+    @extend %button-none;
+    color: $c-font-dim;
+    font-size: 16px;
+    padding: 0 6px;
+
+    &::before {
+      vertical-align: sub;
+    }
+
+    &:hover {
+      color: $c-font;
+    }
+
+    &.active {
+      color: white;
+      background-color: $c-primary;
     }
   }
 }

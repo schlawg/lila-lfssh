@@ -1,7 +1,6 @@
 import { CevalWorker, CevalState } from './worker';
 import { Protocol } from '../protocol';
 import { Redraw, Work } from '../types';
-import { Cache } from '../cache';
 
 export interface VariantWasmOpts {
   baseUrl: string;
@@ -27,7 +26,6 @@ interface Stockfish {
 declare global {
   interface Window {
     StockfishMv?: WasmModule;
-    Stockfish?: WasmModule; // hopefully this will be unused, but hang on to it
   }
 }
 
@@ -59,43 +57,24 @@ export class VariantWasmWorker implements CevalWorker {
 
   private async boot(): Promise<Stockfish> {
     const version = this.opts.version;
-    const cache = this.opts.cache;
-    const useNnue = this.opts.nnueProgress !== undefined;
 
-    // Fetch WASM file ourselves, for caching and progress indication.
-    let wasmBinary: ArrayBuffer | undefined;
-    if (cache) {
-      const wasmPath = this.opts.baseUrl + 'stockfish.wasm';
-      try {
-        const [found, data] = await cache.get(wasmPath, version);
-        if (found) wasmBinary = data;
-      } catch (e) {
-        console.log('ceval: idb cache load failed:', e);
-      }
-      if (!wasmBinary) {
-        wasmBinary = await new Promise((resolve, reject) => {
-          const req = new XMLHttpRequest();
-          req.open('GET', lichess.assetUrl(wasmPath, { version }), true);
-          req.responseType = 'arraybuffer';
-          req.onerror = event => reject(event);
-          req.onprogress = event => this.opts.nnueProgress?.(event.loaded);
-          req.onload = _ => {
-            this.opts.nnueProgress?.(0);
-            resolve(req.response);
-          };
-          req.send();
-        });
-      }
-      try {
-        await cache.set(wasmPath, version, wasmBinary);
-      } catch (e) {
-        console.log('ceval: idb cache store failed:', e);
-      }
-    }
+    const wasmPath = this.opts.baseUrl + 'stockfish.wasm';
+    const wasmBinary = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const req = new XMLHttpRequest();
+      req.open('GET', lichess.assetUrl(wasmPath, { version }), true);
+      req.responseType = 'arraybuffer';
+      req.onerror = event => reject(event);
+      req.onprogress = event => this.opts.nnueProgress?.(event.loaded);
+      req.onload = _ => {
+        this.opts.nnueProgress?.(0);
+        resolve(req.response);
+      };
+      req.send();
+    });
 
     // Load Emscripten module.
     await lichess.loadIife(this.opts.baseUrl + 'stockfish.js', { version });
-    const sf = await window[useNnue ? 'Stockfish' : 'StockfishMv']!({
+    const sf = await window['StockfishMv']!({
       wasmBinary,
       locateFile: (path: string) =>
         lichess.assetUrl(this.opts.baseUrl + path, { version, sameDomain: path.endsWith('.worker.js') }),

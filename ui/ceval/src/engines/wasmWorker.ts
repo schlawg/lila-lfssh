@@ -23,7 +23,8 @@ export class WasmWorker implements CevalWorker {
 
   async boot() {
     const makeStockfish = await import(lichess.assetUrl('npm/stockfish-web/stockfishWeb.js', { version }));
-    const module = await makeStockfish.default({
+
+    const module: StockfishWeb = await makeStockfish.default({
       wasmMemory: this.wasmMemory,
       locateFile: (name: string) =>
         lichess.assetUrl(`npm/stockfish-web/${name}`, { version, sameDomain: name.endsWith('.worker.js') }),
@@ -33,7 +34,7 @@ export class WasmWorker implements CevalWorker {
     const nnueVersion = nnueFilename.slice(3, 9);
     const nnueStore = await objectStorage<Uint8Array>({ store: 'nnue' }).catch(() => undefined);
 
-    module.errorHandler = (msg: string) => {
+    module.onError = (msg: string) => {
       if (msg.startsWith('BAD_NNUE')) {
         // stockfish doesn't like our nnue file, let's remove it from IDB.
         // this will happen before nnueStore.put completes so let that finish before deletion.
@@ -66,7 +67,7 @@ export class WasmWorker implements CevalWorker {
       }
       module.setNnueBuffer(nnueBuffer!);
     }
-    module.addMessageListener((data: string) => this.protocol.received(data));
+    module.listen = (data: string) => this.protocol.received(data);
     this.protocol.connected(cmd => module.postMessage(cmd));
     this.module = module;
   }
