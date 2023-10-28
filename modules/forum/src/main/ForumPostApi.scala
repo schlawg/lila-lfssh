@@ -6,6 +6,7 @@ import lila.ask.AskApi
 import lila.common.Bus
 import lila.db.dsl.{ *, given }
 import lila.hub.actorApi.timeline.{ ForumPost as TimelinePost, Propagate }
+import lila.hub.actorApi.shutup.{ PublicSource, RecordPublicText, RecordTeamForumMessage }
 import lila.security.{ Granter as MasterGranter }
 import lila.user.{ Me, User }
 
@@ -60,8 +61,8 @@ final class ForumPostApi(
             promotion.save(post.text)
             shutup ! {
               if post.isTeam
-              then lila.hub.actorApi.shutup.RecordTeamForumMessage(me, post.text)
-              else lila.hub.actorApi.shutup.RecordPublicForumMessage(me, post.text)
+              then RecordTeamForumMessage(me, post.text)
+              else RecordPublicText(me, post.text, PublicSource.Forum(post.id))
             }
             if anonMod
             then logAnonPost(post, edit = false)
