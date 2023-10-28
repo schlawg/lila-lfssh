@@ -1,9 +1,5 @@
 import { defined } from 'common';
-import { lichessRules } from 'chessops/compat';
 import { Work } from './types';
-
-const minDepth = 6;
-const maxStockfishPlies = 245;
 
 export class Protocol {
   public engineName: string | undefined;
@@ -11,16 +7,13 @@ export class Protocol {
   private work: Work | undefined;
   private currentEval: Tree.LocalEval | undefined;
   private expectedPvs = 1;
-  private reasonableDepthLimit: number | undefined;
 
   private nextWork: Work | undefined;
 
   private send: ((cmd: string) => void) | undefined;
   private options: Map<string, string | number> = new Map<string, string>();
 
-  constructor(o?: { reasonableDepthLimit: number }) {
-    this.reasonableDepthLimit = o?.reasonableDepthLimit;
-  }
+  constructor(readonly variantMap?: (v: VariantKey) => string) {}
 
   connected(send: (cmd: string) => void): void {
     this.send = send;
@@ -112,8 +105,7 @@ export class Protocol {
       // Track max pv index to determine when pv prints are done.
       if (this.expectedPvs < multiPv) this.expectedPvs = multiPv;
 
-      if (depth < minDepth || !defined(nodes) || !defined(elapsedMs) || !defined(isMate) || !defined(povEv))
-        return;
+      if (!defined(nodes) || !defined(elapsedMs) || !defined(isMate) || !defined(povEv)) return;
 
       const pivot = this.work.threatMode ? 0 : 1;
       const ev = this.work.ply % 2 === pivot ? -povEv : povEv;
@@ -132,7 +124,6 @@ export class Protocol {
       if (multiPv === 1) {
         this.currentEval = {
           fen: this.work.currentFen,
-          maxDepth: this.work.maxDepth,
           depth,
           knps: nodes / elapsedMs,
           nodes,
@@ -149,26 +140,14 @@ export class Protocol {
       if (multiPv === this.expectedPvs && this.currentEval) {
         this.work.emit(this.currentEval);
 
-        // Depth limits are nice in the user interface, but in clearly decided
-        // positions the usual depth limits are reached very quickly due to
-        // pruning. Therefore not using `go depth ${this.work.maxDepth}` and
-        // manually ensuring Stockfish gets to spend a minimum amount of
-        // time/nodes on each position.
-
-        // stockfish-web throws movepick.cpp/h assertions sometimes at very high depths > 140
-        // dunno why. it's not the stack but doesn't seem to happen on desktop builds. added the
-        // additional depth guard as a workaround until we can look into it further
-        if (
-          depth >= (this.reasonableDepthLimit ?? maxStockfishPlies) ||
-          (depth >= this.work.maxDepth &&
-            elapsedMs > 8000 &&
-            nodes > 4000 * Math.exp(this.work.maxDepth * 0.3))
-        )
+        if (depth >= 99 || elapsedMs >= this.work.searchMillis) {
           this.stop();
+        }
       }
     } else if (command && !['Stockfish', 'id', 'option', 'info'].includes(parts[0])) {
-      // filtered because some think it's a bug when they see it in the console
-      if (command !== 'No such option: Analysis Contempt') console.log('SF:', command);
+      // some think it's a bug when they see these in console
+      if (!['No such option: Analysis Contempt', 'No such option: UCI_Variant'].includes(command))
+        console.warn('SF:', command);
     }
   }
 
@@ -189,22 +168,13 @@ export class Protocol {
       this.currentEval = undefined;
       this.expectedPvs = 1;
 
-      this.setOption(
-        'UCI_Variant',
-        this.work.variant === 'antichess'
-          ? 'giveaway' // for old asmjs fallback
-          : lichessRules(this.work.variant),
-      );
+      this.setOption('UCI_Variant', this.variantMap?.(this.work.variant) ?? this.work.variant);
       this.setOption('Threads', this.work.threads);
       this.setOption('Hash', this.work.hashSize || 16);
       this.setOption('MultiPV', Math.max(1, this.work.multiPv));
 
       this.send(['position fen', this.work.initialFen, 'moves', ...this.work.moves].join(' '));
-      this.send(
-        this.work.maxDepth >= 99
-          ? `go depth ${maxStockfishPlies}` // 'go infinite' would not finish even if entire tree search completed
-          : 'go movetime 90000',
-      );
+      this.send(`go depth 99`);
     }
   }
 

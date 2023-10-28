@@ -2,13 +2,13 @@ import { Work } from '../types';
 import { CevalWorker, CevalState } from './worker';
 import { Protocol } from '../protocol';
 import { objectStorage } from 'common/objectStorage';
-import type StockfishWeb from 'stockfish-web';
+import type StockfishWeb from 'lila-stockfish-web';
 
 const version = 'sf1600';
 
 export class WasmWorker implements CevalWorker {
   private failed = false;
-  private protocol = new Protocol({ reasonableDepthLimit: 99 });
+  private protocol = new Protocol();
   private module: StockfishWeb;
 
   constructor(

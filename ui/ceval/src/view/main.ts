@@ -3,7 +3,7 @@ import * as licon from 'common/licon';
 import { stepwiseScroll } from 'common/scroll';
 import { bind, MaybeVNodes } from 'common/snabbdom';
 import { defined, notNull } from 'common';
-import { Eval, ParentCtrl, NodeEvals } from '../types';
+import { Eval, ParentCtrl, NodeEvals, CevalState } from '../types';
 import { h, VNode } from 'snabbdom';
 import { Position } from 'chessops/chess';
 import { lichessRules } from 'chessops/compat';
@@ -13,7 +13,6 @@ import { parseFen, makeBoardFen } from 'chessops/fen';
 import { renderEval } from '../util';
 import { setupPosition } from 'chessops/variant';
 import { uciToMove } from 'chessground/util';
-import { CevalState } from '../engines/worker';
 import { renderCevalSettings } from './settings';
 import CevalCtrl from '../ctrl';
 
@@ -34,32 +33,28 @@ function localEvalInfo(ctrl: ParentCtrl, evs: NodeEvals): Array<VNode | string> 
   }
 
   const depth = evs.client.depth || 0;
-  const t: Array<VNode | string> = evs.client.cloud
-    ? [trans('depthX', depth), h('span.cloud', { attrs: { title: trans.noarg('cloudAnalysis') } }, 'Cloud')]
-    : [trans('depthX', depth)];
-  if (ceval.infinite()) t.push(h('span.infinite', { attrs: { title: trans('infiniteAnalysis') } }, '∞'));
-  if (ceval.canGoDeeper())
+  const t: Array<VNode | string> = [];
+  if (ceval.isPaused() || ceval.computing() || ceval.canGoDeeper())
     t.push(
-      h('a.deeper', {
+      h(`a.deeper-toggle${ceval.computing() ? '.computing' : ''}`, {
         attrs: {
-          title: trans.noarg('goDeeper'),
-          'data-icon': licon.PlusButton,
+          title: ceval.isPaused() || ceval.canGoDeeper() ? trans.noarg('goDeeper') : 'Pause',
+          'data-icon': ceval.computing() ? licon.Pause : licon.PlusButton,
         },
-        hook: bind('click', ceval.goDeeper),
+        hook: bind('click', ceval.togglePauseDeeper),
       }),
     );
-  else if (
-    !(depth >= 99 && ceval.shortEngineName() === 'Stockfish 16') &&
-    !evs.client.cloud &&
-    evs.client.knps
-  )
-    t.push(' · ' + Math.round(evs.client.knps) + 'k n/s');
+  t.push(trans('depthX', depth));
+  if (ceval.infinite() && ceval.computing())
+    t.push(h('span.infinite', { attrs: { title: trans('infiniteAnalysis') } }, '∞'));
+  if (evs.client.cloud) t.push(h('span.cloud', { attrs: { title: trans.noarg('cloudAnalysis') } }, 'Cloud'));
+  else if (evs.client.knps && ceval.computing()) t.push(' · ' + Math.round(evs.client.knps) + 'k n/s');
   return t;
 }
 
 function threatInfo(ctrl: ParentCtrl, threat?: Tree.LocalEval | false): string {
   if (!threat) return ctrl.trans.noarg('calculatingMoves');
-  let t = ctrl.trans('depthX', (threat.depth || 0) + '/' + threat.maxDepth);
+  let t = ctrl.trans('depthX', threat.depth || 0);
   if (threat.knps) t += ' · ' + Math.round(threat.knps) + 'k n/s';
   return t;
 }
@@ -80,42 +75,42 @@ function threatButton(ctrl: ParentCtrl): VNode | null {
 }
 
 function engineName(ctrl: CevalCtrl): VNode[] {
-  return [
-    h('span', { attrs: { title: ctrl.longEngineName() || '' } }, ctrl.shortEngineName()),
-    ctrl.technology == 'external'
-      ? h(
-          'span.technology.good',
-          {
-            attrs: {
-              title: 'Engine running outside of the browser',
-            },
-          },
-          'EXTERNAL',
-        )
-      : ctrl.technology == 'nnue'
-      ? h(
-          'span.technology.good',
-          {
-            attrs: {
-              title: 'Multi-threaded WebAssembly with SIMD',
-            },
-          },
-          'NNUE',
-        )
-      : ctrl.technology == 'hce'
-      ? h(
-          'span.technology.good',
-          { attrs: { title: 'Multi-threaded WebAssembly (classical hand crafted evaluation)' } },
-          'HCE',
-        )
-      : ctrl.technology == 'wasm'
-      ? h('span.technology', { attrs: { title: 'Single-threaded WebAssembly fallback (slow)' } }, 'WASM')
-      : h(
-          'span.technology',
-          { attrs: { title: 'Single-threaded JavaScript fallback (very slow)' } },
-          'ASMJS',
-        ),
-  ];
+  const engine = ctrl.engines.active,
+    engineTech = engine?.tech ?? 'EXTERNAL';
+  return engine
+    ? [
+        h('span', { attrs: { title: engine?.name || '' } }, engine.short),
+        engineTech === 'EXTERNAL'
+          ? h(
+              'span.technology.good',
+              {
+                attrs: {
+                  title: 'Engine running outside of the browser',
+                },
+              },
+              engineTech,
+            )
+          : engine.requires === 'simd'
+          ? h(
+              'span.technology.good',
+              {
+                attrs: {
+                  title: 'Multi-threaded WebAssembly with SIMD',
+                },
+              },
+              engineTech,
+            )
+          : engine.requires === 'sharedMem'
+          ? h('span.technology.good', { attrs: { title: 'Multi-threaded WebAssembly' } }, engineTech)
+          : engine.requires === 'wasm'
+          ? h('span.technology', { attrs: { title: 'Single-threaded WebAssembly fallback' } }, engineTech)
+          : h(
+              'span.technology',
+              { attrs: { title: 'Single-threaded JavaScript fallback (very slow)' } },
+              engineTech,
+            ),
+      ]
+    : [];
 }
 
 const serverNodes = 4e6;
@@ -174,9 +169,9 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
   if (bestEv && typeof bestEv.cp !== 'undefined') {
     pearl = renderEval(bestEv.cp);
     percent = evs.client
-      ? evs.client.cloud
+      ? evs.client.cloud || instance.infinite()
         ? 100
-        : Math.min(100, Math.round((100 * evs.client.depth) / evs.client.maxDepth))
+        : Math.min(100, Math.round((100 * evs.client.millis) / instance.searchMillis()))
       : 0;
   } else if (bestEv && defined(bestEv.mate)) {
     pearl = '#' + bestEv.mate;
@@ -190,7 +185,7 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
     percent = 0;
   }
   if (threatMode) {
-    if (threat) percent = Math.min(100, Math.round((100 * threat.depth) / threat.maxDepth));
+    if (threat) percent = Math.min(100, Math.round((100 * threat.millis) / instance.searchMillis()));
     else percent = 0;
   }
   if (download) percent = Math.min(100, Math.round((100 * download.bytes) / download.total));
@@ -275,7 +270,7 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
     h(
       'div.ceval' + (enabled ? '.enabled' : ''),
       {
-        class: { computing: percent < 100 && instance.getState() === CevalState.Computing },
+        class: { computing: instance.computing() },
       },
       [progressBar, switchButton, ...body, threatButton(ctrl), settingsGear],
     ),

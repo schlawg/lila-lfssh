@@ -2,8 +2,7 @@ import CevalCtrl from './ctrl';
 import * as view from './view/main';
 import * as winningChances from './winningChances';
 
-export type { NodeEvals, Eval, EvalMeta, CevalOpts } from './types';
-export type { ExternalEngine } from './engines/externalEngine';
+export type { NodeEvals, Eval, EvalMeta, CevalOpts, ExternalEngineInfo } from './types';
 export { isEvalBetter, renderEval, sanIrreversible } from './util';
 export { CevalCtrl, view, winningChances };
 

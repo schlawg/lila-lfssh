@@ -1,19 +1,6 @@
-import { CevalWorker, CevalState } from './worker';
-import { Redraw, Work } from '../types';
+import { Redraw, Work, ExternalEngineInfo, CevalEngine, CevalState } from '../types';
 import { randomToken } from 'common/random';
 import { readNdJson } from 'common/ndjson';
-
-export interface ExternalEngine {
-  id: string;
-  name: string;
-  variants: VariantKey[];
-  maxThreads: number;
-  maxHash: number;
-  defaultDepth: number;
-  clientSecret: string;
-  officialStockfish?: boolean;
-  endpoint: string;
-}
 
 interface ExternalEngineOutput {
   time: number;
@@ -27,13 +14,13 @@ interface ExternalEngineOutput {
   }[];
 }
 
-export class ExternalWorker implements CevalWorker {
+export class ExternalEngine implements CevalEngine {
   private state = CevalState.Initial;
   private sessionId = randomToken();
   private req: AbortController | undefined;
 
   constructor(
-    private opts: ExternalEngine,
+    private opts: ExternalEngineInfo,
     private redraw: Redraw,
   ) {}
 
@@ -52,7 +39,7 @@ export class ExternalWorker implements CevalWorker {
   private async analyse(work: Work, signal: AbortSignal): Promise<void> {
     try {
       const url = new URL(`${this.opts.endpoint}/api/external-engine/${this.opts.id}/analyse`);
-      const infinite = work.maxDepth >= 99;
+      //const infinite = work.maxDepth >= 99;
       const res = await fetch(url.href, {
         signal,
         method: 'post',
@@ -67,7 +54,7 @@ export class ExternalWorker implements CevalWorker {
             sessionId: this.sessionId,
             threads: work.threads,
             hash: work.hashSize || 16,
-            infinite,
+            infinite: true, // TODO WTF
             multiPv: work.multiPv,
             variant: work.variant,
             initialFen: work.initialFen,
@@ -80,7 +67,7 @@ export class ExternalWorker implements CevalWorker {
         this.state = CevalState.Computing;
         work.emit({
           fen: work.currentFen,
-          maxDepth: infinite ? 99 : this.opts.defaultDepth,
+          //maxDepth: infinite ? 99 : this.opts.defaultDepth!,
           depth: line.pvs[0]?.depth || 0,
           knps: line.nodes / Math.max(line.time, 1),
           nodes: line.nodes,

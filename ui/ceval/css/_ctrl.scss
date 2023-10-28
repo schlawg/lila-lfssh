@@ -49,25 +49,72 @@
     .infinite {
       @extend %roboto, %box-radius;
       margin-#{$start-direction}: 4px;
+    }
+    .cloud {
       background: $c-secondary-dim;
       color: $c-secondary-over;
       padding: 1px 3px;
       text-transform: uppercase;
       font-size: 11px;
     }
-
+    .infinite {
+      color: $c-secondary;
+      font-size: 14px;
+      font-weight: bold;
+    }
     .info {
       display: block;
       white-space: nowrap;
     }
 
-    .deeper {
-      color: $c-primary;
-      margin-#{$start-direction}: 4px;
+    .deeper-toggle {
+      color: $c-secondary;
+      margin-#{$end-direction}: 4px;
+      font-size: 10px;
+
+      &.computing {
+        color: c-dimmer($c-bad);
+      }
+
+      &::before {
+        vertical-align: top;
+      }
+    }
+  }
+
+  .show-threat {
+    @extend %button-none;
+    flex: 0 0 18px;
+    color: $c-font-dim;
+    font-size: 16px;
+    overflow: hidden;
+    visibility: hidden;
+
+    &:hover:not(.hidden),
+    &.active {
+      color: $c-red;
     }
 
-    .deeper::before {
-      vertical-align: -2px;
+    &.hidden {
+      opacity: 0.3;
+      cursor: default;
+    }
+  }
+
+  .settings-gear {
+    @extend %button-none;
+    color: $c-font-dim;
+    font-size: 16px;
+    padding: 0 6px;
+    margin-#{$end-direction}: 6px;
+
+    &:hover {
+      color: $c-font;
+    }
+
+    &.active {
+      color: white;
+      background-color: $c-primary;
     }
   }
 

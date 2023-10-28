@@ -20,7 +20,7 @@ final class ForumTextExpand(askApi: lila.ask.AskApi)(using Executor, Scheduler):
     posts
       .map(_.text)
       .traverse(one)
-      .map:
-        _ zip posts map { (body, post) =>
+      .flatMap: bodies =>
+        bodies zip posts traverse { case (body, post) =>
           askApi.asksIn(post.text).map(ForumPost.WithFrag(post, body, _))
         }

@@ -1,6 +1,3 @@
-import { CevalTechnology } from './platform';
-import { ExternalEngine } from './engines/externalEngine';
-
 export function isEvalBetter(a: Tree.ClientEval, b: Tree.ClientEval): boolean {
   return a.depth > b.depth || (a.depth === b.depth && a.nodes > b.nodes);
 }
@@ -25,47 +22,14 @@ export const pow2floor = (n: number) => {
 };
 
 export const sharedWasmMemory = (lo: number, hi = 32767): WebAssembly.Memory => {
-  let shrink = 4;
+  let shrink = 4; // 32767 -> 24576 -> 16384 -> 12288 -> 8192 -> 6144 -> etc
   while (true) {
     try {
       return new WebAssembly.Memory({ shared: true, initial: lo, maximum: hi });
     } catch (e) {
       if (hi <= lo || !(e instanceof RangeError)) throw e;
-      hi = Math.ceil(hi - hi / shrink);
+      hi = Math.max(lo, Math.ceil(hi - hi / shrink));
       shrink = shrink === 4 ? 3 : 4;
     }
   }
 };
-
-export function defaultDepth(technology: CevalTechnology, threads: number, multiPv: number): number {
-  const extraDepth = Math.min(Math.max(threads - multiPv, 0), 6);
-  switch (technology) {
-    case 'asmjs':
-      return 18;
-    case 'wasm':
-      return 20;
-    case 'external':
-      return 24 + extraDepth;
-    default:
-      return 22 + extraDepth;
-  }
-}
-
-export function engineName(
-  technology: CevalTechnology,
-  officialStockfish: boolean,
-  externalEngine?: ExternalEngine,
-): string {
-  if (externalEngine) return externalEngine.name;
-  switch (technology) {
-    case 'wasm':
-    case 'asmjs':
-      return 'Stockfish 10+';
-    case 'hce':
-      return officialStockfish ? 'Stockfish 16' : 'Stockfish MV';
-    case 'nnue':
-      return 'Stockfish 16';
-    default:
-      return 'Error';
-  }
-}

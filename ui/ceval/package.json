@@ -18,10 +18,12 @@
     "@badrap/result": "^0.2.13",
     "chessops": "^0.12.7",
     "common": "workspace:*",
+    "idb-keyval": "^6.2.1",
     "snabbdom": "^3.5.1",
-    "stockfish-web": "^0.0.9",
+    "stockfish.js": "^10.0.2",
+    "stockfish.wasm": "^0.10.0",
     "stockfish-mv.wasm": "^0.6.1",
-    "stockfish.js": "^10.0.2"
+    "lila-stockfish-web": "^0.0.1"
   },
   "scripts": {
     "compile": "tsc",
@@ -31,7 +33,7 @@
   "lichess": {
     "copy": [
       {
-        "src": "node_modules/stockfish*/*.{js,wasm}",
+        "src": "node_modules/*stockfish*/*.{js,wasm}",
         "dest": "../../public/npm"
       }
     ]
