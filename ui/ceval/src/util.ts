@@ -1,4 +1,4 @@
-import { Feature } from 'common/device';
+//import { Feature } from 'common/device';
 
 export function isEvalBetter(a: Tree.ClientEval, b: Tree.ClientEval): boolean {
   return a.depth > b.depth || (a.depth === b.depth && a.nodes > b.nodes);
@@ -35,7 +35,7 @@ export const sharedWasmMemory = (lo: number, hi = 32767): WebAssembly.Memory => 
     }
   }
 };
-
+/*
 export function defaultDepth(
   feature: Feature | 'external' | undefined,
   threads: number,
@@ -54,3 +54,4 @@ export function defaultDepth(
       return 18;
   }
 }
+*/

@@ -15,7 +15,7 @@ export interface Work {
   stopRequested: boolean;
 
   path: string;
-  maxDepth: number;
+  searchMillis: number;
   multiPv: number;
   ply: number;
   threatMode: boolean;
@@ -28,13 +28,13 @@ export interface Work {
 export interface EngineInfo {
   id: string;
   name: string;
-  class?: string; // 'NNUE', 'EXTERNAL', 'HCE', etc
+  tech?: 'HCE' | 'NNUE' | 'EXTERNAL';
   short?: string;
   variants?: VariantKey[];
   maxThreads?: number;
   maxHash?: number;
-  defaultDepth?: number;
-  requires?: Feature | 'external';
+  //defaultDepth?: number;
+  requires?: Feature;
 }
 
 export interface ExternalEngineInfo extends EngineInfo {

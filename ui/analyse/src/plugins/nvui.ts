@@ -322,9 +322,7 @@ function evalInfo(bestEv: Eval | undefined): string {
 function depthInfo(ctrl: AnalyseController, clientEv: Tree.ClientEval | undefined, isCloud: boolean): string {
   if (!clientEv) return '';
   const depth = clientEv.depth || 0;
-  return isCloud
-    ? ctrl.trans('depthX', depth) + ' Cloud'
-    : ctrl.trans('depthX', depth + '/' + Math.max(depth, clientEv.maxDepth || depth));
+  return ctrl.trans('depthX', depth) + isCloud ? ' Cloud' : '';
 }
 
 function renderBestMove(ctrl: AnalyseController, style: Style): string {

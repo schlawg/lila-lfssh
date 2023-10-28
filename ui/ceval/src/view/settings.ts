@@ -1,12 +1,17 @@
 import { h, VNode } from 'snabbdom';
 import { ParentCtrl } from '../types';
-import { toggle, ToggleSettings, rangeConfig } from 'common/controls';
+import { rangeConfig } from 'common/controls';
 import { hasFeature } from 'common/device';
 import { onInsert, bind } from 'common/snabbdom';
 import { onClickAway } from 'common';
 
-const ctrlToggle = (t: ToggleSettings, ctrl: ParentCtrl) =>
-  toggle(t, ctrl.trans, ctrl.getCeval().opts.redraw);
+const searchPips: [number, string][] = [
+  [5000, '5s'],
+  [10000, '10s'],
+  [30000, '30s'],
+  [90000, '90s'],
+  [Number.POSITIVE_INFINITY, '∞'],
+];
 
 const formatHashSize = (v: number): string => (v < 1000 ? v + 'MB' : Math.round(v / 1024) + 'GB');
 
@@ -14,7 +19,6 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
   const ceval = ctrl.getCeval(),
     noarg = ctrl.trans.noarg,
     engCtrl = ctrl.getCeval().engines;
-
   return ceval.showEnginePrefs()
     ? h(
         'div#ceval-settings-anchor',
@@ -23,16 +27,24 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
           { hook: onInsert(onClickAway(() => (ceval.showEnginePrefs(false), ceval.opts.redraw()))) },
           [
             (id => {
+              return h('div.setting', [
+                h('label', { attrs: { for: id } }, noarg('Search')),
+                h('input#' + id, {
+                  attrs: { type: 'range', min: 0, max: searchPips.length - 1, step: 1 },
+                  hook: rangeConfig(getSearchPip, n => {
+                    ceval.searchMillis(searchPips[n][0]);
+                    ctrl.redraw?.();
+                  }),
+                }),
+                h('div.range_value', searchPips[getSearchPip()][1]),
+              ]);
+            })('analyse-search-millis'),
+            (id => {
               const max = 5;
               return h('div.setting', [
                 h('label', { attrs: { for: id } }, noarg('multipleLines')),
                 h('input#' + id, {
-                  attrs: {
-                    type: 'range',
-                    min: 0,
-                    max,
-                    step: 1,
-                  },
+                  attrs: { type: 'range', min: 0, max, step: 1 },
                   hook: rangeConfig(() => ceval!.multiPv(), ctrl.cevalSetMultiPv ?? (() => {})),
                 }),
                 h('div.range_value', ceval.multiPv() + ' / ' + max),
@@ -77,21 +89,18 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
                 }),
                 h('div.range_value', formatHashSize(ceval.hashSize())),
               ]))('analyse-memory'),
-            ctrlToggle(
-              {
-                name: 'infiniteAnalysis',
-                title: 'removesTheDepthLimit',
-                id: 'infinite',
-                checked: ceval.infinite(),
-                change: x => (ceval.infinite(x), ctrl.cevalReset?.()),
-              },
-              ctrl,
-            ),
             ...engineSelection(ctrl),
           ],
         ),
       )
     : null;
+  function getSearchPip() {
+    const ms = ceval.searchMillis();
+    return Math.max(
+      0,
+      searchPips.findIndex(([v]) => v >= ms),
+    );
+  }
 }
 
 function engineSelection(ctrl: ParentCtrl) {
@@ -102,7 +111,7 @@ function engineSelection(ctrl: ParentCtrl) {
   return [
     h('hr'),
     h('div.setting', [
-      'Using:',
+      'Engine:',
       h(
         'select.select-engine',
         {

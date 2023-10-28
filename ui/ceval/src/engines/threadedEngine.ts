@@ -26,16 +26,13 @@ declare global {
 export class ThreadedEngine implements CevalEngine {
   failed: boolean;
   protocol: Protocol;
-  module: 'Stockfish' | 'StockfishMv';
 
   constructor(
     readonly info: BrowserEngineInfo,
     readonly redraw: Redraw,
     readonly progress?: (download?: { bytes: number; total: number }) => void,
     readonly variantMap?: (v: string) => string,
-  ) {
-    this.module = this.info.id === '__sf11mv' ? 'StockfishMv' : 'Stockfish';
-  }
+  ) {}
 
   getState() {
     return !this.protocol
@@ -92,7 +89,7 @@ export class ThreadedEngine implements CevalEngine {
 
     // Load Emscripten module.
     await lichess.loadIife(`${root}/${js}`, { version });
-    const sf = await window[this.module]!({
+    const sf = await window[this.info.id === '__sf11mv' ? 'StockfishMv' : 'Stockfish']!({
       wasmBinary,
       locateFile: (path: string) =>
         lichess.assetUrl(`${root}/${path}`, { version, sameDomain: path.endsWith('.worker.js') }),

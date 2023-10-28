@@ -1,7 +1,7 @@
 import throttle from 'common/throttle';
 import { Engines } from './engines/engines';
 import { CevalOpts, CevalState, CevalEngine, Work, Step, Hovering, PvBoard, Started } from './types';
-import { defaultDepth, sanIrreversible } from './util';
+import { sanIrreversible } from './util';
 import { defaultPosition, setupPosition } from 'chessops/variant';
 import { parseFen } from 'chessops/fen';
 import { lichessRules, lichessVariant } from 'chessops/compat';
@@ -9,7 +9,7 @@ import { povChances } from './winningChances';
 import { prop, Toggle, toggle } from 'common';
 import { hasFeature } from 'common/device';
 import { Result } from '@badrap/result';
-import { storedBooleanProp, storedIntProp, StoredProp } from 'common/storage';
+import { storedIntProp, StoredProp } from 'common/storage';
 import { Rules } from 'chessops';
 
 const cevalDisabledSentinel = '1';
@@ -27,19 +27,20 @@ export default class CevalCtrl {
   cachable: boolean;
 
   engines = new Engines(this);
-  enableNnue = storedBooleanProp('ceval.enable-nnue', !(navigator as any).connection?.saveData);
-  infinite = storedBooleanProp('ceval.infinite', false);
   multiPv: StoredProp<number>;
   allowed = toggle(true);
   enabled: Toggle;
   download?: { bytes: number; total: number };
   hovering = prop<Hovering | null>(null);
   pvBoard = prop<PvBoard | null>(null);
-  isDeeper = toggle(false);
   showEnginePrefs = toggle(false);
 
   curEval: Tree.LocalEval | null = null;
   lastStarted: Started | false = false; // last started object (for going deeper even if stopped)
+
+  searchMillis: StoredProp<number> = storedIntProp('ceval.search-millis', 10000);
+  isPaused = toggle(false);
+  timesUp = toggle(false);
 
   private worker: CevalEngine | undefined;
 
@@ -66,6 +67,7 @@ export default class CevalCtrl {
     this.sortPvsInPlace(ev.pvs, work.ply % 2 === (work.threatMode ? 1 : 0) ? 'white' : 'black');
     this.curEval = ev;
     this.opts.emit(ev, work);
+    if (ev.millis >= this.searchMillis()) this.timesUp(true);
     if (ev.fen !== this.lastEmitFen && enabledAfterDisable()) {
       // amnesty while auto disable not processed
       this.lastEmitFen = ev.fen;
@@ -75,20 +77,13 @@ export default class CevalCtrl {
 
   curDepth = () => this.curEval?.depth || 0;
 
-  effectiveMaxDepth = () =>
-    this.isDeeper() || this.infinite()
-      ? 99
-      : defaultDepth(this.engines.active?.requires, this.threads(), this.multiPv());
-
   private doStart = (path: Tree.Path, steps: Step[], threatMode: boolean) => {
     if (!this.enabled() || !this.possible || !enabledAfterDisable()) return;
-
-    const maxDepth = this.effectiveMaxDepth();
 
     const step = steps[steps.length - 1];
 
     const existing = threatMode ? step.threat : step.ceval;
-    if (existing && existing.depth >= maxDepth) {
+    if (existing && existing.depth >= 99) {
       this.lastStarted = {
         path,
         steps,
@@ -107,7 +102,7 @@ export default class CevalCtrl {
       currentFen: step.fen,
       path,
       ply: step.ply,
-      maxDepth,
+      searchMillis: this.timesUp() ? Number.POSITIVE_INFINITY : this.searchMillis(),
       multiPv: this.multiPv(),
       threatMode,
       emit: (ev: Tree.LocalEval) => {
@@ -146,16 +141,16 @@ export default class CevalCtrl {
     };
   };
 
-  goDeeper = () => {
-    this.isDeeper(true);
-    if (this.lastStarted) {
-      if (this.infinite()) {
-        if (this.curEval) this.opts.emit(this.curEval, this.lastStarted);
-      } else {
-        this.stop();
-        this.doStart(this.lastStarted.path, this.lastStarted.steps, this.lastStarted.threatMode);
-      }
+  togglePauseDeeper = () => {
+    if (this.computing()) {
+      this.isPaused(true);
+      this.stop();
+      return;
     }
+
+    if (!this.lastStarted) return;
+    this.isPaused(false);
+    this.doStart(this.lastStarted.path, this.lastStarted.steps, this.lastStarted.threatMode);
     this.opts.redraw();
   };
 
@@ -170,7 +165,7 @@ export default class CevalCtrl {
   };
 
   start = (path: string, steps: Step[], threatMode?: boolean) => {
-    this.isDeeper(false);
+    this.timesUp(false);
     this.doStart(path, steps, !!threatMode);
   };
 
@@ -215,7 +210,7 @@ export default class CevalCtrl {
     this.stop();
     if (!this.enabled() && !document.hidden) {
       const disable = lichess.storage.get('ceval.disable') || cevalDisabledSentinel;
-      if (disable) lichess.tempStorage.set('ceval.enabled-after', disable);
+      lichess.tempStorage.set('ceval.enabled-after', disable);
       this.enabled(true);
     } else {
       lichess.tempStorage.set('ceval.enabled-after', '');
@@ -230,9 +225,12 @@ export default class CevalCtrl {
   };
 
   canGoDeeper = () =>
+    this.getState() !== CevalState.Computing &&
     this.curDepth() < 99 &&
-    !this.isDeeper() &&
-    ((!this.infinite() && this.getState() !== CevalState.Computing) || this.showingCloud());
+    this.timesUp() &&
+    !this.showingCloud();
 
+  infinite = () => this.searchMillis() === Number.POSITIVE_INFINITY || this.timesUp();
+  computing = () => this.getState() === CevalState.Computing;
   destroy = () => this.worker?.destroy();
 }

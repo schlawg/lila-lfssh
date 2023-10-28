@@ -13,25 +13,22 @@ const version = 'a022fa';
 const maxHash = maxHashMB();
 
 export class Engines {
-  localEngines: BrowserEngineInfo[];
-  localEngineMap: Map<string, WithMake>;
-  externalEngines: ExternalEngineInfo[];
-  lastSelected: StoredProp<string>;
-  active?: EngineInfo; // not necessarily selected after variant change
+  private localEngines: BrowserEngineInfo[];
+  private localEngineMap: Map<string, WithMake>;
+  private externalEngines: ExternalEngineInfo[];
+  private selected: StoredProp<string>;
+  active?: EngineInfo; // not necessarily selected in storage
 
   constructor(readonly ctrl: CevalCtrl) {
     this.localEngineMap = this.makeEngineMap();
 
-    if (hasFeature('wasm')) this.localEngineMap.delete('__sfjs');
-    if (hasFeature('sharedMem')) this.localEngineMap.delete('__sfwasm');
-
     this.localEngines = [...this.localEngineMap.values()].map(e => e.info);
-    this.externalEngines = this.ctrl.opts.externalEngines?.map(e => ({ requires: 'external', ...e })) ?? [];
+    this.externalEngines = this.ctrl.opts.externalEngines?.map(e => ({ tech: 'EXTERNAL', ...e })) ?? [];
 
-    this.lastSelected = storedStringProp('ceval.engine', this.localEngines[0].id);
-    if (this.lastSelected() === 'lichess') this.localEngines[0].id; // backcompat
+    this.selected = storedStringProp('ceval.engine', this.localEngines[0].id);
+    if (this.selected() === 'lichess') this.localEngines[0].id; // backcompat
 
-    this.active = this.engineFor({ id: this.lastSelected() });
+    this.active = this.engineFor({ id: this.selected() });
   }
 
   get external() {
@@ -47,11 +44,11 @@ export class Engines {
 
   select(id: string) {
     this.active = this.engineFor({ id })!;
-    this.lastSelected(id);
+    this.selected(id);
   }
 
   engineFor(selector?: { id?: string; variant?: VariantKey }): EngineInfo | undefined {
-    const id = selector?.id ?? this.lastSelected();
+    const id = selector?.id ?? this.selected();
     const variant = selector?.variant ?? 'standard';
     return (
       this.externalEngines.find(e => e.id === id && e.variants?.includes(variant)) ??
@@ -63,11 +60,11 @@ export class Engines {
 
   make(selector?: { id?: string; variant?: VariantKey }): CevalEngine {
     const e = (this.active = this.engineFor(selector));
-    if (!e) throw Error(`Engine not found ${selector?.id ?? selector?.variant ?? this.lastSelected()}}`);
+    if (!e) throw Error(`Engine not found ${selector?.id ?? selector?.variant ?? this.selected()}}`);
 
-    return e.requires === 'external'
-      ? new ExternalEngine(e as ExternalEngineInfo, this.ctrl.opts.redraw)
-      : this.localEngineMap.get(e.id)!.make(e as BrowserEngineInfo);
+    return e.tech !== 'EXTERNAL'
+      ? this.localEngineMap.get(e.id)!.make(e as BrowserEngineInfo)
+      : new ExternalEngine(e as ExternalEngineInfo, this.ctrl.opts.redraw);
   }
 
   makeEngineMap() {
@@ -84,7 +81,7 @@ export class Engines {
             id: '__sf16nnue7',
             name: 'Stockfish 16 NNUE · 7MB',
             short: 'SF 16 · 7MB',
-            class: 'NNUE',
+            tech: 'NNUE',
             requires: 'simd',
             minMem: 1536,
             assets: {
@@ -94,27 +91,12 @@ export class Engines {
           },
           make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
         },
-        /*{
-          info: {
-            id: '__sf16nnue12',
-            name: 'Stockfish 16 NNUE · 12MB',
-            short: 'SF 16 · 12MB',
-            class: 'NNUE',
-            requires: 'simd',
-            minMem: 1536,
-            assets: {
-              root: 'npm/lila-stockfish-web',
-              js: 'linrock-nnue-12.js',
-            },
-          },
-          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
-        },*/
         {
           info: {
             id: '__sf16nnue40',
             name: 'Stockfish 16 NNUE · 40MB',
             short: 'SF 16 · 40MB',
-            class: 'NNUE',
+            tech: 'NNUE',
             requires: 'simd',
             minMem: 2048,
             assets: {
@@ -124,27 +106,12 @@ export class Engines {
           },
           make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
         },
-        /*{
-          info: {
-            id: '__sf16nnue60',
-            name: 'Stockfish 16 NNUE · 60MB',
-            short: 'SF 16 · 60MB',
-            class: 'NNUE',
-            requires: 'simd',
-            minMem: 4096,
-            assets: {
-              root: 'npm/lila-stockfish-web',
-              js: 'sf-nnue-60.js',
-            },
-          },
-          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
-        },*/
         {
           info: {
             id: '__sf16hce',
             name: 'Stockfish 16 HCE',
             short: 'SF 16',
-            class: 'HCE',
+            tech: 'HCE',
             requires: 'simd',
             assets: {
               root: 'npm/lila-stockfish-web',
@@ -158,7 +125,7 @@ export class Engines {
             id: '__fsfhce',
             name: 'Fairy Stockfish 16',
             short: 'FSF 16',
-            class: 'HCE',
+            tech: 'HCE',
             requires: 'simd',
             variants: [
               'crazyhouse',
@@ -179,27 +146,10 @@ export class Engines {
         },
         {
           info: {
-            id: '__sf14nnue',
-            name: 'Stockfish 14 NNUE · 12MB',
-            short: 'SF 14',
-            version: 'b6939d',
-            class: 'NNUE',
-            requires: 'simd',
-            minMem: 2048,
-            assets: {
-              root: 'npm/stockfish-nnue.wasm',
-              js: 'stockfish.js',
-              wasm: 'stockfish.wasm',
-            },
-          },
-          make: (e: BrowserEngineInfo) => new ThreadedEngine(e, redraw, progress),
-        },
-        {
-          info: {
             id: '__sf11mv',
-            name: 'Stockfish 11 MV',
-            short: 'SF 11 · MV',
-            class: 'HCE',
+            name: 'Stockfish 11',
+            short: 'SF 11',
+            tech: 'HCE',
             requires: 'sharedMem',
             variants: [
               'crazyhouse',
@@ -226,8 +176,9 @@ export class Engines {
             id: '__sf11hce',
             name: 'Stockfish 11',
             short: 'SF 11',
-            class: 'HCE',
+            tech: 'HCE',
             requires: 'sharedMem',
+            obsoletedBy: 'simd',
             assets: {
               root: 'npm/stockfish.wasm',
               js: 'stockfish.js',
@@ -241,9 +192,10 @@ export class Engines {
             id: '__sfwasm',
             name: 'Stockfish WASM',
             short: 'Stockfish',
-            class: 'WASM',
+            tech: 'HCE',
             maxThreads: 1,
             requires: 'wasm',
+            obsoletedBy: 'sharedMem',
             assets: {
               root: 'npm/stockfish.js',
               js: 'stockfish.wasm.js',
@@ -256,8 +208,9 @@ export class Engines {
             id: '__sfjs',
             name: 'Stockfish JS',
             short: 'Stockfish',
-            class: 'JS',
+            tech: 'HCE',
             maxThreads: 1,
+            obsoletedBy: 'wasm',
             assets: {
               root: 'npm/stockfish.js',
               js: 'stockfish.js',
@@ -266,9 +219,8 @@ export class Engines {
           make: (e: BrowserEngineInfo) => new SimpleEngine(e, redraw),
         },
       ]
-        .filter(e => e && hasFeature(e.info.requires))
-        .map(e => ({ info: withDefaults(e.info as BrowserEngineInfo), make: e.make }))
-        .map(e => [e.info.id, e] as [string, WithMake]),
+        .filter(e => hasFeature(e.info.requires) && !(e.info.obsoletedBy && hasFeature(e.info.obsoletedBy)))
+        .map(e => [e.info.id, { info: withDefaults(e.info as BrowserEngineInfo), make: e.make }]),
     );
   }
 }
