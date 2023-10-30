@@ -125,12 +125,11 @@ export class Protocol {
         this.currentEval = {
           fen: this.work.currentFen,
           depth,
-          knps: nodes / elapsedMs,
           nodes,
+          elapsedMs,
           cp: isMate ? undefined : ev,
           mate: isMate ? ev : undefined,
           pvs: [pvData],
-          millis: elapsedMs,
         };
       } else if (this.currentEval) {
         this.currentEval.pvs.push(pvData);
@@ -139,10 +138,7 @@ export class Protocol {
 
       if (multiPv === this.expectedPvs && this.currentEval) {
         this.work.emit(this.currentEval);
-
-        if (depth >= 99 || elapsedMs >= this.work.searchMillis) {
-          this.stop();
-        }
+        if (depth >= 99 || elapsedMs >= this.work.searchMs) this.stop();
       }
     } else if (command && !['Stockfish', 'id', 'option', 'info'].includes(parts[0])) {
       // some think it's a bug when they see these in console

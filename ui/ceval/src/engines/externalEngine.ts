@@ -39,7 +39,6 @@ export class ExternalEngine implements CevalEngine {
   private async analyse(work: Work, signal: AbortSignal): Promise<void> {
     try {
       const url = new URL(`${this.opts.endpoint}/api/external-engine/${this.opts.id}/analyse`);
-      //const infinite = work.maxDepth >= 99;
       const res = await fetch(url.href, {
         signal,
         method: 'post',
@@ -67,13 +66,11 @@ export class ExternalEngine implements CevalEngine {
         this.state = CevalState.Computing;
         work.emit({
           fen: work.currentFen,
-          //maxDepth: infinite ? 99 : this.opts.defaultDepth!,
           depth: line.pvs[0]?.depth || 0,
-          knps: line.nodes / Math.max(line.time, 1),
+          elapsedMs: Math.max(line.time, 1),
           nodes: line.nodes,
           cp: line.pvs[0]?.cp,
           mate: line.pvs[0]?.mate,
-          millis: line.time,
           pvs: line.pvs,
         });
       });

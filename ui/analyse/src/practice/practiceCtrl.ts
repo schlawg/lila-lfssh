@@ -59,17 +59,11 @@ export function make(root: AnalyseCtrl, playableDepth: () => number): PracticeCt
 
   function commentable(node: Tree.Node, bonus = 0): boolean {
     if (node.tbhit || root.outcome(node)) return true;
-    const ceval = node.ceval;
-    return ceval
-      ? ceval.depth + bonus >= 15 || (ceval.depth >= 13 && !ceval.cloud && ceval.millis > 3000)
-      : false;
+    return (node.ceval?.depth ?? 0) + bonus >= 15;
   }
 
   function playable(node: Tree.Node): boolean {
-    const ceval = node.ceval;
-    return ceval
-      ? ceval.depth >= playableDepth() || (ceval.depth >= 15 && (ceval.cloud || ceval.millis > 5000))
-      : false;
+    return (node.ceval?.depth ?? 0) >= playableDepth();
   }
 
   function tbhitToEval(hit: Tree.TablebaseHit | undefined | null) {

@@ -17,7 +17,7 @@ export class Engines {
   private localEngineMap: Map<string, WithMake>;
   private externalEngines: ExternalEngineInfo[];
   private selected: StoredProp<string>;
-  active?: EngineInfo; // not necessarily selected in storage
+  active?: EngineInfo;
 
   constructor(readonly ctrl: CevalCtrl) {
     this.localEngineMap = this.makeEngineMap();
@@ -26,9 +26,10 @@ export class Engines {
     this.externalEngines = this.ctrl.opts.externalEngines?.map(e => ({ tech: 'EXTERNAL', ...e })) ?? [];
 
     this.selected = storedStringProp('ceval.engine', this.localEngines[0].id);
-    if (this.selected() === 'lichess') this.localEngines[0].id; // backcompat
 
-    this.active = this.engineFor({ id: this.selected() });
+    if (this.selected() === 'lichess') this.selected(this.localEngines[0].id); // delete this 2024-01-01
+
+    this.active = this.engineFor({ id: this.selected(), variant: this.ctrl.opts.variant.key });
   }
 
   get external() {

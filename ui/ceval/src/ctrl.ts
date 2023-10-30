@@ -4,7 +4,7 @@ import { CevalOpts, CevalState, CevalEngine, Work, Step, Hovering, PvBoard, Star
 import { sanIrreversible } from './util';
 import { defaultPosition, setupPosition } from 'chessops/variant';
 import { parseFen } from 'chessops/fen';
-import { lichessRules, lichessVariant } from 'chessops/compat';
+import { lichessRules } from 'chessops/compat';
 import { povChances } from './winningChances';
 import { prop, Toggle, toggle } from 'common';
 import { hasFeature } from 'common/device';
@@ -33,14 +33,12 @@ export default class CevalCtrl {
   download?: { bytes: number; total: number };
   hovering = prop<Hovering | null>(null);
   pvBoard = prop<PvBoard | null>(null);
-  showEnginePrefs = toggle(false);
+  isDeeper = toggle(false);
 
   curEval: Tree.LocalEval | null = null;
   lastStarted: Started | false = false; // last started object (for going deeper even if stopped)
-
-  searchMillis: StoredProp<number> = storedIntProp('ceval.search-millis', 10000);
-  isPaused = toggle(false);
-  timesUp = toggle(false);
+  searchMs: StoredProp<number>;
+  showEnginePrefs = toggle(false);
 
   private worker: CevalEngine | undefined;
 
@@ -55,6 +53,7 @@ export default class CevalCtrl {
     this.analysable = pos.isOk;
     this.enabled = toggle(this.possible && this.analysable && this.allowed() && enabledAfterDisable());
     this.multiPv = storedIntProp(this.storageKey('ceval.multipv'), this.opts.multiPvDefault || 1);
+    this.searchMs = storedIntProp('ceval.search-ms', 8000);
   }
 
   storageKey = (k: string) => (this.opts.storageKeyPrefix ? `${this.opts.storageKeyPrefix}.${k}` : k);
@@ -67,11 +66,20 @@ export default class CevalCtrl {
     this.sortPvsInPlace(ev.pvs, work.ply % 2 === (work.threatMode ? 1 : 0) ? 'white' : 'black');
     this.curEval = ev;
     this.opts.emit(ev, work);
-    if (ev.millis >= this.searchMillis()) this.timesUp(true);
     if (ev.fen !== this.lastEmitFen && enabledAfterDisable()) {
       // amnesty while auto disable not processed
       this.lastEmitFen = ev.fen;
       lichess.storage.fire('ceval.fen', ev.fen);
+    }
+    if (!this.lastStarted || this.isDeeper() || this.infinite() || work.threatMode) return;
+
+    const showingNode = this.lastStarted.steps[this.lastStarted.steps.length - 1];
+    if (showingNode.ceval?.cloud && ev.elapsedMs > 500) {
+      const targetNodes = showingNode.ceval.nodes;
+      const likelyNodes = Math.round((this.searchMs() * ev.nodes) / ev.elapsedMs);
+
+      // nps varies with positional complexity so this is rough, but save planet earth
+      if (likelyNodes < targetNodes) this.stop(); // let them click plus
     }
   });
 
@@ -82,8 +90,8 @@ export default class CevalCtrl {
 
     const step = steps[steps.length - 1];
 
-    const existing = threatMode ? step.threat : step.ceval;
-    if (existing && existing.depth >= 99) {
+    const last = threatMode ? step.threat : step.ceval;
+    if (last && 'elapsedMs' in last && last.elapsedMs >= this.searchMs()) {
       this.lastStarted = {
         path,
         steps,
@@ -102,11 +110,12 @@ export default class CevalCtrl {
       currentFen: step.fen,
       path,
       ply: step.ply,
-      searchMillis: this.timesUp() ? Number.POSITIVE_INFINITY : this.searchMillis(),
+      searchMs: this.isDeeper() ? Number.POSITIVE_INFINITY : this.searchMs(),
       multiPv: this.multiPv(),
       threatMode,
       emit: (ev: Tree.LocalEval) => {
-        if (this.enabled()) this.onEmit(ev, work);
+        if (!this.enabled()) return;
+        this.onEmit(ev, work);
       },
     };
 
@@ -130,7 +139,7 @@ export default class CevalCtrl {
     lichess.storage.fire('ceval.disable');
     lichess.tempStorage.set('ceval.enabled-after', lichess.storage.get('ceval.disable')!);
 
-    if (!this.worker) this.worker = this.engines.make({ variant: lichessVariant(this.rules) });
+    if (!this.worker) this.worker = this.engines.make({ variant: this.opts.variant.key });
 
     this.worker.start(work);
 
@@ -141,17 +150,10 @@ export default class CevalCtrl {
     };
   };
 
-  togglePauseDeeper = () => {
-    if (this.computing()) {
-      this.isPaused(true);
-      this.stop();
-      return;
-    }
-
+  goDeeper = () => {
     if (!this.lastStarted) return;
-    this.isPaused(false);
+    this.isDeeper(true);
     this.doStart(this.lastStarted.path, this.lastStarted.steps, this.lastStarted.threatMode);
-    this.opts.redraw();
   };
 
   stop = () => {
@@ -165,7 +167,7 @@ export default class CevalCtrl {
   };
 
   start = (path: string, steps: Step[], threatMode?: boolean) => {
-    this.timesUp(false);
+    this.isDeeper(false);
     this.doStart(path, steps, !!threatMode);
   };
 
@@ -177,7 +179,7 @@ export default class CevalCtrl {
     const stored = lichess.storage.get(this.storageKey('ceval.threads'));
     return Math.min(
       this.engines.active?.maxThreads ?? 96, // Can haz threadripper?
-      stored ? parseInt(stored, 10) : Math.ceil((navigator.hardwareConcurrency ?? 1) / 4),
+      stored ? parseInt(stored, 10) : Math.ceil(navigator.hardwareConcurrency / 4),
     );
   };
 
@@ -191,7 +193,7 @@ export default class CevalCtrl {
   setHashSize = (hash: number) => lichess.storage.set(this.storageKey('ceval.hash-size'), hash.toString());
 
   maxThreads = () =>
-    this.engines.external?.maxThreads ?? (hasFeature('sharedMem') ? navigator.hardwareConcurrency ?? 4 : 1);
+    this.engines.external?.maxThreads ?? (hasFeature('sharedMem') ? navigator.hardwareConcurrency : 1);
 
   maxHash = () => this.engines.active?.maxHash ?? 16;
 
@@ -219,18 +221,12 @@ export default class CevalCtrl {
     }
   };
 
-  selectEngine = (id: string) => {
-    this.engines.select(id);
-    lichess.reload();
-  };
-
   canGoDeeper = () =>
     this.getState() !== CevalState.Computing &&
-    this.curDepth() < 99 &&
-    this.timesUp() &&
-    !this.showingCloud();
+    this.curEval?.pvs[0].mate === undefined &&
+    this.curDepth() < 99;
 
-  infinite = () => this.searchMillis() === Number.POSITIVE_INFINITY || this.timesUp();
+  infinite = () => this.searchMs() === Number.POSITIVE_INFINITY;
   computing = () => this.getState() === CevalState.Computing;
   destroy = () => this.worker?.destroy();
 }

@@ -625,7 +625,7 @@ export default class AnalyseCtrl {
         if (!node.threat || isEvalBetter(threat, node.threat)) node.threat = threat;
       } else if (!node.ceval || isEvalBetter(ev, node.ceval)) node.ceval = ev;
       else if (!ev.cloud) {
-        if (node.ceval.cloud && this.ceval.timesUp()) node.ceval = ev;
+        if (node.ceval.cloud && this.ceval.isDeeper()) node.ceval = ev;
       }
 
       if (path === this.path) {
@@ -635,7 +635,6 @@ export default class AnalyseCtrl {
           if (this.practice) this.practice.onCeval();
           if (this.studyPractice) this.studyPractice.onCeval();
           this.evalCache.onCeval();
-          if (ev.cloud && ev.depth >= 99) this.ceval.stop(); // TODO
         }
         this.redraw();
       }
@@ -887,13 +886,15 @@ export default class AnalyseCtrl {
     this.evalCache = makeEvalCache({
       variant: this.data.game.variant.key,
       canGet: () => this.canEvalGet(),
-      canPut: () =>
-        !!(
+      canPut: () => {
+        return true;
+        return !!(
           this.ceval?.cachable &&
           this.canEvalGet() &&
           // if not in study, only put decent opening moves
           (this.opts.study || (!this.node.ceval!.mate && Math.abs(this.node.ceval!.cp!) < 99))
-        ),
+        );
+      },
       getNode: () => this.node,
       send: this.opts.socketSend,
       receive: this.onNewCeval,

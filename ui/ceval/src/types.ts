@@ -15,7 +15,7 @@ export interface Work {
   stopRequested: boolean;
 
   path: string;
-  searchMillis: number;
+  searchMs: number;
   multiPv: number;
   ply: number;
   threatMode: boolean;
@@ -33,7 +33,6 @@ export interface EngineInfo {
   variants?: VariantKey[];
   maxThreads?: number;
   maxHash?: number;
-  //defaultDepth?: number;
   requires?: Feature;
 }
 
