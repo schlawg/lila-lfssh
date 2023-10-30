@@ -16,7 +16,7 @@ import { uciToMove } from 'chessground/util';
 import { renderCevalSettings } from './settings';
 import CevalCtrl from '../ctrl';
 
-type LocalInfo = { knps: number; npsText: string; depthText: string };
+type EvalInfo = { knps: number; npsText: string; depthText: string };
 
 let gaugeLast = 0;
 const gaugeTicks: VNode[] = [...Array(8).keys()].map(i =>
@@ -57,7 +57,7 @@ function threatInfo(ctrl: ParentCtrl, threat?: Tree.LocalEval | false): string {
   return info.depthText + (info.knps ? ' · ' + info.npsText : '');
 }
 
-function localInfo(ctrl: ParentCtrl, ev?: Tree.ClientEvalBase | false): LocalInfo {
+function localInfo(ctrl: ParentCtrl, ev?: Tree.ClientEval | false): EvalInfo {
   const info = { npsText: '', knps: 0, depthText: ctrl.trans.noarg('calculatingMoves') };
 
   if (!ev) return info;
@@ -65,10 +65,9 @@ function localInfo(ctrl: ParentCtrl, ev?: Tree.ClientEvalBase | false): LocalInf
   const ceval = ctrl.getCeval();
   info.depthText = ctrl.trans('depthX', ev.depth || 0) + (ceval.isDeeper() || ceval.infinite() ? '/99' : '');
 
-  if (!('elapsedMs' in ev) || !ceval.computing()) return info;
+  if (!ceval.computing()) return info;
 
-  const elapsedMs = ev.elapsedMs as number;
-  const knps = ev.nodes / elapsedMs;
+  const knps = ev.nodes / (ev?.millis ?? Number.POSITIVE_INFINITY);
 
   if (knps > 0) {
     info.npsText = `${knps > 1000 ? (knps / 1000).toFixed(knps > 10000 ? 0 : 1) + ' Mn/s' : knps + ' Kn/s'}`;
@@ -97,7 +96,7 @@ function engineName(ctrl: CevalCtrl): VNode[] {
     engineTech = engine?.tech ?? 'EXTERNAL';
   return engine
     ? [
-        h('span', { attrs: { title: engine?.name || '' } }, engine.short),
+        h('span', { attrs: { title: engine?.name || '' } }, engine.short ?? engine.name),
         engineTech === 'EXTERNAL'
           ? h(
               'span.technology.good',
@@ -121,12 +120,8 @@ function engineName(ctrl: CevalCtrl): VNode[] {
           : engine.requires === 'sharedMem'
           ? h('span.technology.good', { attrs: { title: 'Multi-threaded WebAssembly' } }, engineTech)
           : engine.requires === 'wasm'
-          ? h('span.technology', { attrs: { title: 'Single-threaded WebAssembly fallback' } }, engineTech)
-          : h(
-              'span.technology',
-              { attrs: { title: 'Single-threaded JavaScript fallback (very slow)' } },
-              engineTech,
-            ),
+          ? h('span.technology', { attrs: { title: 'Single-threaded WebAssembly' } }, engineTech)
+          : h('span.technology', { attrs: { title: 'Single-threaded JavaScript' } }, engineTech),
       ]
     : [];
 }
@@ -179,7 +174,7 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
   const enabled = ceval.enabled(),
     evs = ctrl.currentEvals(),
     threatMode = ctrl.threatMode(),
-    threat = threatMode && ctrl.getNode().threat,
+    threat = threatMode ? ctrl.getNode().threat : undefined,
     bestEv = threat || getBestEval(evs),
     download = ceval.download;
   let pearl: VNode | string,
@@ -188,7 +183,7 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
   if (evs.client) {
     if (evs.client.cloud && !threatMode) percent = 100;
     else if (ceval.isDeeper() || ceval.infinite()) percent = Math.min(100, (100 * evs.client.depth) / 99);
-    else percent = Math.min(100, (100 * getElapsedMs(ctrl)) / ceval.searchMs());
+    else percent = Math.min(100, (100 * ((threat ?? evs.client)?.millis ?? 0)) / ceval.searchMs());
   }
   if (bestEv && typeof bestEv.cp !== 'undefined') {
     pearl = renderEval(bestEv.cp);
@@ -534,9 +529,4 @@ function loadingText(ctrl: ParentCtrl): string {
   if (d && d.total)
     return `Downloaded ${Math.round((d.bytes * 100) / d.total)}% of ${Math.round(d.total / 1000 / 1000)}MB`;
   else return ctrl.trans.noarg('loadingEngine');
-}
-
-function getElapsedMs(ctrl: ParentCtrl): number {
-  const local = (ctrl.threatMode() && ctrl.getNode().threat) || ctrl.currentEvals().client;
-  return local && 'elapsedMs' in local ? local.elapsedMs : 0;
 }

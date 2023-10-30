@@ -68,7 +68,7 @@ export class Protocol {
       let depth = 0,
         nodes,
         multiPv = 1,
-        elapsedMs,
+        millis,
         evalType,
         isMate = false,
         povEv,
@@ -85,7 +85,7 @@ export class Protocol {
             multiPv = parseInt(parts[++i]);
             break;
           case 'time':
-            elapsedMs = parseInt(parts[++i]);
+            millis = parseInt(parts[++i]);
             break;
           case 'score':
             isMate = parts[++i] === 'mate';
@@ -105,7 +105,7 @@ export class Protocol {
       // Track max pv index to determine when pv prints are done.
       if (this.expectedPvs < multiPv) this.expectedPvs = multiPv;
 
-      if (!defined(nodes) || !defined(elapsedMs) || !defined(isMate) || !defined(povEv)) return;
+      if (!defined(nodes) || !defined(millis) || !defined(isMate) || !defined(povEv)) return;
 
       const pivot = this.work.threatMode ? 0 : 1;
       const ev = this.work.ply % 2 === pivot ? -povEv : povEv;
@@ -126,7 +126,7 @@ export class Protocol {
           fen: this.work.currentFen,
           depth,
           nodes,
-          elapsedMs,
+          millis,
           cp: isMate ? undefined : ev,
           mate: isMate ? ev : undefined,
           pvs: [pvData],
@@ -138,7 +138,7 @@ export class Protocol {
 
       if (multiPv === this.expectedPvs && this.currentEval) {
         this.work.emit(this.currentEval);
-        if (depth >= 99 || elapsedMs >= this.work.searchMs) this.stop();
+        if (depth >= 99 || millis >= this.work.searchMs) this.stop();
       }
     } else if (command && !['Stockfish', 'id', 'option', 'info'].includes(parts[0])) {
       // some think it's a bug when they see these in console

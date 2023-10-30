@@ -20,6 +20,15 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
   const ceval = ctrl.getCeval(),
     noarg = ctrl.trans.noarg,
     engCtrl = ctrl.getCeval().engines;
+
+  function searchTick() {
+    const millis = ceval.searchMs();
+    return Math.max(
+      0,
+      searchTicks.findIndex(([tickMs]) => tickMs >= millis),
+    );
+  }
+
   return ceval.showEnginePrefs()
     ? h(
         'div#ceval-settings-anchor',
@@ -43,15 +52,15 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
                   attrs: { title: 'Set time to evaluate fresh positions' },
                 },
                 [
-                  h('label', noarg('Search')),
+                  h('label', 'Search time'),
                   h('input#' + id, {
                     attrs: { type: 'range', min: 0, max: searchTicks.length - 1, step: 1 },
-                    hook: rangeConfig(getSearchPip, n => {
+                    hook: rangeConfig(searchTick, n => {
                       ceval.searchMs(searchTicks[n][0]);
                       ctrl.cevalReset?.();
                     }),
                   }),
-                  h('div.range_value', searchTicks[getSearchPip()][1]),
+                  h('div.range_value', searchTicks[searchTick()][1]),
                 ],
               );
             })('engine-search-ms'),
@@ -133,13 +142,6 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
         ),
       )
     : null;
-  function getSearchPip() {
-    const ms = ceval.searchMs();
-    return Math.max(
-      0,
-      searchTicks.findIndex(([v]) => v >= ms),
-    );
-  }
 }
 
 function engineSelection(ctrl: ParentCtrl) {

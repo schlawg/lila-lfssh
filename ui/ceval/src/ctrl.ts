@@ -74,9 +74,9 @@ export default class CevalCtrl {
     if (!this.lastStarted || this.isDeeper() || this.infinite() || work.threatMode) return;
 
     const showingNode = this.lastStarted.steps[this.lastStarted.steps.length - 1];
-    if (showingNode.ceval?.cloud && ev.elapsedMs > 500) {
+    if (showingNode.ceval?.cloud && ev.millis > 500) {
       const targetNodes = showingNode.ceval.nodes;
-      const likelyNodes = Math.round((this.searchMs() * ev.nodes) / ev.elapsedMs);
+      const likelyNodes = Math.round((this.searchMs() * ev.nodes) / ev.millis);
 
       // nps varies with positional complexity so this is rough, but save planet earth
       if (likelyNodes < targetNodes) this.stop(); // let them click plus
@@ -90,13 +90,8 @@ export default class CevalCtrl {
 
     const step = steps[steps.length - 1];
 
-    const last = threatMode ? step.threat : step.ceval;
-    if (last && 'elapsedMs' in last && last.elapsedMs >= this.searchMs()) {
-      this.lastStarted = {
-        path,
-        steps,
-        threatMode,
-      };
+    if (((threatMode ? step.threat : step.ceval)?.millis ?? 0) >= this.searchMs()) {
+      this.lastStarted = { path, steps, threatMode };
       return;
     }
 

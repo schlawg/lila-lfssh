@@ -67,7 +67,7 @@ export class ExternalEngine implements CevalEngine {
         work.emit({
           fen: work.currentFen,
           depth: line.pvs[0]?.depth || 0,
-          elapsedMs: Math.max(line.time, 1),
+          millis: Math.max(line.time, 1),
           nodes: line.nodes,
           cp: line.pvs[0]?.cp,
           mate: line.pvs[0]?.mate,

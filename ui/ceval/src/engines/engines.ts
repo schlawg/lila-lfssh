@@ -37,9 +37,10 @@ export class Engines {
   }
 
   supporting(variant: VariantKey): EngineInfo[] {
+    console.log(variant, this.externalEngines);
     return [
       ...this.localEngines.filter(e => e.variants?.includes(variant)),
-      ...this.externalEngines.filter(e => e.variants?.includes(variant)),
+      ...this.externalEngines.filter(e => externalEngineSupports(e, variant)),
     ];
   }
 
@@ -52,10 +53,10 @@ export class Engines {
     const id = selector?.id ?? this.selected();
     const variant = selector?.variant ?? 'standard';
     return (
-      this.externalEngines.find(e => e.id === id && e.variants?.includes(variant)) ??
+      this.externalEngines.find(e => e.id === id && externalEngineSupports(e, variant)) ??
       this.localEngines.find(e => e.id === id && e.variants?.includes(variant)) ??
       this.localEngines.find(e => e.variants?.includes(variant)) ??
-      this.externalEngines.find(e => e.variants?.includes(variant))
+      this.externalEngines.find(e => externalEngineSupports(e, variant))
     );
   }
 
@@ -232,6 +233,14 @@ function maxHashMB() {
   else if (isIPad()) return 64; // iPadOS safari pretends to be desktop but acts more like iphone
   else if (isIOS()) return 32;
   return 256; // this is safe, mostly desktop firefox / mac safari users here
+}
+
+function externalEngineSupports(e: EngineInfo, v: VariantKey) {
+  const names = [v.toLowerCase()];
+  if (v === 'standard' || v === 'fromPosition' || v === 'chess960') names.push('chess');
+  if (v === 'threeCheck') names.push('3check');
+  if (v === 'antichess') names.push('giveaway');
+  return (e.variants ?? []).filter(v => names.includes(v.toLowerCase())).length;
 }
 
 const withDefaults = (engine: BrowserEngineInfo): BrowserEngineInfo => ({
