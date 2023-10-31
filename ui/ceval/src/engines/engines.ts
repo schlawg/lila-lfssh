@@ -125,7 +125,7 @@ export class Engines {
         },
         {
           info: {
-            id: '__sf16nnue40',
+            id: '__sf16nnue60',
             name: 'Stockfish 16 NNUE · 60MB',
             short: 'SF 16 · 60MB',
             tech: 'NNUE',
