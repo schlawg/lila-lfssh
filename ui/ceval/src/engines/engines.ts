@@ -95,6 +95,21 @@ export class Engines {
         },
         {
           info: {
+            id: '__sf16nnue12',
+            name: 'Stockfish 16 NNUE · 12MB',
+            short: 'SF 16 · 12MB',
+            tech: 'NNUE',
+            requires: 'simd',
+            minMem: 1536,
+            assets: {
+              root: 'npm/lila-stockfish-web',
+              js: 'linrock-nnue-12.js',
+            },
+          },
+          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
+        },
+        {
+          info: {
             id: '__sf16nnue40',
             name: 'Stockfish 16 NNUE · 40MB',
             short: 'SF 16 · 40MB',
@@ -104,6 +119,21 @@ export class Engines {
             assets: {
               root: 'npm/lila-stockfish-web',
               js: 'sf-nnue-40.js',
+            },
+          },
+          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
+        },
+        {
+          info: {
+            id: '__sf16nnue40',
+            name: 'Stockfish 16 NNUE · 60MB',
+            short: 'SF 16 · 60MB',
+            tech: 'NNUE',
+            requires: 'simd',
+            minMem: 2048,
+            assets: {
+              root: 'npm/lila-stockfish-web',
+              js: 'sf-nnue-60.js',
             },
           },
           make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
@@ -145,6 +175,23 @@ export class Engines {
           },
           make: (e: BrowserEngineInfo) =>
             new StockfishWebEngine(e, undefined, v => (v === 'threeCheck' ? '3check' : v.toLowerCase())),
+        },
+        {
+          info: {
+            id: '__sf14nnue',
+            name: 'Stockfish 14 NNUE',
+            short: 'SF 14',
+            version: 'b6939d',
+            class: 'NNUE',
+            requires: 'simd',
+            minMem: 1536,
+            assets: {
+              root: 'npm/stockfish-nnue.wasm',
+              js: 'stockfish.js',
+              wasm: 'stockfish.wasm',
+            },
+          },
+          make: (e: BrowserEngineInfo) => new ThreadedEngine(e, redraw, progress),
         },
         {
           info: {
