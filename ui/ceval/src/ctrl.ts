@@ -26,7 +26,7 @@ export default class CevalCtrl {
   possible: boolean;
   cachable: boolean;
 
-  engines = new Engines(this);
+  engines: Engines;
   multiPv: StoredProp<number>;
   allowed = toggle(true);
   enabled: Toggle;
@@ -54,6 +54,7 @@ export default class CevalCtrl {
     this.enabled = toggle(this.possible && this.analysable && this.allowed() && enabledAfterDisable());
     this.multiPv = storedIntProp(this.storageKey('ceval.multipv'), this.opts.multiPvDefault || 1);
     this.searchMs = storedIntProp('ceval.search-ms', 8000);
+    this.engines = new Engines(this);
   }
 
   storageKey = (k: string) => (this.opts.storageKeyPrefix ? `${this.opts.storageKeyPrefix}.${k}` : k);
@@ -216,10 +217,7 @@ export default class CevalCtrl {
     }
   };
 
-  canGoDeeper = () =>
-    this.getState() !== CevalState.Computing &&
-    this.curEval?.pvs[0].mate === undefined &&
-    this.curDepth() < 99;
+  canGoDeeper = () => this.getState() !== CevalState.Computing && this.curDepth() < 99;
 
   infinite = () => this.searchMs() === Number.POSITIVE_INFINITY;
   computing = () => this.getState() === CevalState.Computing;
