@@ -8,9 +8,8 @@ import { onClickAway } from 'common';
 const searchTicks: [number, string][] = [
   [4000, '4s'],
   [8000, '8s'],
-  [30000, '30s'],
-  [300000, '5m'],
-  [3600000, '1hr'],
+  [12000, '12s'],
+  [200000, '20s'],
   [Number.POSITIVE_INFINITY, '∞'],
 ];
 
@@ -93,7 +92,7 @@ export function renderCevalSettings(ctrl: ParentCtrl): VNode | null {
                       },
                     },
                     [
-                      h('label', { attrs: { for: id } }, noarg('cpus')),
+                      h('label', { attrs: { for: id } }, noarg('Threads')),
                       h('input#' + id, {
                         attrs: {
                           type: 'range',

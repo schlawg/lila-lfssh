@@ -53,7 +53,7 @@ export default class CevalCtrl {
     this.analysable = pos.isOk;
     this.enabled = toggle(this.possible && this.analysable && this.allowed() && enabledAfterDisable());
     this.multiPv = storedIntProp(this.storageKey('ceval.multipv'), this.opts.multiPvDefault || 1);
-    this.searchMs = storedIntProp('ceval.search-ms', 8000);
+    this.searchMs = storedIntProp('ceval.movetime-ms', 8000);
     this.engines = new Engines(this);
   }
 
