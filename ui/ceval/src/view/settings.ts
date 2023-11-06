@@ -6,10 +6,10 @@ import { onInsert, bind } from 'common/snabbdom';
 import { onClickAway } from 'common';
 
 const searchTicks: [number, string][] = [
-  [4000, '4s'],
-  [8000, '8s'],
-  [12000, '12s'],
-  [200000, '20s'],
+  [4000, '> 4s'],
+  [8000, '> 8s'],
+  [12000, '> 12s'],
+  [20000, '> 20s'],
   [Number.POSITIVE_INFINITY, '∞'],
 ];
 

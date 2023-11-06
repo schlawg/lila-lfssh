@@ -4,7 +4,7 @@ import { SimpleEngine } from './simpleEngine';
 import { StockfishWebEngine } from './stockfishWebEngine';
 import { ThreadedEngine } from './threadedEngine';
 import { ExternalEngine } from './externalEngine';
-import { storedStringProp, StoredProp } from 'common/storage';
+import { storedStringProp, storedBooleanProp, StoredProp } from 'common/storage';
 import { isAndroid, isIOS, isIPad, hasFeature } from 'common/device';
 import { pow2floor } from '../util';
 import { lichessRules } from 'chessops/compat';
@@ -26,47 +26,9 @@ export class Engines {
     this.externalEngines = this.ctrl.opts.externalEngines?.map(e => ({ tech: 'EXTERNAL', ...e })) ?? [];
 
     this.selected = storedStringProp('ceval.engine', this.localEngines[0].id);
-
-    if (this.selected() === 'lichess') this.selected(this.localEngines[0].id); // delete this 2024-01-01
+    this.migrateSettings(); // TODO - delete this on or after 2024-01-01
 
     this.active = this.engineFor({ id: this.selected(), variant: this.ctrl.opts.variant.key });
-  }
-
-  get external() {
-    return this.active instanceof ExternalEngine ? this.active : undefined;
-  }
-
-  supporting(variant: VariantKey): EngineInfo[] {
-    console.log(variant, this.externalEngines);
-    return [
-      ...this.localEngines.filter(e => e.variants?.includes(variant)),
-      ...this.externalEngines.filter(e => externalEngineSupports(e, variant)),
-    ];
-  }
-
-  select(id: string) {
-    this.active = this.engineFor({ id })!;
-    this.selected(id);
-  }
-
-  engineFor(selector?: { id?: string; variant?: VariantKey }): EngineInfo | undefined {
-    const id = selector?.id ?? this.selected();
-    const variant = selector?.variant ?? 'standard';
-    return (
-      this.externalEngines.find(e => e.id === id && externalEngineSupports(e, variant)) ??
-      this.localEngines.find(e => e.id === id && e.variants?.includes(variant)) ??
-      this.localEngines.find(e => e.variants?.includes(variant)) ??
-      this.externalEngines.find(e => externalEngineSupports(e, variant))
-    );
-  }
-
-  make(selector?: { id?: string; variant?: VariantKey }): CevalEngine {
-    const e = (this.active = this.engineFor(selector));
-    if (!e) throw Error(`Engine not found ${selector?.id ?? selector?.variant ?? this.selected()}}`);
-
-    return e.tech !== 'EXTERNAL'
-      ? this.localEngineMap.get(e.id)!.make(e as BrowserEngineInfo)
-      : new ExternalEngine(e as ExternalEngineInfo, this.ctrl.opts.redraw);
   }
 
   makeEngineMap() {
@@ -80,6 +42,23 @@ export class Engines {
       [
         {
           info: {
+            id: '__sf14nnue',
+            name: 'Stockfish 14 NNUE',
+            short: 'SF 14',
+            version: 'b6939d',
+            class: 'NNUE',
+            requires: 'simd',
+            minMem: 2048,
+            assets: {
+              root: 'npm/stockfish-nnue.wasm',
+              js: 'stockfish.js',
+              wasm: 'stockfish.wasm',
+            },
+          },
+          make: (e: BrowserEngineInfo) => new ThreadedEngine(e, redraw, progress),
+        },
+        {
+          info: {
             id: '__sf16nnue7',
             name: 'Stockfish 16 NNUE · 7MB',
             short: 'SF 16 · 7MB',
@@ -89,21 +68,6 @@ export class Engines {
             assets: {
               root: 'npm/lila-stockfish-web',
               js: 'linrock-nnue-7.js',
-            },
-          },
-          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
-        },
-        {
-          info: {
-            id: '__sf16nnue12',
-            name: 'Stockfish 16 NNUE · 12MB',
-            short: 'SF 16 · 12MB',
-            tech: 'NNUE',
-            requires: 'simd',
-            minMem: 1536,
-            assets: {
-              root: 'npm/lila-stockfish-web',
-              js: 'linrock-nnue-12.js',
             },
           },
           make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
@@ -122,35 +86,6 @@ export class Engines {
             },
           },
           make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
-        },
-        {
-          info: {
-            id: '__sf16nnue60',
-            name: 'Stockfish 16 NNUE · 60MB',
-            short: 'SF 16 · 60MB',
-            tech: 'NNUE',
-            requires: 'simd',
-            minMem: 2048,
-            assets: {
-              root: 'npm/lila-stockfish-web',
-              js: 'sf-nnue-60.js',
-            },
-          },
-          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e, progress),
-        },
-        {
-          info: {
-            id: '__sf16hce',
-            name: 'Stockfish 16 HCE',
-            short: 'SF 16',
-            tech: 'HCE',
-            requires: 'simd',
-            assets: {
-              root: 'npm/lila-stockfish-web',
-              js: 'sf-nnue-40.js',
-            },
-          },
-          make: (e: BrowserEngineInfo) => new StockfishWebEngine(e),
         },
         {
           info: {
@@ -227,7 +162,6 @@ export class Engines {
             short: 'SF 11',
             tech: 'HCE',
             requires: 'sharedMem',
-            obsoletedBy: 'simd',
             assets: {
               root: 'npm/stockfish.wasm',
               js: 'stockfish.js',
@@ -271,6 +205,52 @@ export class Engines {
         .filter(e => hasFeature(e.info.requires) && !(e.info.obsoletedBy && hasFeature(e.info.obsoletedBy)))
         .map(e => [e.info.id, { info: withDefaults(e.info as BrowserEngineInfo), make: e.make }]),
     );
+  }
+
+  get external() {
+    return this.active instanceof ExternalEngine ? this.active : undefined;
+  }
+
+  supporting(variant: VariantKey): EngineInfo[] {
+    console.log(variant, this.externalEngines);
+    return [
+      ...this.localEngines.filter(e => e.variants?.includes(variant)),
+      ...this.externalEngines.filter(e => externalEngineSupports(e, variant)),
+    ];
+  }
+
+  select(id: string) {
+    this.active = this.engineFor({ id })!;
+    this.selected(id);
+  }
+
+  engineFor(selector?: { id?: string; variant?: VariantKey }): EngineInfo | undefined {
+    const id = selector?.id ?? this.selected();
+    const variant = selector?.variant ?? 'standard';
+    return (
+      this.externalEngines.find(e => e.id === id && externalEngineSupports(e, variant)) ??
+      this.localEngines.find(e => e.id === id && e.variants?.includes(variant)) ??
+      this.localEngines.find(e => e.variants?.includes(variant)) ??
+      this.externalEngines.find(e => externalEngineSupports(e, variant))
+    );
+  }
+
+  make(selector?: { id?: string; variant?: VariantKey }): CevalEngine {
+    const e = (this.active = this.engineFor(selector));
+    if (!e) throw Error(`Engine not found ${selector?.id ?? selector?.variant ?? this.selected()}}`);
+
+    return e.tech !== 'EXTERNAL'
+      ? this.localEngineMap.get(e.id)!.make(e as BrowserEngineInfo)
+      : new ExternalEngine(e as ExternalEngineInfo, this.ctrl.opts.redraw);
+  }
+
+  migrateSettings() {
+    // TODO - delete this on or after 2024-01-01
+    if (this.selected() === 'lichess') {
+      this.selected(this.localEngines[0].id);
+      if (storedBooleanProp('ceval.infinite', false)()) this.ctrl.searchMs(Number.POSITIVE_INFINITY);
+      if (!storedBooleanProp('ceval.enable-nnue', true)()) this.select('__sf11hce');
+    }
   }
 }
 
