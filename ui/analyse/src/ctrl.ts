@@ -612,8 +612,8 @@ export default class AnalyseCtrl {
     return treeOps.withMainlineChild(this.node, (n: Tree.Node) => n.eval?.best);
   }
 
-  setAutoShapes = () => {
-    this.withCg(cg => cg.setAutoShapes(computeAutoShapes(this)));
+  setAutoShapes = (): void => {
+    this.chessground?.setAutoShapes(computeAutoShapes(this));
     keyboard.maybeShowVariationArrowHelp(this);
   };
 
@@ -768,7 +768,7 @@ export default class AnalyseCtrl {
       !isTouchDevice() &&
       !chap?.practice &&
       chap?.conceal === undefined &&
-      !chap?.gamebook &&
+      !this.study?.gamebookPlay() &&
       !this.retro &&
       this.variationArrowsProp() &&
       this.node.children.length > 1

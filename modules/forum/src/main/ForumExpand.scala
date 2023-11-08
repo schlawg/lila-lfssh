@@ -7,20 +7,17 @@ import lila.common.config
 
 final class ForumTextExpand(askApi: lila.ask.AskApi)(using Executor, Scheduler):
 
-  private def one(text: String)(using config.NetDomain): Fu[Frag] =
+  private def one(post: ForumPost)(using config.NetDomain): Fu[ForumPost.WithFrag] =
     lila.common.Bus
-      .ask("lpv")(lila.hub.actorApi.lpv.LpvLinkRenderFromText(text, _))
+      .ask("lpv")(lila.hub.actorApi.lpv.LpvLinkRenderFromText(post.text, _))
       .map: linkRender =>
         raw:
           RawHtml.nl2br {
-            RawHtml.addLinks(text, expandImg = true, linkRender = linkRender.some).value
+            RawHtml.addLinks(post.text, expandImg = true, linkRender = linkRender.some).value
           }.value
+      .zip(askApi.asksIn(post.text))
+      .map: (body, asks) =>
+        ForumPost.WithFrag(post, body, asks)
 
   def manyPosts(posts: Seq[ForumPost])(using config.NetDomain): Fu[Seq[ForumPost.WithFrag]] =
-    posts
-      .map(_.text)
-      .traverse(one)
-      .flatMap: bodies =>
-        bodies zip posts traverse { case (body, post) =>
-          askApi.asksIn(post.text).map(ForumPost.WithFrag(post, body, _))
-        }
+    posts.traverse(one)
