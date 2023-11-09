@@ -33,7 +33,6 @@ export function renderVoiceBar(ctrl: VoiceCtrl, redraw: () => void, cls?: string
           ...(ctrl.module()?.prefNodes(redraw) ?? []),
           pushTalkSetting(ctrl),
           h('br'),
-          ctrl.moduleId === 'move' ? voiceDisable() : null,
         ])
       : null,
 
@@ -125,25 +124,6 @@ function deviceSelector(ctrl: VoiceCtrl, redraw: () => void) {
       ),
     ),
   ]);
-}
-
-function voiceDisable() {
-  return !document.body.dataset.user
-    ? null
-    : h(
-        'a.button',
-        {
-          attrs: {
-            title: 'Also set in Preferences -> Display',
-          },
-          hook: bind('click', () =>
-            xhr
-              .text('/pref/voice', { method: 'post', body: xhr.form({ voice: '0' }) })
-              .then(() => window.location.reload()),
-          ),
-        },
-        'Disable voice recognition',
-      );
 }
 
 function renderHelpModal(ctrl: VoiceCtrl) {

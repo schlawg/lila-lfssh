@@ -51,8 +51,6 @@ case class Ask(
   lazy val isVertical = tags.exists(_ startsWith "vert")               // one choice per row
   lazy val isCheckbox = !isRanked && isVertical                        // use checkboxes
 
-  // these accessors probably seem cumbersone
-  // they were written to support app/views/ask.scala code
   def toAnon(user: UserId): Option[String] =
     Some(if isAnon then Ask.anonHash(user.value, _id) else user.value)
 
@@ -97,13 +95,12 @@ case class Ask(
     case _ =>
       Vector.fill(choices.size)(0)
 
-  // index of returned vector maps to choices list, value is from [0f, choices.size-1f] where 0 is "best" rank
+  // index of returned vector maps to choices list, values from [0f, choices.size-1f] where 0 is "best" rank
   def averageRank: Vector[Float] = picks match
     case Some(pmap) if choices.nonEmpty && pmap.nonEmpty =>
       val results = Array.ofDim[Int](choices.size)
       pmap.values.foreach: ranking =>
-        for (it <- choices.indices)
-          results(constrain(ranking(it))) += it
+        for it <- choices.indices do results(constrain(ranking(it))) += it
       results.map(_ / pmap.size.toFloat).toVector
     case _ =>
       Vector.fill(choices.size)(0f)
@@ -115,9 +112,8 @@ case class Ask(
       val n   = choices.size
       val mat = Array.ofDim[Int](n, n)
       pmap.values.foreach: ranking =>
-        for (i <- choices.indices)
-          for (j <- choices.indices)
-            mat(i)(j) += (if (ranking(i) <= j) 1 else 0)
+        for i <- choices.indices do
+          for j <- choices.indices do mat(i)(j) += (if ranking(i) <= j then 1 else 0)
       mat
     case _ =>
       Array.ofDim[Int](0, 0)
@@ -166,6 +162,6 @@ object Ask:
 
   def anonHash(text: String, aid: Ask.ID): String =
     "anon-" + new String(base64.encode(com.roundeights.hasher.Algo.sha1(s"$text-$aid").bytes))
-      .substring(0, 11) // 66 bits is plenty of entropy, collisions are fairly harmless
+      .substring(0, 11) // 66 bits is plenty of entropy, collisions harmless
 
   private val base64 = java.util.Base64.getEncoder().withoutPadding();
