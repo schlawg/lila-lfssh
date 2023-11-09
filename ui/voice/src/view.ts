@@ -32,7 +32,6 @@ export function renderVoiceBar(ctrl: VoiceCtrl, redraw: () => void, cls?: string
           langSetting(ctrl),
           ...(ctrl.module()?.prefNodes(redraw) ?? []),
           pushTalkSetting(ctrl),
-          h('br'),
         ])
       : null,
 
