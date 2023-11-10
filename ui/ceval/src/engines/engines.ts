@@ -40,7 +40,7 @@ export class Engines {
     const redraw = this.ctrl.opts.redraw;
     const progress = (download?: { bytes: number; total: number }) => {
       if (this.ctrl.enabled()) this.ctrl.download = download;
-      this.ctrl.opts.redraw();
+      redraw();
     };
 
     return new Map<string, WithMake>(
