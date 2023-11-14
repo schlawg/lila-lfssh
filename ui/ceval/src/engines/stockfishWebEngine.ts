@@ -7,11 +7,11 @@ import type StockfishWeb from 'lila-stockfish-web';
 export class StockfishWebEngine implements CevalEngine {
   failed = false;
   protocol: Protocol;
-  module: StockfishWeb;
+  module?: StockfishWeb;
 
   constructor(
     readonly info: BrowserEngineInfo,
-    readonly nnue?: (download?: { bytes: number; total: number }) => void,
+    readonly progress?: (download?: { bytes: number; total: number }) => void,
     readonly variantMap?: (v: string) => string,
   ) {
     this.protocol = new Protocol(variantMap);
@@ -19,6 +19,10 @@ export class StockfishWebEngine implements CevalEngine {
       console.error(e);
       this.failed = true;
     });
+  }
+
+  getInfo() {
+    return this.info;
   }
 
   async boot() {
@@ -53,15 +57,17 @@ export class StockfishWebEngine implements CevalEngine {
 
         req.open('get', lichess.assetUrl(`lifat/nnue/${nnueFilename}`, { noVersion: true }), true);
         req.responseType = 'arraybuffer';
-        req.onprogress = e => this.nnue?.({ bytes: e.loaded, total: e.total });
+        req.onprogress = e => this.progress?.({ bytes: e.loaded, total: e.total });
 
         nnueBuffer = await new Promise((resolve, reject) => {
-          req.onerror = reject;
-          req.onload = _ => resolve(new Uint8Array(req.response));
+          req.onerror = () => reject(new Error(`NNUE download failed: ${req.status}`));
+          req.onload = () => {
+            if (req.status / 100 === 2) resolve(new Uint8Array(req.response));
+            else reject(new Error(`NNUE download failed: ${req.status}`));
+          };
           req.send();
         });
-
-        this.nnue?.();
+        this.progress?.();
         nnueStore?.put(nnueFilename, nnueBuffer!).catch(() => console.warn('IDB store failed'));
       }
       module.setNnueBuffer(nnueBuffer!);
@@ -75,14 +81,17 @@ export class StockfishWebEngine implements CevalEngine {
     return this.failed
       ? CevalState.Failed
       : !this.module
-      ? CevalState.Loading
-      : this.protocol.isComputing()
-      ? CevalState.Computing
-      : CevalState.Idle;
+        ? CevalState.Loading
+        : this.protocol.isComputing()
+          ? CevalState.Computing
+          : CevalState.Idle;
   }
 
   start = (work?: Work) => this.protocol.compute(work);
   stop = () => this.protocol.compute(undefined);
   engineName = () => this.protocol.engineName;
-  destroy = () => this.stop();
+  destroy = () => {
+    this.module?.postMessage('quit');
+    this.module = undefined;
+  };
 }

@@ -110,20 +110,20 @@ function engineName(ctrl: CevalCtrl): VNode[] {
               engineTech,
             )
           : engine.requires === 'simd'
-          ? h(
-              'span.technology.good',
-              {
-                attrs: {
-                  title: 'Multi-threaded WebAssembly with SIMD',
+            ? h(
+                'span.technology.good',
+                {
+                  attrs: {
+                    title: 'Multi-threaded WebAssembly with SIMD',
+                  },
                 },
-              },
-              engineTech,
-            )
-          : engine.requires === 'sharedMem'
-          ? h('span.technology.good', { attrs: { title: 'Multi-threaded WebAssembly' } }, engineTech)
-          : engine.requires === 'wasm'
-          ? h('span.technology', { attrs: { title: 'Single-threaded WebAssembly' } }, engineTech)
-          : h('span.technology', { attrs: { title: 'Single-threaded JavaScript' } }, engineTech),
+                engineTech,
+              )
+            : engine.requires === 'sharedMem'
+              ? h('span.technology.good', { attrs: { title: 'Multi-threaded WebAssembly' } }, engineTech)
+              : engine.requires === 'wasm'
+                ? h('span.technology', { attrs: { title: 'Single-threaded WebAssembly' } }, engineTech)
+                : h('span.technology', { attrs: { title: 'Single-threaded JavaScript' } }, engineTech),
       ]
     : [];
 }
@@ -235,10 +235,10 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
             ctrl.outcome()
               ? [trans.noarg('gameOver')]
               : ctrl.getNode().threefold
-              ? [trans.noarg('threefoldRepetition')]
-              : threatMode
-              ? [threatInfo(ctrl, threat)]
-              : localEvalNodes(ctrl, evs),
+                ? [trans.noarg('threefoldRepetition')]
+                : threatMode
+                  ? [threatInfo(ctrl, threat)]
+                  : localEvalNodes(ctrl, evs),
           ),
         ]),
       ]
@@ -274,8 +274,13 @@ export function renderCeval(ctrl: ParentCtrl): MaybeVNodes {
 
   const settingsGear: VNode | null = h('button.settings-gear', {
     attrs: { 'data-icon': licon.Gear, title: 'Engine settings' },
-    class: { active: ceval.showEnginePrefs() },
-    hook: bind('click', ceval.showEnginePrefs.toggle, ceval.opts.redraw, false),
+    class: { active: ctrl.getCeval().showEnginePrefs() }, // must use ctrl.getCeval() rather than ceval here
+    hook: bind(
+      'click',
+      () => ctrl.getCeval().showEnginePrefs.toggle(), // must use ctrl.getCeval() rather than ceval here
+      () => ctrl.getCeval().opts.redraw(), // must use ctrl.getCeval() rather than ceval here
+      false,
+    ),
   });
 
   return [
