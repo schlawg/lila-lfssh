@@ -22,3 +22,4 @@ public/lifat/vosk/model-pl-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
 public/lifat/vosk/model-vi-0.4.tar.gz filter=lfs diff=lfs merge=lfs -text
 public/lifat/vosk/model-it-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
 public/lifat/vosk/model-uk-v3.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/nnue/nn-5af11540bbfe.nnue filter=lfs diff=lfs merge=lfs -text
