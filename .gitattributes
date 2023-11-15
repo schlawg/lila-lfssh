@@ -1,2 +1,24 @@
 /lila       text eol=lf
 /ui/build   text eol=lf
+public/lifat/vosk/model-uz-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-ca-0.4.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-de-0.15.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-es-0.42.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-fa-0.4.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-hi-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-nl-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-tr-0.3.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-cn-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-cs-0.4.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-ko-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-kz-0.15.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-pt-0.3.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-ru-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-en-us-0.15.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-eo-0.42.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-fr-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-ja-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-pl-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-vi-0.4.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-it-0.22.tar.gz filter=lfs diff=lfs merge=lfs -text
+public/lifat/vosk/model-uk-v3.tar.gz filter=lfs diff=lfs merge=lfs -text
